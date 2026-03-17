@@ -23,7 +23,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { DOCUMENT_TYPE_LABELS } from "@/lib/validations/document"
-import { formatFileSize } from "@/lib/utils"
+import { cn, formatFileSize } from "@/lib/utils"
 import type { DocumentType } from "@/lib/validations/document"
 
 interface DocumentCardProps {
@@ -74,7 +74,7 @@ export function DocumentCard({
         <CardHeader>
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-2">
-              <Icon className={`h-5 w-5 shrink-0 ${typeColors[docType] ?? "text-muted-foreground"}`} />
+              <Icon className={cn("h-5 w-5 shrink-0", typeColors[docType] ?? "text-muted-foreground")} />
               <CardTitle className="line-clamp-1 text-base">
                 {document.title}
               </CardTitle>

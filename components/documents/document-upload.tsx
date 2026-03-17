@@ -11,7 +11,7 @@ import {
   resolveDocumentType,
   MAX_FILE_SIZE,
 } from "@/lib/validations/document"
-import { cn } from "@/lib/utils"
+import { cn, formatFileSize } from "@/lib/utils"
 
 interface DocumentUploadProps {
   onSuccess?: () => void
@@ -27,7 +27,7 @@ export function DocumentUpload({ onSuccess }: DocumentUploadProps) {
 
   const validateAndSetFile = useCallback((file: File) => {
     if (file.size > MAX_FILE_SIZE) {
-      toast.error("파일 크기가 10MB를 초과합니다.")
+      toast.error(`파일 크기가 ${formatFileSize(MAX_FILE_SIZE)}를 초과합니다.`)
       return
     }
     if (!resolveDocumentType(file)) {

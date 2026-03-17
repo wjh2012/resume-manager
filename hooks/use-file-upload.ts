@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useRef, useEffect } from "react"
 import { toast } from "sonner"
 
 interface UseFileUploadOptions {
@@ -11,13 +11,22 @@ export function useFileUpload({ onSuccess }: UseFileUploadOptions = {}) {
   const [isUploading, setIsUploading] = useState(false)
   const [progress, setProgress] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const xhrRef = useRef<XMLHttpRequest | null>(null)
+
+  // 컴포넌트 언마운트 시 진행 중인 XHR 중단
+  useEffect(() => {
+    return () => {
+      xhrRef.current?.abort()
+    }
+  }, [])
 
   const upload = useCallback(
     (file: File, title: string): Promise<Record<string, unknown> | null> => {
+      // 이전 요청이 있으면 중단
+      xhrRef.current?.abort()
+
       setIsUploading(true)
       setProgress(0)
-      setError(null)
 
       return new Promise((resolve) => {
         const formData = new FormData()
@@ -25,14 +34,17 @@ export function useFileUpload({ onSuccess }: UseFileUploadOptions = {}) {
         formData.append("title", title)
 
         const xhr = new XMLHttpRequest()
+        xhrRef.current = xhr
 
         xhr.upload.addEventListener("progress", (e) => {
           if (e.lengthComputable) {
-            setProgress(Math.round((e.loaded / e.total) * 100))
+            const next = Math.round((e.loaded / e.total) * 100)
+            setProgress((prev) => (prev === next ? prev : next))
           }
         })
 
         xhr.addEventListener("load", () => {
+          xhrRef.current = null
           setIsUploading(false)
           setProgress(0)
 
@@ -41,7 +53,6 @@ export function useFileUpload({ onSuccess }: UseFileUploadOptions = {}) {
 
             if (xhr.status >= 400) {
               const message = data.error || "업로드에 실패했습니다."
-              setError(message)
               toast.error(message)
               resolve(null)
               return
@@ -51,16 +62,15 @@ export function useFileUpload({ onSuccess }: UseFileUploadOptions = {}) {
             onSuccess?.()
             resolve(data)
           } catch {
-            setError("업로드에 실패했습니다.")
             toast.error("업로드에 실패했습니다.")
             resolve(null)
           }
         })
 
         xhr.addEventListener("error", () => {
+          xhrRef.current = null
           setIsUploading(false)
           setProgress(0)
-          setError("업로드에 실패했습니다.")
           toast.error("업로드에 실패했습니다.")
           resolve(null)
         })
@@ -86,7 +96,6 @@ export function useFileUpload({ onSuccess }: UseFileUploadOptions = {}) {
     isUploading,
     progress,
     isDragging,
-    error,
     upload,
     handleDragOver,
     handleDragLeave,

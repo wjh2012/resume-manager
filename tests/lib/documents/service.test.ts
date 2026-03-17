@@ -1,4 +1,3 @@
-// @ts-nocheck — vi.mock으로 생성된 mock 객체의 타입이 원본과 불일치하는 문제 (런타임 정상)
 import { describe, it, expect, vi, beforeEach } from "vitest"
 
 // embedding.ts가 모듈 최상위에서 openai.embedding()을 즉시 호출하므로
