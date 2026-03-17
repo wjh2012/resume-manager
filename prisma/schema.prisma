@@ -8,6 +8,28 @@ datasource db {
   extensions = [vector]
 }
 
+enum CoverLetterStatus {
+  DRAFT
+  COMPLETED
+}
+
+enum InterviewSessionStatus {
+  ACTIVE
+  COMPLETED
+}
+
+enum ConversationType {
+  COVER_LETTER
+  INTERVIEW
+  GENERAL
+}
+
+enum MessageRole {
+  USER
+  ASSISTANT
+  SYSTEM
+}
+
 model User {
   id        String   @id @default(uuid()) @db.Uuid
   email     String   @unique
@@ -32,7 +54,7 @@ model AiSettings {
   userId    String   @unique @map("user_id") @db.Uuid
   provider  String   @default("openai")
   model     String   @default("gpt-4o")
-  apiKey    String?  @map("api_key")
+  apiKey    String?  @map("api_key") // TODO: 프로덕션 배포 전 암호화 적용 필요
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -189,9 +211,9 @@ model CoverLetter {
   position       String
   jobPostingText String?  @map("job_posting_text") @db.Text
   content        String?  @db.Text
-  status         String   @default("draft")
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+  status         CoverLetterStatus @default(DRAFT)
+  createdAt      DateTime          @default(now()) @map("created_at")
+  updatedAt      DateTime          @updatedAt @map("updated_at")
 
   user                 User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
   conversations        Conversation[]
@@ -218,9 +240,9 @@ model InterviewSession {
   title       String
   companyName String?  @map("company_name")
   position    String?
-  status      String   @default("active")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  status      InterviewSessionStatus @default(ACTIVE)
+  createdAt   DateTime               @default(now()) @map("created_at")
+  updatedAt   DateTime               @updatedAt @map("updated_at")
 
   user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   interviewDocuments InterviewDocument[]
@@ -243,8 +265,8 @@ model InterviewDocument {
 
 model Conversation {
   id                 String   @id @default(uuid()) @db.Uuid
-  userId             String   @map("user_id") @db.Uuid
-  type               String
+  userId             String           @map("user_id") @db.Uuid
+  type               ConversationType
   coverLetterId      String?  @map("cover_letter_id") @db.Uuid
   interviewSessionId String?  @map("interview_session_id") @db.Uuid
   title              String?
@@ -262,8 +284,8 @@ model Conversation {
 
 model Message {
   id             String   @id @default(uuid()) @db.Uuid
-  conversationId String   @map("conversation_id") @db.Uuid
-  role           String
+  conversationId String      @map("conversation_id") @db.Uuid
+  role           MessageRole
   content        String   @db.Text
   createdAt      DateTime @default(now()) @map("created_at")
 

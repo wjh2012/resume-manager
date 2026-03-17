@@ -14,11 +14,20 @@ export async function GET(request: Request) {
     if (!error && data.user) {
       const { name, email, avatarUrl } = extractUserInfo(data.user)
 
-      await prisma.user.upsert({
-        where: { id: data.user.id },
-        update: { email, name, avatarUrl },
-        create: { id: data.user.id, email, name, avatarUrl },
-      })
+      if (!email) {
+        return NextResponse.redirect(`${origin}/login?error=no_email`)
+      }
+
+      try {
+        await prisma.user.upsert({
+          where: { id: data.user.id },
+          update: { email, name, avatarUrl },
+          create: { id: data.user.id, email, name, avatarUrl },
+        })
+      } catch (e) {
+        console.error("[callback] user upsert failed:", e)
+        return NextResponse.redirect(`${origin}/login`)
+      }
 
       return NextResponse.redirect(origin)
     }

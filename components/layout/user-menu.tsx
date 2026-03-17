@@ -35,7 +35,7 @@ export function UserMenu({ user }: UserMenuProps) {
         .join("")
         .toUpperCase()
         .slice(0, 2)
-    : user.email[0].toUpperCase()
+    : (user.email?.[0] ?? "?").toUpperCase()
 
   return (
     <DropdownMenu>
@@ -47,9 +47,9 @@ export function UserMenu({ user }: UserMenuProps) {
           </Avatar>
           <div className="flex min-w-0 flex-col">
             <span className="truncate text-sm font-medium">
-              {user.name ?? user.email}
+              {user.name ?? user.email ?? ""}
             </span>
-            {user.name && (
+            {user.name && user.email && (
               <span className="text-muted-foreground truncate text-xs">
                 {user.email}
               </span>

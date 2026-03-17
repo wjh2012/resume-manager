@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 
@@ -7,14 +8,21 @@ type OAuthProvider = "kakao" | "google" | "github"
 
 export default function LoginPage() {
   const supabase = createClient()
+  const [loadingProvider, setLoadingProvider] = useState<OAuthProvider | null>(null)
 
   const handleLogin = async (provider: OAuthProvider) => {
-    await supabase.auth.signInWithOAuth({
-      provider,
-      options: {
-        redirectTo: `${window.location.origin}/callback`,
-      },
-    })
+    if (loadingProvider) return
+    setLoadingProvider(provider)
+    try {
+      await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: `${window.location.origin}/callback`,
+        },
+      })
+    } catch {
+      setLoadingProvider(null)
+    }
   }
 
   return (
@@ -41,15 +49,17 @@ export default function LoginPage() {
             variant="outline"
             className="h-12 w-full cursor-pointer text-sm font-medium"
             onClick={() => handleLogin("google")}
+            disabled={loadingProvider !== null}
           >
-            Google로 시작하기
+            {loadingProvider === "google" ? "로그인 중..." : "Google로 시작하기"}
           </Button>
 
           <Button
             className="h-12 w-full cursor-pointer bg-black text-sm font-medium text-white hover:bg-black/90 dark:bg-white dark:text-black dark:hover:bg-white/90"
             onClick={() => handleLogin("github")}
+            disabled={loadingProvider !== null}
           >
-            GitHub로 시작하기
+            {loadingProvider === "github" ? "로그인 중..." : "GitHub로 시작하기"}
           </Button>
         </div>
       </div>
