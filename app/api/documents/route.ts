@@ -36,6 +36,7 @@ export async function POST(request: Request) {
     const result = await uploadDocument(user.id, file, title.trim())
     return NextResponse.json(result, { status: 201 })
   } catch (error) {
+    console.error("[POST /api/documents]", error)
     const message =
       error instanceof Error ? error.message : "문서 업로드에 실패했습니다."
     return NextResponse.json({ error: message }, { status: 500 })

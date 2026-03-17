@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server"
+import { randomUUID } from "crypto"
 
 const BUCKET = "documents"
 
@@ -9,7 +10,8 @@ export async function uploadFile(
   file: Blob,
 ): Promise<string> {
   const supabase = await createClient()
-  const path = `${userId}/${Date.now()}-${fileName}`
+  const ext = fileName.slice(fileName.lastIndexOf(".")).toLowerCase()
+  const path = `${userId}/${Date.now()}-${randomUUID()}${ext}`
 
   const { error } = await supabase.storage.from(BUCKET).upload(path, file, {
     upsert: false,

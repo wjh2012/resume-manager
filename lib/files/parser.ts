@@ -4,7 +4,8 @@ import type { DocumentType } from "@/lib/validations/document"
 async function parsePdf(buffer: ArrayBuffer): Promise<string> {
   const { extractText } = await import("unpdf")
   const { text } = await extractText(buffer)
-  return text.trim()
+  const content = Array.isArray(text) ? text.join("\n") : text
+  return content.trim()
 }
 
 // DOCX 파서 (mammoth)
