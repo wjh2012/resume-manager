@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { Suspense, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { toast } from "sonner"
 import { createClient } from "@/lib/supabase/client"
@@ -12,7 +12,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   no_email: "이메일 정보를 가져올 수 없습니다. 다른 계정으로 시도해주세요.",
 }
 
-export default function LoginPage() {
+function LoginContent() {
   const supabase = createClient()
   const searchParams = useSearchParams()
   const [loadingProvider, setLoadingProvider] = useState<OAuthProvider | null>(null)
@@ -23,14 +23,13 @@ export default function LoginPage() {
   const handleLogin = async (provider: OAuthProvider) => {
     if (loadingProvider) return
     setLoadingProvider(provider)
-    try {
-      await supabase.auth.signInWithOAuth({
-        provider,
-        options: {
-          redirectTo: `${window.location.origin}/callback`,
-        },
-      })
-    } catch {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: {
+        redirectTo: `${window.location.origin}/callback`,
+      },
+    })
+    if (error) {
       setLoadingProvider(null)
       toast.error("로그인 중 오류가 발생했습니다. 다시 시도해주세요.")
     }
@@ -79,5 +78,13 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginContent />
+    </Suspense>
   )
 }
