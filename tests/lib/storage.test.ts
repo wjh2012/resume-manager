@@ -46,7 +46,7 @@ describe("uploadFile()", () => {
       expect(result.startsWith("user-123/")).toBe(true)
     })
 
-    it("반환된 경로에 파일명이 포함되어야 한다", async () => {
+    it("반환된 경로에 원본 파일의 확장자가 포함되어야 한다", async () => {
       // Arrange
       const storage = makeStorageMock()
       mockCreateClient.mockResolvedValue({ storage } as never)
@@ -54,11 +54,11 @@ describe("uploadFile()", () => {
       // Act
       const result = await uploadFile("user-abc", "cv.pdf", new Blob(["data"]))
 
-      // Assert
-      expect(result).toContain("cv.pdf")
+      // Assert — UUID 기반 파일명이지만 확장자는 유지
+      expect(result).toMatch(/\.pdf$/)
     })
 
-    it("경로 형식은 '{userId}/{timestamp}-{fileName}' 이어야 한다", async () => {
+    it("경로 형식은 '{userId}/{timestamp}-{uuid}.{ext}' 이어야 한다", async () => {
       // Arrange
       const storage = makeStorageMock()
       mockCreateClient.mockResolvedValue({ storage } as never)
@@ -67,8 +67,8 @@ describe("uploadFile()", () => {
       // Act
       const result = await uploadFile("u1", "file.txt", new Blob(["x"]))
 
-      // Assert — 타임스탬프가 before 이상의 숫자여야 한다
-      const match = result.match(/^u1\/(\d+)-file\.txt$/)
+      // Assert — UUID 기반 경로: u1/{timestamp}-{uuid}.txt
+      const match = result.match(/^u1\/(\d+)-[0-9a-f-]+\.txt$/)
       expect(match).not.toBeNull()
       const timestamp = Number(match![1])
       expect(timestamp).toBeGreaterThanOrEqual(before)

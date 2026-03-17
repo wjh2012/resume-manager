@@ -3,6 +3,7 @@
 import { useCallback, useRef, useState } from "react"
 import { Upload } from "lucide-react"
 
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useFileUpload } from "@/hooks/use-file-upload"
@@ -21,14 +22,16 @@ export function DocumentUpload({ onSuccess }: DocumentUploadProps) {
   const [title, setTitle] = useState("")
   const inputRef = useRef<HTMLInputElement>(null)
 
-  const { isUploading, isDragging, upload, handleDragOver, handleDragLeave, setIsDragging } =
+  const { isUploading, progress, isDragging, upload, handleDragOver, handleDragLeave, setIsDragging } =
     useFileUpload({ onSuccess })
 
   const validateAndSetFile = useCallback((file: File) => {
     if (file.size > MAX_FILE_SIZE) {
+      toast.error("파일 크기가 10MB를 초과합니다.")
       return
     }
     if (!resolveDocumentType(file)) {
+      toast.error("지원하지 않는 파일 형식입니다. (PDF, DOCX, TXT만 가능)")
       return
     }
     setSelectedFile(file)
@@ -110,12 +113,20 @@ export function DocumentUpload({ onSuccess }: DocumentUploadProps) {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
           />
+          {isUploading && (
+            <div className="bg-muted h-2 w-full overflow-hidden rounded-full">
+              <div
+                className="bg-primary h-full transition-all duration-300"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          )}
           <Button
             onClick={handleSubmit}
             disabled={isUploading || !title.trim()}
             className="w-full"
           >
-            {isUploading ? "업로드 중..." : "업로드"}
+            {isUploading ? `업로드 중... ${progress}%` : "업로드"}
           </Button>
         </>
       )}

@@ -45,6 +45,12 @@ const typeIcons: Record<DocumentType, typeof FileText> = {
   txt: File,
 }
 
+const typeColors: Record<DocumentType, string> = {
+  pdf: "text-red-500",
+  docx: "text-blue-500",
+  txt: "text-gray-500",
+}
+
 function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString("ko-KR", {
     year: "numeric",
@@ -68,7 +74,7 @@ export function DocumentCard({
         <CardHeader>
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-2">
-              <Icon className="text-muted-foreground h-5 w-5 shrink-0" />
+              <Icon className={`h-5 w-5 shrink-0 ${typeColors[docType] ?? "text-muted-foreground"}`} />
               <CardTitle className="line-clamp-1 text-base">
                 {document.title}
               </CardTitle>
