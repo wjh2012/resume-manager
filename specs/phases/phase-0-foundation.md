@@ -76,6 +76,9 @@ SUPABASE_SERVICE_ROLE_KEY=
 # Database (Supabase PostgreSQL direct connection)
 DATABASE_URL=
 DIRECT_URL=
+
+# OpenAI (임베딩 전용 - 사용자 AI 설정과 별도)
+OPENAI_API_KEY=
 ```
 
 ### 3. Prisma 초기화 & 스키마 작성
@@ -252,10 +255,23 @@ export async function GET(request: Request) {
     const { error } = await supabase.auth.exchangeCodeForSession(code)
 
     if (!error) {
-      // 최초 로그인 시 users 테이블에 upsert
+      // 앱 레벨 upsert로 users 테이블 동기화 (DB 트리거 대신 앱에서 처리)
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
-        // prisma.user.upsert(...)
+        await prisma.user.upsert({
+          where: { id: user.id },
+          create: {
+            id: user.id,
+            email: user.email!,
+            name: user.user_metadata?.full_name ?? null,
+            avatarUrl: user.user_metadata?.avatar_url ?? null,
+          },
+          update: {
+            email: user.email!,
+            name: user.user_metadata?.full_name ?? null,
+            avatarUrl: user.user_metadata?.avatar_url ?? null,
+          },
+        })
       }
       return NextResponse.redirect(`${origin}/`)
     }
@@ -272,7 +288,7 @@ export async function GET(request: Request) {
 ### 9. shadcn/ui 컴포넌트 추가
 
 ```bash
-npx shadcn@latest add card input textarea dialog sidebar tabs select badge separator skeleton sonner avatar dropdown-menu tooltip scroll-area sheet
+npx shadcn@latest add card input textarea dialog sidebar tabs select badge separator skeleton sonner avatar dropdown-menu tooltip scroll-area sheet resizable
 ```
 
 ### 10. 대시보드 레이아웃

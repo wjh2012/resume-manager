@@ -52,6 +52,7 @@ export const createCoverLetterSchema = z.object({
   companyName: z.string().min(1, "기업명을 입력해주세요"),
   position: z.string().min(1, "직무를 입력해주세요"),
   jobPostingText: z.string().optional(),
+  selectedDocumentIds: z.array(z.string().uuid()).optional(),
 })
 
 export const updateCoverLetterSchema = z.object({
@@ -67,11 +68,12 @@ export const updateCoverLetterSchema = z.object({
 
 - 유효성 검증
 - `CoverLetter` 생성 + 초기 `Conversation` (type: "cover_letter") 생성
+- `selectedDocumentIds`가 있으면 `CoverLetterDocument` 조인 레코드 생성
 - 응답: 생성된 자기소개서 (conversationId 포함)
 
-#### `GET /api/cover-letters`
+#### 목록 조회
 
-- 사용자의 자기소개서 목록 (최신순)
+- Server Component에서 직접 `prisma.coverLetter.findMany()` 호출 (API route 불필요)
 
 #### `GET /api/cover-letters/[id]`
 
@@ -118,6 +120,12 @@ export async function POST(req: Request) {
     context,
   })
 
+  // user 메시지를 스트리밍 시작 전에 DB 저장
+  const lastMessage = messages.at(-1)
+  await prisma.message.create({
+    data: { conversationId, role: "user", content: lastMessage.content },
+  })
+
   const result = streamText({
     model,
     system: systemPrompt,
@@ -157,7 +165,7 @@ export async function POST(req: Request) {
 - **좌측**: 자기소개서 에디터 (`CoverLetterEditor`)
 - **우측**: AI 채팅 사이드패널 (`CoverLetterChat`)
 
-리사이즈 가능한 분할 패널 (드래그 핸들).
+shadcn/ui의 `ResizablePanelGroup` / `ResizablePanel` / `ResizableHandle` 컴포넌트로 리사이즈 가능한 분할 패널 구현.
 
 #### `components/cover-letters/cover-letter-editor.tsx`
 
@@ -171,8 +179,9 @@ export async function POST(req: Request) {
 Phase 2의 공용 채팅 컴포넌트를 래핑:
 - `useChat` 훅 연동 (`/api/chat/cover-letter`)
 - 상단: 참고 문서 선택 드롭다운 (체크박스 목록)
+  - 선택 변경 시 `CoverLetterDocument` 조인 테이블에 저장 (작업공간 재진입 시 이전 선택 복원)
 - 채팅 영역
-- "에디터에 반영" 버튼 — AI 응답 중 자기소개서 내용을 에디터에 복사
+- "에디터에 반영" 버튼 — 각 assistant 메시지에 버튼을 두고, 해당 메시지 전체를 에디터 끝에 추가
 
 ### 6. 자기소개서 목록 페이지
 

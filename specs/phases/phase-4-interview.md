@@ -65,10 +65,10 @@ export const createInterviewSchema = z.object({
   3. 초기 `Conversation` (type: "interview") 생성
 - 응답: 생성된 세션 (연결된 문서 목록 포함)
 
-#### `GET /api/interviews`
+#### 목록 조회
 
-- 사용자의 면접 세션 목록 (최신순)
-- 각 세션에 연결된 문서 수 포함
+- Server Component에서 직접 `prisma.interviewSession.findMany()` 호출 (API route 불필요)
+- 각 세션에 연결된 문서 수 포함 (`_count` 사용)
 
 #### `GET /api/interviews/[id]`
 
@@ -116,7 +116,13 @@ export async function POST(req: Request) {
     context,
   })
 
-  // 6. streamText
+  // 6. user 메시지를 스트리밍 시작 전에 DB 저장
+  const lastMessage = messages.at(-1)
+  await prisma.message.create({
+    data: { conversationId, role: "user", content: lastMessage.content },
+  })
+
+  // 7. streamText
   const result = streamText({
     model: await getLanguageModel(userId),
     system: systemPrompt,
@@ -165,7 +171,7 @@ export async function POST(req: Request) {
 #### `components/interviews/interview-chat.tsx`
 
 - `useChat` 훅 연동 (`/api/chat/interview`)
-- 면접 시작 시 AI가 먼저 인사 + 첫 질문 (초기 system 메시지로 트리거)
+- 면접 시작 시 AI가 먼저 인사 + 첫 질문: 면접 페이지 진입 시 초기 프롬프트 ("면접을 시작합니다")를 자동 전송하여 AI 응답을 유도
 - 면접 종료 버튼 → 확인 다이얼로그 → status "completed"로 변경
 - 종료된 면접은 읽기 전용 (입력 비활성화)
 

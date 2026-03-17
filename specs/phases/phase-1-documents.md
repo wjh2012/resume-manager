@@ -122,8 +122,18 @@ export async function parseFile(buffer: Buffer, filename: string): Promise<strin
 
 #### `lib/ai/embedding.ts`
 
+임베딩은 항상 OpenAI `text-embedding-3-small` (1536차원)을 사용한다. 서버 환경변수 `OPENAI_API_KEY`로 관리하며, 사용자의 AI 설정(제공자/모델)과 무관하게 동작한다.
+
 ```typescript
 import { embed } from "ai"
+import { createOpenAI } from "@ai-sdk/openai"
+
+// 임베딩 전용 모델 (서버 환경변수 기반, 사용자 설정과 분리)
+export function getEmbeddingModel() {
+  const apiKey = process.env.OPENAI_API_KEY
+  if (!apiKey) throw new Error("OPENAI_API_KEY 환경변수가 설정되지 않았습니다")
+  return createOpenAI({ apiKey }).embedding("text-embedding-3-small")
+}
 
 // 텍스트를 청크로 분할
 export function splitIntoChunks(text: string, chunkSize = 1000, overlap = 200): string[] {
@@ -138,7 +148,8 @@ export function splitIntoChunks(text: string, chunkSize = 1000, overlap = 200): 
 }
 
 // 청크에 대한 임베딩 생성
-export async function generateEmbedding(text: string, model: EmbeddingModel): Promise<number[]> {
+export async function generateEmbedding(text: string): Promise<number[]> {
+  const model = getEmbeddingModel()
   const { embedding } = await embed({ model, value: text })
   return embedding
 }

@@ -145,9 +145,9 @@ export const updateResumeSchema = z.object({
 
 - 빈 이력서 생성 (제목 + 템플릿)
 
-#### `GET /api/resumes`
+#### 목록 조회
 
-- 사용자의 이력서 목록
+- Server Component에서 직접 `prisma.resume.findMany()` 호출 (API route 불필요)
 
 #### `GET /api/resumes/[id]`
 

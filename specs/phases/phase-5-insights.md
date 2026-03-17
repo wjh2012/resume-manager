@@ -65,7 +65,16 @@ export async function POST(req: Request) {
     orderBy: { createdAt: "asc" },
   })
 
-  // 3. generateObject로 구조화된 인사이트 추출
+  // 3. 중복 추출 방지: 해당 대화에서 기존 인사이트가 있는지 확인
+  const existingInsights = await prisma.insight.findMany({
+    where: { conversationId },
+  })
+  if (existingInsights.length > 0) {
+    // 기존 인사이트를 삭제 후 재추출 (클라이언트에서 확인 다이얼로그 후 호출)
+    await prisma.insight.deleteMany({ where: { conversationId } })
+  }
+
+  // 4. generateObject로 구조화된 인사이트 추출
   const model = await getLanguageModel(userId)
   const { object } = await generateObject({
     model,
@@ -95,10 +104,10 @@ export async function POST(req: Request) {
 
 ### 2. 인사이트 CRUD API
 
-#### `GET /api/insights`
+#### 목록 조회
 
-- Query: `category` (선택, 필터)
-- 사용자의 인사이트 목록 (최신순)
+- Server Component에서 직접 `prisma.insight.findMany()` 호출 (API route 불필요)
+- Query param으로 `category` 필터 (searchParams 사용)
 - 출처 대화 정보 포함 (conversation.type, 관련 자기소개서/면접 제목)
 
 #### `PUT /api/insights/[id]`
@@ -114,7 +123,8 @@ export async function POST(req: Request) {
 #### 자기소개서 채팅 (`cover-letter-chat.tsx`)
 
 채팅 영역 상단이나 하단에 "인사이트 추출" 버튼 추가:
-- 클릭 시 `POST /api/insights/extract` 호출
+- 클릭 시 기존 인사이트 존재 여부 확인 → 있으면 "이미 추출된 인사이트가 있습니다. 다시 추출하시겠습니까?" 확인 다이얼로그
+- 확인 후 `POST /api/insights/extract` 호출
 - 추출 결과를 토스트로 알림 ("3개의 인사이트가 추출되었습니다")
 - 로딩 상태 표시
 

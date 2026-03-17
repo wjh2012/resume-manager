@@ -5,7 +5,8 @@
 ```
 User ─┬─ AiSettings (1:1)
       ├─ Document (1:N) ──── DocumentChunk (1:N)
-      │                 └─── InterviewDocument (N:M) ──── InterviewSession
+      │                 ├─── InterviewDocument (N:M) ──── InterviewSession
+      │                 └─── CoverLetterDocument (N:M) ── CoverLetter
       ├─ Resume (1:N) ──┬─ PersonalInfo (1:1)
       │                  ├─ Education (1:N)
       │                  ├─ Experience (1:N)
@@ -81,9 +82,10 @@ model Document {
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
 
-  user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  chunks             DocumentChunk[]
-  interviewDocuments InterviewDocument[]
+  user                 User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chunks               DocumentChunk[]
+  interviewDocuments   InterviewDocument[]
+  coverLetterDocuments CoverLetterDocument[]
 
   @@map("documents")
 }
@@ -97,6 +99,7 @@ model DocumentChunk {
 
   document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
 
+  @@index([documentId])
   @@map("document_chunks")
 }
 ```
@@ -230,10 +233,29 @@ model CoverLetter {
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
 
-  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  conversations Conversation[]
+  user                 User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversations        Conversation[]
+  coverLetterDocuments CoverLetterDocument[]
 
   @@map("cover_letters")
+}
+```
+
+### CoverLetterDocument
+
+자기소개서 작성 시 선택한 참고 문서를 영구 저장하는 조인 테이블. `InterviewDocument`와 동일 패턴.
+
+```prisma
+model CoverLetterDocument {
+  id            String @id @default(uuid()) @db.Uuid
+  coverLetterId String @map("cover_letter_id") @db.Uuid
+  documentId    String @map("document_id") @db.Uuid
+
+  coverLetter CoverLetter @relation(fields: [coverLetterId], references: [id], onDelete: Cascade)
+  document    Document    @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@unique([coverLetterId, documentId])
+  @@map("cover_letter_documents")
 }
 ```
 

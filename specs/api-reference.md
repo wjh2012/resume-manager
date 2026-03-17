@@ -5,6 +5,31 @@
 모든 `(dashboard)` 하위 라우트 및 `/api/*` 라우트는 Supabase Auth 세션이 필요하다.
 `middleware.ts`에서 세션 검증 후, 미인증 시 `/login`으로 리다이렉트한다.
 
+## 목록 조회 전략
+
+목록 페이지(문서, 자기소개서, 면접, 이력서, 인사이트)는 **Server Component에서 직접 Prisma를 호출**하여 데이터를 조회한다.
+별도 API route를 거치지 않으므로 아래 API 목록에 `GET /api/xxx` (목록) 엔드포인트는 없다.
+
+## 에러 응답 형식
+
+모든 API 에러 응답은 아래 형식을 따른다:
+
+```json
+{
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "구체적인 에러 메시지"
+  }
+}
+```
+
+주요 에러 코드:
+- `VALIDATION_ERROR` (400): 입력 검증 실패
+- `UNAUTHORIZED` (401): 인증 실패
+- `FORBIDDEN` (403): 권한 없음 (소유자가 아닌 경우)
+- `NOT_FOUND` (404): 리소스 없음
+- `PAYLOAD_TOO_LARGE` (413): 파일 크기 초과
+
 ---
 
 ## 문서 (Documents)
@@ -154,6 +179,20 @@
 
 - **Query**: `category` (optional, 필터)
 - **Response**: `200 OK` — 인사이트 배열
+
+### `PUT /api/insights/[id]`
+
+인사이트 수정 (제목, 내용, 카테고리).
+
+- **Body**:
+  ```json
+  {
+    "title": "수정된 제목",
+    "content": "수정된 내용",
+    "category": "strength"
+  }
+  ```
+- **Response**: `200 OK` — 수정된 인사이트
 
 ### `DELETE /api/insights/[id]`
 

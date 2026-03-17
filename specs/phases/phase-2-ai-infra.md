@@ -20,7 +20,7 @@ AI 채팅의 공통 인프라를 구축한다. 제공자 팩토리, 컨텍스트
 ## 설치할 패키지
 
 ```bash
-npm install ai @ai-sdk/openai @ai-sdk/anthropic @ai-sdk/google
+npm install ai @ai-sdk/openai @ai-sdk/anthropic @ai-sdk/google react-markdown remark-gfm
 ```
 
 ## 생성/수정할 파일
@@ -98,23 +98,9 @@ export async function getLanguageModel(userId: string) {
   }
 }
 
-// 임베딩 모델도 제공자에 따라 반환
-export async function getEmbeddingModel(userId: string) {
-  const settings = await prisma.aiSettings.findUnique({ where: { userId } })
-  if (!settings?.apiKey) throw new Error("AI 설정을 먼저 완료해주세요")
-
-  switch (settings.provider) {
-    case "openai":
-      return createOpenAI({ apiKey: settings.apiKey }).embedding("text-embedding-3-small")
-    case "anthropic":
-      // Anthropic은 임베딩 모델이 없으므로 OpenAI fallback 또는 에러
-      throw new Error("Anthropic은 임베딩을 지원하지 않습니다. OpenAI API 키가 필요합니다.")
-    case "google":
-      return createGoogleGenerativeAI({ apiKey: settings.apiKey }).textEmbeddingModel("text-embedding-004")
-    default:
-      throw new Error(`지원하지 않는 AI 제공자: ${settings.provider}`)
-  }
-}
+// 임베딩 모델은 lib/ai/embedding.ts의 getEmbeddingModel()을 사용한다.
+// 서버 환경변수 OPENAI_API_KEY 기반으로 항상 OpenAI text-embedding-3-small을 사용하며,
+// 사용자의 AI 제공자 설정과 무관하게 동작한다.
 ```
 
 ### 3. 컨텍스트 빌더
@@ -267,7 +253,7 @@ export const insightExtractionPrompt = `대화 내용을 분석하여 취업 준
 #### `components/chat/chat-message.tsx`
 
 - `role`에 따른 스타일 분기 (user: 오른쪽, assistant: 왼쪽)
-- 마크다운 렌더링 (선택)
+- 마크다운 렌더링 (`react-markdown` + `remark-gfm`)
 - 타임스탬프
 
 #### `components/chat/chat-input.tsx`
