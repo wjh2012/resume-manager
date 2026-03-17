@@ -28,13 +28,14 @@ export default function LoginPage() {
         </div>
 
         <div className="flex w-full flex-col gap-3">
-          <Button
+          {/* TODO: 카카오 비즈앱 전환 후 활성화 */}
+          {/* <Button
             className="h-12 w-full cursor-pointer text-sm font-medium text-black"
             style={{ backgroundColor: "#FEE500" }}
             onClick={() => handleLogin("kakao")}
           >
             카카오로 시작하기
-          </Button>
+          </Button> */}
 
           <Button
             variant="outline"
