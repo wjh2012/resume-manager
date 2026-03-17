@@ -1,14 +1,24 @@
 "use client"
 
 import { useState } from "react"
+import { useSearchParams } from "next/navigation"
+import { toast } from "sonner"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 
 type OAuthProvider = "kakao" | "google" | "github"
 
+const ERROR_MESSAGES: Record<string, string> = {
+  no_email: "이메일 정보를 가져올 수 없습니다. 다른 계정으로 시도해주세요.",
+}
+
 export default function LoginPage() {
   const supabase = createClient()
+  const searchParams = useSearchParams()
   const [loadingProvider, setLoadingProvider] = useState<OAuthProvider | null>(null)
+
+  const errorParam = searchParams.get("error")
+  const errorMessage = errorParam ? ERROR_MESSAGES[errorParam] : null
 
   const handleLogin = async (provider: OAuthProvider) => {
     if (loadingProvider) return
@@ -22,6 +32,7 @@ export default function LoginPage() {
       })
     } catch {
       setLoadingProvider(null)
+      toast.error("로그인 중 오류가 발생했습니다. 다시 시도해주세요.")
     }
   }
 
@@ -34,6 +45,10 @@ export default function LoginPage() {
             이력서 관리 서비스에 로그인하세요
           </p>
         </div>
+
+        {errorMessage && (
+          <p className="text-destructive text-center text-sm">{errorMessage}</p>
+        )}
 
         <div className="flex w-full flex-col gap-3">
           {/* TODO: 카카오 비즈앱 전환 후 활성화 */}
