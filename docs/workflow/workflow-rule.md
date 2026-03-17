@@ -19,6 +19,9 @@
 2. **`project-manager` 점검** — 스펙 대비 구현 상태 검증
 3. **PR 생성** — `.github/pull_request_template.md` 템플릿 사용. Test Plan의 체크박스는 실제로 검증 완료한 항목만 체크한다.
 4. **`@claude` 리뷰** — PR에 `@claude` 호출하여 코드 리뷰
+5. **리뷰 피드백 반영** — `@claude` 지적사항 수정 (커밋 플로우 적용)
+6. **`project-manager` 최종 점검** — 변경사항 반영 후 스펙 대비 재검증
+7. **머지**
 
 ## Changelog
 
