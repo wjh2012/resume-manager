@@ -8,7 +8,9 @@
 ## Commit Rule
 
 - 기능 구현 완료 후, 커밋 전에 반드시 `/simplify`를 실행하여 코드 품질을 점검한다.
+- `/simplify` 완료 후, `test-writer` 에이전트를 호출하여 테스트를 작성하고 통과를 확인한다.
 - Git 커밋은 항상 `/git-commit` 스킬을 통해 실행한다.
+- 순서: **구현 → `/simplify` → 테스트 → `/git-commit`**
 
 ## PR Rule
 
