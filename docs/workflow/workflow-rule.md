@@ -7,7 +7,8 @@
 
 ## Commit Rule
 
-- Git 커밋 시 `/git-commit` 스킬을 사용한다. 직접 `git commit` 명령을 실행하지 않는다.
+- 기능 구현 완료 후, 커밋 전에 반드시 `/simplify`를 실행하여 코드 품질을 점검한다.
+- Git 커밋은 항상 `/git-commit` 스킬을 통해 실행한다.
 
 ## Changelog
 
