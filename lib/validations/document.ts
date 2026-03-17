@@ -27,8 +27,7 @@ export function resolveDocumentType(file: File): DocumentType | null {
   if (byMime && byExt && byMime === byExt) return byMime
   // MIME이 빈 문자열인 경우 확장자로 판별
   if (!file.type && byExt) return byExt
-  if (byMime) return byMime
-
+  // MIME과 확장자가 불일치하면 거부 (위조 방지)
   return null
 }
 

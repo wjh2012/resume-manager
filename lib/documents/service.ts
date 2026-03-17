@@ -118,6 +118,12 @@ export async function uploadDocument(
         select: { id: true },
       })
 
+      if (embeddings.length !== dbChunks.length) {
+        throw new Error(
+          `임베딩 수 불일치: ${embeddings.length} vs ${dbChunks.length}`,
+        )
+      }
+
       // 배치 업데이트로 N+1 방지
       await prisma.$transaction(
         dbChunks.map((chunk, i) => {
@@ -195,7 +201,6 @@ export async function getDocument(documentId: string, userId: string) {
       userId: true,
       title: true,
       type: true,
-      originalUrl: true,
       extractedText: true,
       fileSize: true,
       createdAt: true,

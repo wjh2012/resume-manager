@@ -72,17 +72,16 @@ describe("resolveDocumentType()", () => {
     })
   })
 
-  // MIME 불일치: MIME 우선
-  describe("MIME과 확장자가 서로 다른 경우 MIME을 우선한다", () => {
-    it("PDF MIME + .txt 확장자 → 'pdf'를 반환해야 한다", () => {
-      // MIME이 존재하고 확장자와 다를 때는 MIME 반환
+  // MIME 불일치: 거부 (위조 방지)
+  describe("MIME과 확장자가 서로 다른 경우 null을 반환한다", () => {
+    it("PDF MIME + .txt 확장자 → null을 반환해야 한다", () => {
       const file = makeFile("resume.txt", "application/pdf")
-      expect(resolveDocumentType(file)).toBe("pdf")
+      expect(resolveDocumentType(file)).toBeNull()
     })
 
-    it("TXT MIME + .pdf 확장자 → 'txt'를 반환해야 한다", () => {
+    it("TXT MIME + .pdf 확장자 → null을 반환해야 한다", () => {
       const file = makeFile("resume.pdf", "text/plain")
-      expect(resolveDocumentType(file)).toBe("txt")
+      expect(resolveDocumentType(file)).toBeNull()
     })
   })
 
