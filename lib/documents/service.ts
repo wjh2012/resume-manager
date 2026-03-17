@@ -6,6 +6,7 @@ import {
   resolveDocumentType,
   verifyMagicBytes,
   MAX_FILE_SIZE,
+  type DocumentType,
 } from "@/lib/validations/document"
 
 export class DocumentNotFoundError extends Error {
@@ -20,16 +21,12 @@ export class DocumentForbiddenError extends Error {
   }
 }
 
-export class DocumentValidationError extends Error {
-  constructor(message: string) {
-    super(message)
-  }
-}
+export class DocumentValidationError extends Error {}
 
 interface UploadResult {
   id: string
   title: string
-  type: string
+  type: DocumentType
   fileSize: number
   chunkCount: number
 }
@@ -67,8 +64,10 @@ export async function uploadDocument(
   ])
 
   if (!extractedText) {
-    await deleteFile(storagePath).catch(() => {})
-    throw new Error("파일에서 텍스트를 추출할 수 없습니다.")
+    await deleteFile(storagePath).catch((e) =>
+      console.error("Storage 정리 실패:", e),
+    )
+    throw new DocumentValidationError("파일에서 텍스트를 추출할 수 없습니다.")
   }
 
   const chunks = splitIntoChunks(extractedText)
@@ -102,7 +101,9 @@ export async function uploadDocument(
       return doc
     })
   } catch (error) {
-    await deleteFile(storagePath).catch(() => {})
+    await deleteFile(storagePath).catch((e) =>
+      console.error("Storage 정리 실패:", e),
+    )
     throw error
   }
 
@@ -160,7 +161,9 @@ export async function deleteDocument(
     throw new DocumentForbiddenError()
   }
 
-  await deleteFile(document.originalUrl).catch(() => {})
+  await deleteFile(document.originalUrl).catch((e) =>
+    console.error("Storage 정리 실패:", e),
+  )
 
   await prisma.document.delete({
     where: { id: documentId },

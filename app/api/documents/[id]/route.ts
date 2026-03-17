@@ -22,16 +22,24 @@ export async function GET(
 
   const { id } = await params
 
-  const document = await getDocument(id, user.id)
+  try {
+    const document = await getDocument(id, user.id)
 
-  if (!document) {
+    if (!document) {
+      return NextResponse.json(
+        { error: "문서를 찾을 수 없습니다." },
+        { status: 404 },
+      )
+    }
+
+    return NextResponse.json(document)
+  } catch (error) {
+    console.error("[GET /api/documents/[id]]", error)
     return NextResponse.json(
-      { error: "문서를 찾을 수 없습니다." },
-      { status: 404 },
+      { error: "문서를 불러오는데 실패했습니다." },
+      { status: 500 },
     )
   }
-
-  return NextResponse.json(document)
 }
 
 export async function DELETE(
@@ -59,8 +67,10 @@ export async function DELETE(
     if (error instanceof DocumentForbiddenError) {
       return NextResponse.json({ error: error.message }, { status: 403 })
     }
-    const message =
-      error instanceof Error ? error.message : "문서 삭제에 실패했습니다."
-    return NextResponse.json({ error: message }, { status: 500 })
+    console.error("[DELETE /api/documents/[id]]", error)
+    return NextResponse.json(
+      { error: "문서 삭제에 실패했습니다." },
+      { status: 500 },
+    )
   }
 }

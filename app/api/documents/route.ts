@@ -44,9 +44,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
     console.error("[POST /api/documents]", error)
-    const message =
-      error instanceof Error ? error.message : "문서 업로드에 실패했습니다."
-    return NextResponse.json({ error: message }, { status: 500 })
+    return NextResponse.json(
+      { error: "문서 업로드에 실패했습니다." },
+      { status: 500 },
+    )
   }
 }
 

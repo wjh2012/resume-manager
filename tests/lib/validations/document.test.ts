@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest"
 import {
   resolveDocumentType,
+  verifyMagicBytes,
   MAX_FILE_SIZE,
   DOCUMENT_TYPE_LABELS,
   DOCUMENT_TYPES,
@@ -127,5 +128,59 @@ describe("resolveDocumentType()", () => {
       const file = makeFile("my.resume.2024.pdf", "application/pdf")
       expect(resolveDocumentType(file)).toBe("pdf")
     })
+  })
+})
+
+// ArrayBuffer 생성 헬퍼: 바이트 배열로부터 ArrayBuffer를 만든다
+function makeBuffer(bytes: number[]): ArrayBuffer {
+  return new Uint8Array(bytes).buffer
+}
+
+describe("verifyMagicBytes()", () => {
+  // TXT 타입: 버퍼 내용과 무관하게 항상 true
+  it("TXT 타입은 버퍼 내용에 상관없이 true를 반환해야 한다", () => {
+    const buffer = makeBuffer([0x00, 0x00, 0x00, 0x00])
+    expect(verifyMagicBytes(buffer, "txt")).toBe(true)
+  })
+
+  it("TXT 타입은 빈 버퍼여도 true를 반환해야 한다", () => {
+    const buffer = makeBuffer([])
+    expect(verifyMagicBytes(buffer, "txt")).toBe(true)
+  })
+
+  // PDF: 올바른 매직 바이트 (%PDF = 0x25,0x50,0x44,0x46)
+  it("PDF 매직 바이트(%PDF)가 일치하면 true를 반환해야 한다", () => {
+    const buffer = makeBuffer([0x25, 0x50, 0x44, 0x46, 0x2d, 0x31])
+    expect(verifyMagicBytes(buffer, "pdf")).toBe(true)
+  })
+
+  // PDF: 틀린 매직 바이트
+  it("PDF 매직 바이트가 일치하지 않으면 false를 반환해야 한다", () => {
+    const buffer = makeBuffer([0x50, 0x4b, 0x03, 0x04])
+    expect(verifyMagicBytes(buffer, "pdf")).toBe(false)
+  })
+
+  // DOCX: 올바른 매직 바이트 (PK = 0x50,0x4b,0x03,0x04)
+  it("DOCX 매직 바이트(PK)가 일치하면 true를 반환해야 한다", () => {
+    const buffer = makeBuffer([0x50, 0x4b, 0x03, 0x04, 0x14, 0x00])
+    expect(verifyMagicBytes(buffer, "docx")).toBe(true)
+  })
+
+  // DOCX: 틀린 매직 바이트
+  it("DOCX 매직 바이트가 일치하지 않으면 false를 반환해야 한다", () => {
+    const buffer = makeBuffer([0x25, 0x50, 0x44, 0x46])
+    expect(verifyMagicBytes(buffer, "docx")).toBe(false)
+  })
+
+  // 4바이트 미만 버퍼: PDF/DOCX 모두 false
+  it("버퍼가 4바이트 미만이면 false를 반환해야 한다", () => {
+    const buffer = makeBuffer([0x25, 0x50, 0x44]) // 3바이트
+    expect(verifyMagicBytes(buffer, "pdf")).toBe(false)
+  })
+
+  // 빈 버퍼: false
+  it("빈 버퍼(0바이트)이면 false를 반환해야 한다", () => {
+    const buffer = makeBuffer([])
+    expect(verifyMagicBytes(buffer, "pdf")).toBe(false)
   })
 })

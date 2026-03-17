@@ -55,6 +55,8 @@ export function verifyMagicBytes(
   // TXT는 바이너리 시그니처가 없으므로 항상 통과
   if (expectedType === "txt") return true
 
+  if (buffer.byteLength < 4) return false
+
   const header = new Uint8Array(buffer, 0, 4)
   const magic = MAGIC_BYTES.find((m) => m.type === expectedType)
   if (!magic) return true
