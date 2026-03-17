@@ -19,6 +19,32 @@ User ─┬─ AiSettings (1:1)
       └─ Insight (1:N)
 ```
 
+## Enum 정의
+
+```prisma
+enum CoverLetterStatus {
+  DRAFT
+  COMPLETED
+}
+
+enum InterviewSessionStatus {
+  ACTIVE
+  COMPLETED
+}
+
+enum ConversationType {
+  COVER_LETTER
+  INTERVIEW
+  GENERAL
+}
+
+enum MessageRole {
+  USER
+  ASSISTANT
+  SYSTEM
+}
+```
+
 ## Prisma 스키마
 
 ### User
@@ -229,7 +255,7 @@ model CoverLetter {
   position        String   // 지원 직무
   jobPostingText  String?  @map("job_posting_text") @db.Text // 채용공고 원문
   content         String?  @db.Text // 최종 자기소개서 내용
-  status          String   @default("draft") // "draft" | "completed"
+  status          CoverLetterStatus @default(DRAFT)
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
 
@@ -268,7 +294,7 @@ model InterviewSession {
   title        String
   companyName  String?  @map("company_name")
   position     String?
-  status       String   @default("active") // "active" | "completed"
+  status       InterviewSessionStatus @default(ACTIVE)
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
@@ -300,7 +326,7 @@ model InterviewDocument {
 model Conversation {
   id                 String   @id @default(uuid()) @db.Uuid
   userId             String   @map("user_id") @db.Uuid
-  type               String   // "cover_letter" | "interview"
+  type               ConversationType
   coverLetterId      String?  @map("cover_letter_id") @db.Uuid
   interviewSessionId String?  @map("interview_session_id") @db.Uuid
   title              String?
@@ -319,7 +345,7 @@ model Conversation {
 model Message {
   id             String   @id @default(uuid()) @db.Uuid
   conversationId String   @map("conversation_id") @db.Uuid
-  role           String   // "user" | "assistant" | "system"
+  role           MessageRole
   content        String   @db.Text
   createdAt      DateTime @default(now()) @map("created_at")
 

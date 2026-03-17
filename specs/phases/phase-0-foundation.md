@@ -6,13 +6,13 @@
 
 ## 완료 기준
 
-- [ ] Prisma 스키마 작성 완료 + 마이그레이션 성공
-- [ ] Supabase 클라이언트 (브라우저/서버) 설정 완료
-- [ ] `middleware.ts`로 미인증 사용자 → `/login` 리다이렉트
-- [ ] 카카오/Google/GitHub 소셜 로그인 동작
-- [ ] `(dashboard)` 레이아웃에 사이드바 네비게이션 표시
-- [ ] `<html lang="ko">` 적용
-- [ ] 필요한 shadcn/ui 컴포넌트 추가 완료
+- [x] Prisma 스키마 작성 완료 + 마이그레이션 성공
+- [x] Supabase 클라이언트 (브라우저/서버) 설정 완료
+- [x] `proxy.ts`로 미인증 사용자 → `/login` 리다이렉트
+- [x] 카카오/Google/GitHub 소셜 로그인 동작
+- [x] `(dashboard)` 레이아웃에 사이드바 네비게이션 표시
+- [x] `<html lang="ko">` 적용
+- [x] 필요한 shadcn/ui 컴포넌트 추가 완료
 
 ## 의존성
 
@@ -35,11 +35,11 @@ npm install zod sonner
 ```
 신규:
   prisma/schema.prisma
-  middleware.ts
+  proxy.ts
   lib/prisma.ts
   lib/supabase/client.ts
   lib/supabase/server.ts
-  lib/supabase/middleware.ts
+  lib/supabase/proxy.ts
   app/(auth)/login/page.tsx
   app/(auth)/callback/route.ts
   app/(dashboard)/layout.tsx
@@ -165,7 +165,7 @@ export async function createClient() {
 }
 ```
 
-#### `lib/supabase/middleware.ts` (미들웨어용)
+#### `lib/supabase/proxy.ts` (미들웨어용)
 
 ```typescript
 import { createServerClient } from "@supabase/ssr"
@@ -209,13 +209,13 @@ export async function updateSession(request: NextRequest) {
 
 ### 6. 미들웨어
 
-`middleware.ts` (프로젝트 루트):
+`proxy.ts` (프로젝트 루트):
 
 ```typescript
 import { type NextRequest } from "next/server"
 import { updateSession } from "@/lib/supabase/middleware"
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   return await updateSession(request)
 }
 
