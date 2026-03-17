@@ -24,6 +24,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 import { UserMenu } from "@/components/layout/user-menu"
+import type { UserInfo } from "@/lib/supabase/user"
 
 const navItems = [
   { icon: Home, label: "대시보드", href: "/" },
@@ -36,11 +37,7 @@ const navItems = [
 ]
 
 interface AppSidebarProps {
-  user: {
-    name: string | null
-    email: string
-    avatarUrl: string | null
-  }
+  user: UserInfo
 }
 
 export function AppSidebar({ user }: AppSidebarProps) {

@@ -13,13 +13,10 @@ import {
 import {
   SidebarMenuButton,
 } from "@/components/ui/sidebar"
+import type { UserInfo } from "@/lib/supabase/user"
 
 interface UserMenuProps {
-  user: {
-    name: string | null
-    email: string
-    avatarUrl: string | null
-  }
+  user: UserInfo
 }
 
 export function UserMenu({ user }: UserMenuProps) {
