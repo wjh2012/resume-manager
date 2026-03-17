@@ -38,8 +38,10 @@ export function splitIntoChunks(text: string): string[] {
       chunks.push(chunk)
     }
 
+    // 마지막 청크까지 처리했으면 종료
+    if (end >= text.length) break
+
     start = end - CHUNK_OVERLAP
-    if (start >= text.length) break
   }
 
   return chunks
