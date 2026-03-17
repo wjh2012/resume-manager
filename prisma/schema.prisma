@@ -1,0 +1,289 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  extensions = [vector]
+}
+
+model User {
+  id        String   @id @default(uuid()) @db.Uuid
+  email     String   @unique
+  name      String?
+  avatarUrl String?  @map("avatar_url")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  aiSettings       AiSettings?
+  documents        Document[]
+  resumes          Resume[]
+  coverLetters     CoverLetter[]
+  interviewSessions InterviewSession[]
+  conversations    Conversation[]
+  insights         Insight[]
+
+  @@map("users")
+}
+
+model AiSettings {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @unique @map("user_id") @db.Uuid
+  provider  String   @default("openai")
+  model     String   @default("gpt-4o")
+  apiKey    String?  @map("api_key")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("ai_settings")
+}
+
+model Document {
+  id            String   @id @default(uuid()) @db.Uuid
+  userId        String   @map("user_id") @db.Uuid
+  title         String
+  type          String
+  originalUrl   String   @map("original_url")
+  extractedText String?  @map("extracted_text") @db.Text
+  fileSize      Int      @map("file_size")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  user                 User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chunks               DocumentChunk[]
+  interviewDocuments   InterviewDocument[]
+  coverLetterDocuments CoverLetterDocument[]
+
+  @@map("documents")
+}
+
+model DocumentChunk {
+  id         String                         @id @default(uuid()) @db.Uuid
+  documentId String                         @map("document_id") @db.Uuid
+  content    String                         @db.Text
+  chunkIndex Int                            @map("chunk_index")
+  embedding  Unsupported("vector(1536)")?
+
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([documentId])
+  @@map("document_chunks")
+}
+
+model Resume {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  title     String
+  template  String   @default("classic")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  personalInfo   PersonalInfo?
+  educations     Education[]
+  experiences    Experience[]
+  skills         Skill[]
+  projects       Project[]
+  certifications Certification[]
+
+  @@map("resumes")
+}
+
+model PersonalInfo {
+  id       String  @id @default(uuid()) @db.Uuid
+  resumeId String  @unique @map("resume_id") @db.Uuid
+  name     String
+  email    String
+  phone    String?
+  address  String?
+  bio      String? @db.Text
+
+  resume Resume @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+
+  @@map("personal_infos")
+}
+
+model Education {
+  id          String    @id @default(uuid()) @db.Uuid
+  resumeId    String    @map("resume_id") @db.Uuid
+  school      String
+  degree      String?
+  field       String?
+  startDate   DateTime? @map("start_date")
+  endDate     DateTime? @map("end_date")
+  description String?   @db.Text
+  sortOrder   Int       @default(0) @map("sort_order")
+
+  resume Resume @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+
+  @@map("educations")
+}
+
+model Experience {
+  id          String    @id @default(uuid()) @db.Uuid
+  resumeId    String    @map("resume_id") @db.Uuid
+  company     String
+  position    String
+  startDate   DateTime? @map("start_date")
+  endDate     DateTime? @map("end_date")
+  isCurrent   Boolean   @default(false) @map("is_current")
+  description String?   @db.Text
+  sortOrder   Int       @default(0) @map("sort_order")
+
+  resume Resume @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+
+  @@map("experiences")
+}
+
+model Skill {
+  id        String  @id @default(uuid()) @db.Uuid
+  resumeId  String  @map("resume_id") @db.Uuid
+  name      String
+  level     String?
+  category  String?
+  sortOrder Int     @default(0) @map("sort_order")
+
+  resume Resume @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+
+  @@map("skills")
+}
+
+model Project {
+  id          String    @id @default(uuid()) @db.Uuid
+  resumeId    String    @map("resume_id") @db.Uuid
+  name        String
+  role        String?
+  startDate   DateTime? @map("start_date")
+  endDate     DateTime? @map("end_date")
+  description String?   @db.Text
+  url         String?
+  sortOrder   Int       @default(0) @map("sort_order")
+
+  resume Resume @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+
+  @@map("projects")
+}
+
+model Certification {
+  id         String    @id @default(uuid()) @db.Uuid
+  resumeId   String    @map("resume_id") @db.Uuid
+  name       String
+  issuer     String?
+  issueDate  DateTime? @map("issue_date")
+  expiryDate DateTime? @map("expiry_date")
+  sortOrder  Int       @default(0) @map("sort_order")
+
+  resume Resume @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+
+  @@map("certifications")
+}
+
+model CoverLetter {
+  id             String   @id @default(uuid()) @db.Uuid
+  userId         String   @map("user_id") @db.Uuid
+  title          String
+  companyName    String   @map("company_name")
+  position       String
+  jobPostingText String?  @map("job_posting_text") @db.Text
+  content        String?  @db.Text
+  status         String   @default("draft")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  user                 User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversations        Conversation[]
+  coverLetterDocuments CoverLetterDocument[]
+
+  @@map("cover_letters")
+}
+
+model CoverLetterDocument {
+  id            String @id @default(uuid()) @db.Uuid
+  coverLetterId String @map("cover_letter_id") @db.Uuid
+  documentId    String @map("document_id") @db.Uuid
+
+  coverLetter CoverLetter @relation(fields: [coverLetterId], references: [id], onDelete: Cascade)
+  document    Document    @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@unique([coverLetterId, documentId])
+  @@map("cover_letter_documents")
+}
+
+model InterviewSession {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  title       String
+  companyName String?  @map("company_name")
+  position    String?
+  status      String   @default("active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  interviewDocuments InterviewDocument[]
+  conversations      Conversation[]
+
+  @@map("interview_sessions")
+}
+
+model InterviewDocument {
+  id                 String @id @default(uuid()) @db.Uuid
+  interviewSessionId String @map("interview_session_id") @db.Uuid
+  documentId         String @map("document_id") @db.Uuid
+
+  interviewSession InterviewSession @relation(fields: [interviewSessionId], references: [id], onDelete: Cascade)
+  document         Document         @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@unique([interviewSessionId, documentId])
+  @@map("interview_documents")
+}
+
+model Conversation {
+  id                 String   @id @default(uuid()) @db.Uuid
+  userId             String   @map("user_id") @db.Uuid
+  type               String
+  coverLetterId      String?  @map("cover_letter_id") @db.Uuid
+  interviewSessionId String?  @map("interview_session_id") @db.Uuid
+  title              String?
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  coverLetter      CoverLetter?      @relation(fields: [coverLetterId], references: [id], onDelete: Cascade)
+  interviewSession InterviewSession? @relation(fields: [interviewSessionId], references: [id], onDelete: Cascade)
+  messages         Message[]
+  insights         Insight[]
+
+  @@map("conversations")
+}
+
+model Message {
+  id             String   @id @default(uuid()) @db.Uuid
+  conversationId String   @map("conversation_id") @db.Uuid
+  role           String
+  content        String   @db.Text
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@map("messages")
+}
+
+model Insight {
+  id             String   @id @default(uuid()) @db.Uuid
+  userId         String   @map("user_id") @db.Uuid
+  conversationId String?  @map("conversation_id") @db.Uuid
+  category       String
+  title          String
+  content        String   @db.Text
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversation Conversation? @relation(fields: [conversationId], references: [id])
+
+  @@map("insights")
+}
