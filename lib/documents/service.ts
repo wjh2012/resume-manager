@@ -2,7 +2,11 @@ import { prisma } from "@/lib/prisma"
 import { parseFile } from "@/lib/files/parser"
 import { uploadFile, deleteFile } from "@/lib/storage"
 import { splitIntoChunks, generateEmbeddings } from "@/lib/ai/embedding"
-import { resolveDocumentType, MAX_FILE_SIZE } from "@/lib/validations/document"
+import {
+  resolveDocumentType,
+  verifyMagicBytes,
+  MAX_FILE_SIZE,
+} from "@/lib/validations/document"
 
 export class DocumentNotFoundError extends Error {
   constructor() {
@@ -13,6 +17,12 @@ export class DocumentNotFoundError extends Error {
 export class DocumentForbiddenError extends Error {
   constructor() {
     super("이 문서에 대한 권한이 없습니다.")
+  }
+}
+
+export class DocumentValidationError extends Error {
+  constructor(message: string) {
+    super(message)
   }
 }
 
@@ -31,16 +41,24 @@ export async function uploadDocument(
   title: string,
 ): Promise<UploadResult> {
   if (file.size > MAX_FILE_SIZE) {
-    throw new Error("파일 크기가 10MB를 초과합니다.")
+    throw new DocumentValidationError("파일 크기가 10MB를 초과합니다.")
   }
 
   const type = resolveDocumentType(file)
   if (!type) {
-    throw new Error("지원하지 않는 파일 형식입니다. (PDF, DOCX, TXT만 가능)")
+    throw new DocumentValidationError(
+      "지원하지 않는 파일 형식입니다. (PDF, DOCX, TXT만 가능)",
+    )
   }
 
   // 버퍼를 한 번만 읽어서 파싱과 Storage 업로드에 공유
   const buffer = await file.arrayBuffer()
+
+  if (!verifyMagicBytes(buffer, type)) {
+    throw new DocumentValidationError(
+      "파일 내용이 확장자와 일치하지 않습니다.",
+    )
+  }
 
   // 파싱과 Storage 업로드를 동시 실행
   const [extractedText, storagePath] = await Promise.all([
@@ -184,6 +202,7 @@ export async function getDocument(documentId: string, userId: string) {
   })
 
   if (!document) return null
+  // 소유권 불일치 시에도 null 반환 — 문서 존재 여부를 노출하지 않기 위한 의도적 설계
   if (document.userId !== userId) return null
 
   return document

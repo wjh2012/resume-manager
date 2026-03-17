@@ -41,3 +41,23 @@ export const DOCUMENT_TYPE_LABELS: Record<DocumentType, string> = {
 export const documentUploadSchema = z.object({
   title: z.string().min(1).max(200),
 })
+
+// Magic bytes로 파일 내용의 실제 타입을 검증
+const MAGIC_BYTES: { type: DocumentType; bytes: number[] }[] = [
+  { type: "pdf", bytes: [0x25, 0x50, 0x44, 0x46] }, // %PDF
+  { type: "docx", bytes: [0x50, 0x4b, 0x03, 0x04] }, // PK (ZIP)
+]
+
+export function verifyMagicBytes(
+  buffer: ArrayBuffer,
+  expectedType: DocumentType,
+): boolean {
+  // TXT는 바이너리 시그니처가 없으므로 항상 통과
+  if (expectedType === "txt") return true
+
+  const header = new Uint8Array(buffer, 0, 4)
+  const magic = MAGIC_BYTES.find((m) => m.type === expectedType)
+  if (!magic) return true
+
+  return magic.bytes.every((byte, i) => header[i] === byte)
+}

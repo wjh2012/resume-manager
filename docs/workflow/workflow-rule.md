@@ -5,17 +5,20 @@
 - `/plan` 모드에서 구현 계획 작성 완료 후, 과도한 설계, 누락된 고려사항, 규칙 위반을 점검한다.
 - 요구사항이 모호하거나 설계 방향이 여러 갈래인 경우, 임의로 판단하지 말고 사용자에게 선택지를 제시하여 확인을 받는다.
 
-## Commit Rule
+## 커밋 플로우 (매 커밋마다)
 
-- 기능 구현 완료 후, 커밋 전에 반드시 `/simplify`를 실행하여 코드 품질을 점검한다.
-- `/simplify` 완료 후, `test-writer` 에이전트를 호출하여 테스트를 작성하고 통과를 확인한다.
-- Git 커밋은 항상 `/git-commit` 스킬을 통해 실행한다.
-- 순서: **구현 → `/simplify` → 테스트 → `/git-commit`**
+1. **구현** — 기능 코드 작성
+2. **`/simplify`** — 코드 품질 점검 (중복, 효율성, 재사용)
+3. **`test-writer`** — simplify된 코드에 대해 테스트 작성 및 통과 확인
+4. **`typecheck` + `lint`** — `npm run typecheck && npm run lint` 통과 확인
+5. **`/git-commit`** — 커밋
 
-## PR Rule
+## PR 플로우 (Phase 완료 시)
 
-- PR 생성 전에 `npm run typecheck`과 `npm run lint`를 실행하여 통과를 확인한다.
-- PR 본문은 `.github/pull_request_template.md` 템플릿을 따른다.
+1. **`docs/features/` 문서화** — 주요 기능 추가 시 해당 기능 문서 작성
+2. **`project-manager` 점검** — 스펙 대비 구현 상태 검증
+3. **PR 생성** — `.github/pull_request_template.md` 템플릿 사용. Test Plan의 체크박스는 실제로 검증 완료한 항목만 체크한다.
+4. **`@claude` 리뷰** — PR에 `@claude` 호출하여 코드 리뷰
 
 ## Changelog
 

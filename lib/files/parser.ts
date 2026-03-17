@@ -15,9 +15,9 @@ async function parseDocx(buffer: ArrayBuffer): Promise<string> {
   return result.value.trim()
 }
 
-// TXT 파서 (UTF-8)
+// TXT 파서 (UTF-8, BOM 자동 감지, 잘못된 바이트는 대체 문자로 처리)
 async function parseTxt(buffer: ArrayBuffer): Promise<string> {
-  const decoder = new TextDecoder("utf-8")
+  const decoder = new TextDecoder("utf-8", { fatal: false })
   return decoder.decode(buffer).trim()
 }
 

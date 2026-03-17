@@ -50,6 +50,7 @@ vi.mock("@/lib/validations/document", async (importOriginal) => {
   return {
     ...actual,
     resolveDocumentType: vi.fn(),
+    verifyMagicBytes: vi.fn().mockReturnValue(true),
   }
 })
 

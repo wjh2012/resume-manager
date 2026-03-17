@@ -41,7 +41,6 @@ export function DeleteButton({ documentId, documentTitle }: DeleteButtonProps) {
 
       toast.success("문서가 삭제되었습니다.")
       router.push("/documents")
-      router.refresh()
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "삭제에 실패했습니다."
