@@ -159,29 +159,29 @@ export async function updateSelectedDocuments(
   userId: string,
   documentIds: string[],
 ) {
-  const coverLetter = await prisma.coverLetter.findUnique({
-    where: { id: coverLetterId },
-    select: { userId: true },
-  })
-
-  if (!coverLetter) {
-    throw new CoverLetterNotFoundError()
-  }
-
-  if (coverLetter.userId !== userId) {
-    throw new CoverLetterForbiddenError()
-  }
-
-  if (documentIds.length > 0) {
-    const ownedCount = await prisma.document.count({
-      where: { id: { in: documentIds }, userId },
+  await prisma.$transaction(async (tx) => {
+    const coverLetter = await tx.coverLetter.findUnique({
+      where: { id: coverLetterId },
+      select: { userId: true },
     })
-    if (ownedCount !== documentIds.length) {
+
+    if (!coverLetter) {
+      throw new CoverLetterNotFoundError()
+    }
+
+    if (coverLetter.userId !== userId) {
       throw new CoverLetterForbiddenError()
     }
-  }
 
-  await prisma.$transaction(async (tx) => {
+    if (documentIds.length > 0) {
+      const ownedCount = await tx.document.count({
+        where: { id: { in: documentIds }, userId },
+      })
+      if (ownedCount !== documentIds.length) {
+        throw new CoverLetterForbiddenError()
+      }
+    }
+
     await tx.coverLetterDocument.deleteMany({
       where: { coverLetterId },
     })

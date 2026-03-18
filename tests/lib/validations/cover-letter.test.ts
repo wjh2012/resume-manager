@@ -300,7 +300,7 @@ describe("coverLetterChatSchema", () => {
   const validBase = {
     conversationId: VALID_UUID,
     coverLetterId: VALID_UUID_2,
-    messages: [{ role: "user", content: "안녕하세요" }],
+    messages: [{ id: "msg-1", role: "user", content: "안녕하세요" }],
   }
 
   describe("유효한 데이터", () => {
@@ -329,10 +329,26 @@ describe("coverLetterChatSchema", () => {
       const result = coverLetterChatSchema.safeParse({
         ...validBase,
         messages: [
-          { role: "user", content: "질문입니다." },
-          { role: "assistant", content: "답변입니다." },
-          { role: "user", content: "추가 질문입니다." },
+          { id: "msg-1", role: "user", content: "질문입니다." },
+          { id: "msg-2", role: "assistant", content: "답변입니다." },
+          { id: "msg-3", role: "user", content: "추가 질문입니다." },
         ],
+      })
+      expect(result.success).toBe(true)
+    })
+
+    it("content가 없어도 빈 문자열로 기본값 처리되어 통과해야 한다", () => {
+      const result = coverLetterChatSchema.safeParse({
+        ...validBase,
+        messages: [{ id: "msg-1", role: "user" }],
+      })
+      expect(result.success).toBe(true)
+    })
+
+    it("parts 필드가 포함되어도 통과해야 한다", () => {
+      const result = coverLetterChatSchema.safeParse({
+        ...validBase,
+        messages: [{ id: "msg-1", role: "user", content: "안녕", parts: [{ type: "text", text: "안녕" }] }],
       })
       expect(result.success).toBe(true)
     })
@@ -385,10 +401,10 @@ describe("coverLetterChatSchema", () => {
       }
     })
 
-    it("메시지 content가 빈 문자열이면 실패해야 한다", () => {
+    it("메시지 id가 없으면 실패해야 한다", () => {
       const result = coverLetterChatSchema.safeParse({
         ...validBase,
-        messages: [{ role: "user", content: "" }],
+        messages: [{ role: "user", content: "내용" }],
       })
       expect(result.success).toBe(false)
     })
@@ -396,7 +412,7 @@ describe("coverLetterChatSchema", () => {
     it("메시지 role이 허용되지 않은 값이면 실패해야 한다", () => {
       const result = coverLetterChatSchema.safeParse({
         ...validBase,
-        messages: [{ role: "system", content: "시스템 메시지" }],
+        messages: [{ id: "msg-1", role: "system", content: "시스템 메시지" }],
       })
       expect(result.success).toBe(false)
     })
@@ -404,12 +420,12 @@ describe("coverLetterChatSchema", () => {
     it("메시지 role이 없으면 실패해야 한다", () => {
       const result = coverLetterChatSchema.safeParse({
         ...validBase,
-        messages: [{ content: "내용만 있음" }],
+        messages: [{ id: "msg-1", content: "내용만 있음" }],
       })
       expect(result.success).toBe(false)
     })
 
-    it("메시지 content가 없으면 실패해야 한다", () => {
+    it("메시지 id가 없으면 실패해야 한다 (role만 있는 경우)", () => {
       const result = coverLetterChatSchema.safeParse({
         ...validBase,
         messages: [{ role: "user" }],

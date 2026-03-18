@@ -1,26 +1,14 @@
 import { streamText, convertToModelMessages, type UIMessage } from "ai"
 import { NextResponse } from "next/server"
-import { z } from "zod"
 import { MessageRole } from "@prisma/client"
 import { createClient } from "@/lib/supabase/server"
 import { prisma } from "@/lib/prisma"
 import { getLanguageModel, AiSettingsNotFoundError } from "@/lib/ai/provider"
 import { buildContext } from "@/lib/ai/context"
 import { buildCoverLetterSystemPrompt } from "@/lib/ai/prompts/cover-letter"
+import { coverLetterChatSchema } from "@/lib/validations/cover-letter"
 
 export const maxDuration = 60
-
-const requestSchema = z.object({
-  messages: z.array(z.object({
-    id: z.string(),
-    role: z.enum(["user", "assistant"]),
-    content: z.string().optional().default(""),
-    parts: z.array(z.any()).optional(),
-  })).min(1, "메시지가 필요합니다."),
-  conversationId: z.string().uuid(),
-  coverLetterId: z.string().uuid(),
-  selectedDocumentIds: z.array(z.string().uuid()).optional(),
-})
 
 export async function POST(request: Request) {
   const supabase = await createClient()
@@ -42,7 +30,7 @@ export async function POST(request: Request) {
     )
   }
 
-  const parsed = requestSchema.safeParse(body)
+  const parsed = coverLetterChatSchema.safeParse(body)
   if (!parsed.success) {
     return NextResponse.json(
       { error: parsed.error.issues[0]?.message ?? "유효하지 않은 입력입니다." },

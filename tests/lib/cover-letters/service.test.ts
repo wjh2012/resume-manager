@@ -460,6 +460,8 @@ describe("updateSelectedDocuments()", () => {
     vi.clearAllMocks()
     mockPrisma.$transaction.mockImplementation(async (fn) => {
       const tx = {
+        coverLetter: { findUnique: vi.fn().mockResolvedValue({ userId: "user-1" }) },
+        document: { count: vi.fn().mockResolvedValue(0) },
         coverLetterDocument: {
           deleteMany: vi.fn().mockResolvedValue({}),
           createMany: vi.fn().mockResolvedValue({}),
@@ -472,7 +474,14 @@ describe("updateSelectedDocuments()", () => {
   describe("소유권 검증", () => {
     it("자기소개서가 없으면 CoverLetterNotFoundError를 던져야 한다", async () => {
       // Arrange
-      mockPrisma.coverLetter.findUnique.mockResolvedValue(null)
+      mockPrisma.$transaction.mockImplementation(async (fn) => {
+        const tx = {
+          coverLetter: { findUnique: vi.fn().mockResolvedValue(null) },
+          document: { count: vi.fn() },
+          coverLetterDocument: { deleteMany: vi.fn(), createMany: vi.fn() },
+        }
+        return fn(tx)
+      })
 
       // Act & Assert
       await expect(updateSelectedDocuments("cl-999", "user-1", ["doc-1"])).rejects.toThrow(
@@ -482,7 +491,14 @@ describe("updateSelectedDocuments()", () => {
 
     it("userId가 소유자와 다르면 CoverLetterForbiddenError를 던져야 한다", async () => {
       // Arrange
-      mockPrisma.coverLetter.findUnique.mockResolvedValue({ userId: "owner-user" } as never)
+      mockPrisma.$transaction.mockImplementation(async (fn) => {
+        const tx = {
+          coverLetter: { findUnique: vi.fn().mockResolvedValue({ userId: "owner-user" }) },
+          document: { count: vi.fn() },
+          coverLetterDocument: { deleteMany: vi.fn(), createMany: vi.fn() },
+        }
+        return fn(tx)
+      })
 
       // Act & Assert
       await expect(updateSelectedDocuments("cl-1", "other-user", ["doc-1"])).rejects.toThrow(
@@ -492,8 +508,14 @@ describe("updateSelectedDocuments()", () => {
 
     it("documentIds 중 소유하지 않은 문서가 있으면 CoverLetterForbiddenError를 던져야 한다", async () => {
       // Arrange
-      mockPrisma.coverLetter.findUnique.mockResolvedValue({ userId: "user-1" } as never)
-      mockPrisma.document.count.mockResolvedValue(1 as never) // 2개 요청했는데 1개만 소유
+      mockPrisma.$transaction.mockImplementation(async (fn) => {
+        const tx = {
+          coverLetter: { findUnique: vi.fn().mockResolvedValue({ userId: "user-1" }) },
+          document: { count: vi.fn().mockResolvedValue(1) }, // 2개 요청했는데 1개만 소유
+          coverLetterDocument: { deleteMany: vi.fn(), createMany: vi.fn() },
+        }
+        return fn(tx)
+      })
 
       // Act & Assert
       await expect(updateSelectedDocuments("cl-1", "user-1", ["doc-1", "doc-other"])).rejects.toThrow(
@@ -505,11 +527,11 @@ describe("updateSelectedDocuments()", () => {
   describe("성공 경로", () => {
     it("기존 문서를 삭제하고 새 문서를 createMany로 생성해야 한다", async () => {
       // Arrange
-      mockPrisma.coverLetter.findUnique.mockResolvedValue({ userId: "user-1" } as never)
-      mockPrisma.document.count.mockResolvedValue(2 as never)
       let capturedTx: Record<string, unknown> | null = null
       mockPrisma.$transaction.mockImplementation(async (fn) => {
         const tx = {
+          coverLetter: { findUnique: vi.fn().mockResolvedValue({ userId: "user-1" }) },
+          document: { count: vi.fn().mockResolvedValue(2) },
           coverLetterDocument: {
             deleteMany: vi.fn().mockResolvedValue({}),
             createMany: vi.fn().mockResolvedValue({}),
@@ -534,12 +556,12 @@ describe("updateSelectedDocuments()", () => {
     })
 
     it("documentIds가 빈 배열이면 deleteMany만 호출하고 createMany는 호출하지 않아야 한다", async () => {
-      // Arrange
-      mockPrisma.coverLetter.findUnique.mockResolvedValue({ userId: "user-1" } as never)
-      // documentIds가 빈 배열이면 document.count는 호출되지 않음
+      // Arrange: documentIds가 빈 배열이면 document.count는 호출되지 않음
       let capturedTx: Record<string, unknown> | null = null
       mockPrisma.$transaction.mockImplementation(async (fn) => {
         const tx = {
+          coverLetter: { findUnique: vi.fn().mockResolvedValue({ userId: "user-1" }) },
+          document: { count: vi.fn() },
           coverLetterDocument: {
             deleteMany: vi.fn().mockResolvedValue({}),
             createMany: vi.fn().mockResolvedValue({}),
@@ -559,12 +581,8 @@ describe("updateSelectedDocuments()", () => {
     })
 
     it("반환값은 undefined여야 한다", async () => {
-      // Arrange
-      mockPrisma.coverLetter.findUnique.mockResolvedValue({ userId: "user-1" } as never)
-      mockPrisma.document.count.mockResolvedValue(1 as never)
-
       // Act
-      const result = await updateSelectedDocuments("cl-1", "user-1", ["doc-1"])
+      const result = await updateSelectedDocuments("cl-1", "user-1", [])
 
       // Assert
       expect(result).toBeUndefined()

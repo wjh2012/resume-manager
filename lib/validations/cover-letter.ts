@@ -15,14 +15,16 @@ export const updateCoverLetterSchema = z.object({
 })
 
 export const coverLetterChatSchema = z.object({
-  conversationId: z.string().uuid("유효하지 않은 대화 ID입니다."),
-  coverLetterId: z.string().uuid("유효하지 않은 자기소개서 ID입니다."),
   messages: z.array(
     z.object({
+      id: z.string(),
       role: z.enum(["user", "assistant"]),
-      content: z.string().min(1),
+      content: z.string().optional().default(""),
+      parts: z.array(z.any()).optional(),
     }),
   ).min(1, "메시지가 필요합니다."),
+  conversationId: z.string().uuid("유효하지 않은 대화 ID입니다."),
+  coverLetterId: z.string().uuid("유효하지 않은 자기소개서 ID입니다."),
   selectedDocumentIds: z.array(z.string().uuid()).optional(),
 })
 

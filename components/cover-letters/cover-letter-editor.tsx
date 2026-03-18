@@ -58,7 +58,8 @@ export function CoverLetterEditor({
       setSaveStatus("saved")
     } catch {
       setSaveStatus("error")
-      // 실패 시 3초 후 자동 재시도 1회
+      // 실패 시 3초 후 자동 재시도 1회 (기존 재시도 타이머가 있으면 취소)
+      if (retryTimerRef.current) clearTimeout(retryTimerRef.current)
       retryTimerRef.current = setTimeout(async () => {
         setSaveStatus("saving")
         try {
