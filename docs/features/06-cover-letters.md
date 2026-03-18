@@ -39,7 +39,8 @@
 |--------|------|------|
 | POST | `/api/cover-letters` | 생성 (+ Conversation + CoverLetterDocument) |
 | GET | `/api/cover-letters/[id]` | 상세 조회 |
-| PUT | `/api/cover-letters/[id]` | 내용/상태 업데이트 또는 참고 문서 변경 |
+| PUT | `/api/cover-letters/[id]` | 내용/상태 업데이트 |
+| PATCH | `/api/cover-letters/[id]/documents` | 참고 문서 변경 |
 | DELETE | `/api/cover-letters/[id]` | 삭제 (cascade) |
 | POST | `/api/chat/cover-letter` | AI 스트리밍 채팅 |
 
@@ -101,7 +102,8 @@ CoverLetterWorkspace (상태 소유: content)
 lib/cover-letters/service.ts          — 서비스 레이어
 lib/validations/cover-letter.ts       — Zod 검증 스키마
 app/api/cover-letters/route.ts        — POST
-app/api/cover-letters/[id]/route.ts   — GET, PUT, DELETE
+app/api/cover-letters/[id]/route.ts            — GET, PUT, DELETE
+app/api/cover-letters/[id]/documents/route.ts  — PATCH (참고 문서 변경)
 app/api/chat/cover-letter/route.ts    — 스트리밍 채팅
 app/(dashboard)/cover-letters/
   page.tsx                            — 목록 페이지
