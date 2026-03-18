@@ -9,11 +9,10 @@
 
 > 표기법: `/name` = 스킬 (Skill tool), `[name]` = 에이전트 (Agent tool)
 
-1. **구현** — 기능 코드 작성
+1. **구현** — 기능 코드 작성. 기능 추가·버그 수정 시 `[test-writer]`로 테스트도 함께 작성
 2. **`/simplify`** — 코드 품질 점검 (중복, 효율성, 재사용)
-3. **`[test-writer]`** — simplify된 코드에 대해 테스트 작성 및 통과 확인
-4. **`typecheck` + `lint`** — `npm run typecheck && npm run lint` 통과 확인
-5. **`/git-commit`** — 커밋
+3. **`typecheck` + `lint`** — `npm run typecheck && npm run lint` 통과 확인
+4. **`/git-commit`** — 커밋
 
 ## PR 플로우 (Phase 완료 시)
 
