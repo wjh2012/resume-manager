@@ -47,6 +47,7 @@ export default async function CoverLetterWorkspacePage({
   const initialMessages = toUIMessages(conversation.messages)
 
   return (
+    {/* -m-6으로 부모 p-6 padding을 상쇄, spacing.12 = p-6 상하 합산(3rem) */}
     <div className="-m-6 h-[calc(100%+theme(spacing.12))]">
       <CoverLetterWorkspace
         coverLetterId={coverLetter.id}
