@@ -18,3 +18,7 @@
 
 - PR 본문은 `.github/pull_request_template.md` 템플릿을 따른다.
 - 셀프 리뷰 완료 후 PR을 생성한다.
+- **PR base 브랜치 규칙**:
+  - `feature/`, `bugfix/` → 반드시 `develop`을 base로 지정
+  - `hotfix/` → `main`을 base로 지정
+  - `main`에 직접 feature/bugfix PR을 생성하지 않는다
