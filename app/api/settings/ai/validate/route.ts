@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { validateApiKey, ApiKeyValidationError } from "@/lib/ai/models"
-import { AI_PROVIDERS, type AIProvider } from "@/types/ai"
+import { apiKeyValidateSchema } from "@/lib/validations/ai-settings"
 
 export async function POST(request: Request) {
   const supabase = await createClient()
@@ -23,24 +23,17 @@ export async function POST(request: Request) {
     )
   }
 
+  const parsed = apiKeyValidateSchema.safeParse(body)
+
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: parsed.error.issues[0]?.message ?? "유효하지 않은 입력입니다." },
+      { status: 400 },
+    )
+  }
+
   try {
-    const { provider, apiKey } = body as { provider?: string; apiKey?: string }
-
-    if (!provider || !(AI_PROVIDERS as readonly string[]).includes(provider)) {
-      return NextResponse.json(
-        { error: "유효하지 않은 제공자입니다." },
-        { status: 400 },
-      )
-    }
-
-    if (!apiKey || typeof apiKey !== "string" || !apiKey.trim()) {
-      return NextResponse.json(
-        { error: "API 키를 입력해주세요." },
-        { status: 400 },
-      )
-    }
-
-    await validateApiKey(provider as AIProvider, apiKey.trim())
+    await validateApiKey(parsed.data.provider, parsed.data.apiKey.trim())
     return NextResponse.json({ valid: true })
   } catch (error) {
     if (error instanceof ApiKeyValidationError) {

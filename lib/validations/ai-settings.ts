@@ -28,6 +28,12 @@ export const aiSettingsUpdateSchema = z
   })
   .refine(isValidModelForProvider, providerModelRefine)
 
+// 검증용: provider + apiKey만 필요
+export const apiKeyValidateSchema = z.object({
+  provider: z.enum(AI_PROVIDERS),
+  apiKey: z.string().min(1, "API 키를 입력해주세요."),
+})
+
 // API 키 마스킹: 앞 4자리 + *** + 뒤 4자리 (8자 미만이면 ****)
 export function maskApiKey(key: string): string {
   if (key.length < 8) return "****"
