@@ -68,6 +68,7 @@ AI SDK v6의 `UIMessage` (parts 배열 기반) 구조에 맞춘 재사용 가능
 |--------|------|------|
 | `GET` | `/api/settings/ai` | AI 설정 조회 (API 키 마스킹) |
 | `PUT` | `/api/settings/ai` | AI 설정 저장/업데이트 (upsert) |
+| `POST` | `/api/settings/ai/validate` | API 키 유효성 검증 (제공자별 연결 테스트) |
 
 ## 주요 파일
 
