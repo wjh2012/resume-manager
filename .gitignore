@@ -36,3 +36,4 @@ pnpm-debug.log*
 next-env.d.ts
 /.idea/
 /.claude/settings.local.json
+/.claude/agent-memory/
