@@ -4,10 +4,6 @@ import {
   insightExtractionPrompt,
 } from "@/lib/ai/prompts/insight-extraction"
 
-// ─────────────────────────────────────────────────────────────────────────────
-// INSIGHT_CATEGORIES
-// ─────────────────────────────────────────────────────────────────────────────
-
 describe("INSIGHT_CATEGORIES", () => {
   it("정확히 5개의 카테고리를 포함해야 한다", () => {
     expect(INSIGHT_CATEGORIES).toHaveLength(5)
@@ -17,36 +13,32 @@ describe("INSIGHT_CATEGORIES", () => {
     expect(INSIGHT_CATEGORIES).toContain("strength")
   })
 
-  it("'weakness' 카테고리가 포함되어야 한다", () => {
-    expect(INSIGHT_CATEGORIES).toContain("weakness")
-  })
-
   it("'experience' 카테고리가 포함되어야 한다", () => {
     expect(INSIGHT_CATEGORIES).toContain("experience")
+  })
+
+  it("'motivation' 카테고리가 포함되어야 한다", () => {
+    expect(INSIGHT_CATEGORIES).toContain("motivation")
   })
 
   it("'skill' 카테고리가 포함되어야 한다", () => {
     expect(INSIGHT_CATEGORIES).toContain("skill")
   })
 
-  it("'keyword' 카테고리가 포함되어야 한다", () => {
-    expect(INSIGHT_CATEGORIES).toContain("keyword")
+  it("'other' 카테고리가 포함되어야 한다", () => {
+    expect(INSIGHT_CATEGORIES).toContain("other")
   })
 
   it("모든 카테고리가 정확한 순서로 정의되어야 한다", () => {
     expect(INSIGHT_CATEGORIES).toEqual([
       "strength",
-      "weakness",
       "experience",
+      "motivation",
       "skill",
-      "keyword",
+      "other",
     ])
   })
 })
-
-// ─────────────────────────────────────────────────────────────────────────────
-// insightExtractionPrompt
-// ─────────────────────────────────────────────────────────────────────────────
 
 describe("insightExtractionPrompt", () => {
   it("비어 있지 않은 문자열이어야 한다", () => {
@@ -58,20 +50,20 @@ describe("insightExtractionPrompt", () => {
     expect(insightExtractionPrompt).toContain("strength")
   })
 
-  it("'weakness' 카테고리명이 포함되어야 한다", () => {
-    expect(insightExtractionPrompt).toContain("weakness")
-  })
-
   it("'experience' 카테고리명이 포함되어야 한다", () => {
     expect(insightExtractionPrompt).toContain("experience")
+  })
+
+  it("'motivation' 카테고리명이 포함되어야 한다", () => {
+    expect(insightExtractionPrompt).toContain("motivation")
   })
 
   it("'skill' 카테고리명이 포함되어야 한다", () => {
     expect(insightExtractionPrompt).toContain("skill")
   })
 
-  it("'keyword' 카테고리명이 포함되어야 한다", () => {
-    expect(insightExtractionPrompt).toContain("keyword")
+  it("'other' 카테고리명이 포함되어야 한다", () => {
+    expect(insightExtractionPrompt).toContain("other")
   })
 
   it("JSON 배열 응답 형식 안내가 포함되어야 한다", () => {

@@ -63,3 +63,9 @@
 - **스펙**: 채팅 메시지에 HH:mm 타임스탬프 표시
 - **실제**: 타임스탬프 미표시
 - **이유**: AI SDK v6의 `UIMessage` 타입에 `createdAt` 필드가 존재하지 않음
+
+## Anthropic 모델 ID
+
+- **스펙**: `claude-sonnet-4-6`
+- **실제**: `claude-sonnet-4-20250514`
+- **이유**: AI SDK에서 사용하는 정식 모델 ID (날짜 기반 버전 형식)
