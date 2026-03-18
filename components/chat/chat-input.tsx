@@ -57,6 +57,7 @@ export function ChatInput({
         className="h-10 w-10 shrink-0"
       >
         <Send className="h-4 w-4" />
+        <span className="sr-only">메시지 전송</span>
       </Button>
     </div>
   )

@@ -61,6 +61,7 @@ export function ChatContainer({
             onClick={scrollToBottom}
           >
             <ArrowDown className="h-4 w-4" />
+            <span className="sr-only">맨 아래로 스크롤</span>
           </Button>
         </div>
 
