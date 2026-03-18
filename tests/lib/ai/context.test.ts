@@ -123,6 +123,46 @@ describe("searchSimilarChunks()", () => {
 
     expect(result).toEqual([])
   })
+
+  it("threshold를 명시해도 $queryRaw가 호출되어야 한다", async () => {
+    await searchSimilarChunks(mockEmbedding, { userId: "user-1", threshold: 0.5 })
+
+    expect(prisma.$queryRaw).toHaveBeenCalledOnce()
+  })
+
+  it("threshold를 지정하지 않으면 $queryRaw가 호출되어야 한다 (기본값 0.7 사용)", async () => {
+    await searchSimilarChunks(mockEmbedding, { userId: "user-1" })
+
+    expect(prisma.$queryRaw).toHaveBeenCalledOnce()
+  })
+
+  it("excludeDocumentIds를 전달해도 $queryRaw가 호출되어야 한다", async () => {
+    await searchSimilarChunks(mockEmbedding, {
+      userId: "user-1",
+      excludeDocumentIds: ["doc-x", "doc-y"],
+    })
+
+    expect(prisma.$queryRaw).toHaveBeenCalledOnce()
+  })
+
+  it("excludeDocumentIds가 빈 배열이어도 $queryRaw가 호출되어야 한다", async () => {
+    await searchSimilarChunks(mockEmbedding, {
+      userId: "user-1",
+      excludeDocumentIds: [],
+    })
+
+    expect(prisma.$queryRaw).toHaveBeenCalledOnce()
+  })
+
+  it("limitToDocumentIds와 excludeDocumentIds를 동시에 전달해도 $queryRaw가 호출되어야 한다", async () => {
+    await searchSimilarChunks(mockEmbedding, {
+      userId: "user-1",
+      limitToDocumentIds: ["doc-a"],
+      excludeDocumentIds: ["doc-b"],
+    })
+
+    expect(prisma.$queryRaw).toHaveBeenCalledOnce()
+  })
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -323,6 +363,48 @@ describe("buildContext()", () => {
 
       expect(result).toContain("---")
       expect(result.indexOf("[문서:")).toBeLessThan(result.indexOf("[관련 내용"))
+    })
+  })
+
+  describe("selectedDocumentIds 중복 제외 (dedup)", () => {
+    it("selectedDocumentIds가 있으면 searchSimilarChunks에 excludeDocumentIds로 전달되어야 한다", async () => {
+      vi.mocked(prisma.document.findMany).mockResolvedValue([
+        { title: "이력서", extractedText: "경력 내용" },
+      ] as never)
+
+      await buildContext(userId, {
+        query: "경력",
+        selectedDocumentIds: ["doc-1", "doc-2"],
+      })
+
+      // $queryRaw가 호출되었음 = searchSimilarChunks가 excludeDocumentIds를 받아 실행됨
+      expect(prisma.$queryRaw).toHaveBeenCalledOnce()
+    })
+
+    it("selectedDocumentIds가 없으면 벡터 검색이 excludeDocumentIds 없이 실행되어야 한다", async () => {
+      await buildContext(userId, { query: "경력" })
+
+      expect(prisma.$queryRaw).toHaveBeenCalledOnce()
+    })
+
+    it("selectedDocumentIds로 포함된 문서가 청크 결과에도 중복 포함되지 않도록 $queryRaw는 한 번만 호출되어야 한다", async () => {
+      vi.mocked(prisma.document.findMany).mockResolvedValue([
+        { title: "이력서", extractedText: "전체 텍스트" },
+      ] as never)
+      vi.mocked(prisma.$queryRaw).mockResolvedValue([
+        { id: "c1", documentId: "doc-other", content: "다른 문서 청크", chunkIndex: 0, distance: 0.2 },
+      ])
+
+      const result = await buildContext(userId, {
+        query: "경력",
+        selectedDocumentIds: ["doc-1"],
+      })
+
+      // 선택 문서 텍스트와 다른 문서의 청크가 모두 결과에 포함되어야 한다
+      expect(result).toContain("[문서: 이력서]")
+      expect(result).toContain("전체 텍스트")
+      expect(result).toContain("[관련 내용 1]")
+      expect(result).toContain("다른 문서 청크")
     })
   })
 })
