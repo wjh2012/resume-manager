@@ -47,7 +47,7 @@ export default async function CoverLetterWorkspacePage({
   const initialMessages = toUIMessages(conversation.messages)
 
   return (
-    <div className="-m-6 h-[calc(100vh-var(--topbar-height))]">
+    <div className="-m-6 h-[calc(100%+theme(spacing.12))]">
       <CoverLetterWorkspace
         coverLetterId={coverLetter.id}
         conversationId={conversation.id}
