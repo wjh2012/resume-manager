@@ -22,21 +22,38 @@ interface SimilarChunk {
   distance: number
 }
 
-// pgvector 코사인 거리 검색
+/**
+ * pgvector 코사인 거리 검색
+ *
+ * @param embedding - 쿼리 임베딩 벡터
+ * @param opts.userId - 문서 소유자 ID
+ * @param opts.limitToDocumentIds - 검색 범위를 특정 문서로 제한 (미지정 시 전체 문서)
+ * @param opts.excludeDocumentIds - 검색에서 제외할 문서 ID (selectedDocumentIds와의 중복 방지용)
+ * @param opts.maxChunks - 반환할 최대 청크 수 (기본값: 5)
+ * @param opts.threshold - 유사도 임계값. 이 거리 이하의 청크만 반환 (기본값: 0.7)
+ */
 export async function searchSimilarChunks(
   embedding: number[],
   opts: {
     userId: string
     limitToDocumentIds?: string[]
+    excludeDocumentIds?: string[]
     maxChunks?: number
+    threshold?: number
   },
 ): Promise<SimilarChunk[]> {
   const vectorStr = `[${embedding.join(",")}]`
   const limit = opts.maxChunks ?? 5
+  const threshold = opts.threshold ?? 0.7
 
   const docFilter =
     opts.limitToDocumentIds && opts.limitToDocumentIds.length > 0
       ? Prisma.sql`AND dc.document_id IN (${Prisma.join(opts.limitToDocumentIds.map((id) => Prisma.sql`${id}::uuid`))})`
+      : Prisma.empty
+
+  const excludeFilter =
+    opts.excludeDocumentIds && opts.excludeDocumentIds.length > 0
+      ? Prisma.sql`AND dc.document_id NOT IN (${Prisma.join(opts.excludeDocumentIds.map((id) => Prisma.sql`${id}::uuid`))})`
       : Prisma.empty
 
   return prisma.$queryRaw<SimilarChunk[]>`
@@ -47,13 +64,24 @@ export async function searchSimilarChunks(
     JOIN documents d ON d.id = dc.document_id
     WHERE d.user_id = ${opts.userId}::uuid
       AND dc.embedding IS NOT NULL
+      AND (dc.embedding <=> ${vectorStr}::vector) < ${threshold}
       ${docFilter}
+      ${excludeFilter}
     ORDER BY distance ASC
     LIMIT ${limit}
   `
 }
 
-// RAG 컨텍스트 빌더: 선택 문서 + 벡터 검색 + 인사이트 조합
+/**
+ * RAG 컨텍스트 빌더: 선택 문서(전체 텍스트) + 벡터 검색(관련 청크) + 인사이트 조합
+ *
+ * @param userId - 사용자 ID
+ * @param opts.query - 벡터 검색용 쿼리 텍스트
+ * @param opts.selectedDocumentIds - 전체 텍스트를 포함할 문서 ID 목록. 벡터 검색에서는 자동 제외되어 중복 방지
+ * @param opts.limitToDocumentIds - 벡터 검색 범위를 특정 문서로 제한
+ * @param opts.includeInsights - 인사이트 포함 여부
+ * @param opts.maxChunks - 벡터 검색 최대 청크 수
+ */
 export async function buildContext(
   userId: string,
   opts: BuildContextOptions,
@@ -81,10 +109,11 @@ export async function buildContext(
     }
   }
 
-  // 2. RAG 벡터 검색으로 관련 청크 포함
+  // 2. RAG 벡터 검색으로 관련 청크 포함 (selectedDocumentIds는 제외하여 중복 방지)
   const chunks = await searchSimilarChunks(queryEmbedding, {
     userId,
     limitToDocumentIds: opts.limitToDocumentIds,
+    excludeDocumentIds: opts.selectedDocumentIds,
     maxChunks: opts.maxChunks,
   })
 

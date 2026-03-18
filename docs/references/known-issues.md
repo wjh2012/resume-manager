@@ -36,23 +36,23 @@
 
 ## AI / RAG
 
-### RAG 컨텍스트 중복 콘텐츠 가능
+### ~~RAG 컨텍스트 중복 콘텐츠 가능~~
 
-- **상태**: `buildContext()`에서 `selectedDocumentIds`와 `limitToDocumentIds`에 동일한 ID가 전달되면 전체 텍스트와 벡터 청크가 모두 포함되어 토큰 낭비
-- **원인**: Phase 2에서는 호출부가 없어 실제 문제 미발생. JSDoc 문서화도 미비
-- **해결 조건**: Phase 3 연동 전에 JSDoc 추가 및 호출부에서 ID 중복 방지
+- **상태**: ~~해결됨~~ (feature/cover-letters)
+- **원인**: `buildContext()`에서 `selectedDocumentIds`와 벡터 검색 결과가 중복될 수 있었음
+- **해결**: `selectedDocumentIds`를 벡터 검색에서 자동 제외 (`excludeDocumentIds`). JSDoc 보강
 
-### 벡터 검색 유사도 임계값 없음
+### ~~벡터 검색 유사도 임계값 없음~~
 
-- **상태**: `searchSimilarChunks()`가 거리 값과 무관하게 상위 `maxChunks`개를 반환
-- **원인**: 적정 임계값을 결정할 실제 데이터가 아직 없음
-- **해결 조건**: Phase 3 연동 시 실험적 임계값(예: `< 0.7`) 도입
+- **상태**: ~~해결됨~~ (feature/cover-letters)
+- **원인**: `searchSimilarChunks()`가 거리 값과 무관하게 상위 `maxChunks`개를 반환
+- **해결**: 코사인 거리 `< 0.7` 임계값 WHERE 조건 추가 (`threshold` 파라미터, 기본값 0.7)
 
-### DB 모델값 검증 없음
+### ~~DB 모델값 검증 없음~~
 
-- **상태**: `getLanguageModel()`에서 provider만 검증하고 model은 검증 없이 SDK에 전달
-- **원인**: Phase 2에서는 설정 저장만 하고 실제 AI 호출이 없어 미처리
-- **해결 조건**: Phase 3 스트리밍 구현 시 model 유효성 검증 또는 에러 처리 추가
+- **상태**: ~~해결됨~~ (feature/cover-letters)
+- **원인**: `getLanguageModel()`에서 provider만 검증하고 model은 검증 없이 SDK에 전달
+- **해결**: `PROVIDER_MODELS`에서 model 존재 여부 검증, 미지원 모델 시 에러 throw
 
 ## 스토리지
 

@@ -3,7 +3,7 @@ import { createOpenAI } from "@ai-sdk/openai"
 import { createAnthropic } from "@ai-sdk/anthropic"
 import { createGoogleGenerativeAI } from "@ai-sdk/google"
 import { prisma } from "@/lib/prisma"
-import { AI_PROVIDERS, type AIProvider } from "@/types/ai"
+import { AI_PROVIDERS, PROVIDER_MODELS, type AIProvider } from "@/types/ai"
 
 export class AiSettingsNotFoundError extends Error {
   constructor() {
@@ -42,13 +42,17 @@ export async function getLanguageModel(userId: string): Promise<LanguageModel> {
     throw new AiSettingsNotFoundError()
   }
 
-  if (!AI_PROVIDERS.includes(settings.provider as AIProvider)) {
+  const provider = settings.provider as AIProvider
+  if (!AI_PROVIDERS.includes(provider)) {
     throw new Error(`지원하지 않는 AI 제공자: ${settings.provider}`)
   }
 
-  return createLanguageModel(
-    settings.provider as AIProvider,
-    settings.model,
-    settings.apiKey,
-  )
+  const validModels = PROVIDER_MODELS[provider]
+  if (!validModels?.some((m) => m.value === settings.model)) {
+    throw new Error(
+      `지원하지 않는 모델입니다: ${settings.model} (${settings.provider})`,
+    )
+  }
+
+  return createLanguageModel(provider, settings.model, settings.apiKey)
 }
