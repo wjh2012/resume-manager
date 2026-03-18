@@ -79,7 +79,7 @@ export async function POST(request: Request) {
       .join("") || lastMessage.content || ""
 
     // RAG 컨텍스트, 모델, user 메시지 저장을 병렬 실행
-    const [context, model] = await Promise.all([
+    const [context, model, _] = await Promise.all([
       buildContext(user.id, {
         query: lastMessageContent,
         selectedDocumentIds,

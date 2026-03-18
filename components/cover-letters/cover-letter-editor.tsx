@@ -4,6 +4,7 @@ import { useRef, useEffect, useState, useCallback } from "react"
 import Link from "next/link"
 import { ChevronLeft } from "lucide-react"
 import { toast } from "sonner"
+import { CoverLetterStatus } from "@prisma/client"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 
@@ -113,7 +114,7 @@ export function CoverLetterEditor({
       const res = await fetch(`/api/cover-letters/${coverLetterId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "COMPLETED" }),
+        body: JSON.stringify({ status: CoverLetterStatus.COMPLETED }),
       })
       if (!res.ok) throw new Error()
       toast.success("자기소개서가 완료 처리되었습니다.")
