@@ -84,7 +84,7 @@ export function DocumentCard({
           <CardDescription className="flex items-center gap-2">
             <span>{formatFileSize(document.fileSize)}</span>
             <span>·</span>
-            <span>{formatDate(document.createdAt)}</span>
+            <span suppressHydrationWarning>{formatDate(document.createdAt)}</span>
             <span>·</span>
             <span>{document._count.chunks}개 청크</span>
           </CardDescription>

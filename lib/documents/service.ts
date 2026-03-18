@@ -70,7 +70,15 @@ export async function uploadDocument(
     throw new DocumentValidationError("파일에서 텍스트를 추출할 수 없습니다.")
   }
 
-  const chunks = splitIntoChunks(extractedText)
+  const MAX_CHUNKS = 500
+  let chunks = splitIntoChunks(extractedText)
+
+  if (chunks.length > MAX_CHUNKS) {
+    console.warn(
+      `청크 수 제한 초과: ${chunks.length}개 → ${MAX_CHUNKS}개만 저장`,
+    )
+    chunks = chunks.slice(0, MAX_CHUNKS)
+  }
 
   // DB 저장 (트랜잭션)
   let document: { id: string }
@@ -111,6 +119,13 @@ export async function uploadDocument(
   if (chunks.length > 0) {
     try {
       const embeddings = await generateEmbeddings(chunks)
+
+      // NaN/Infinity 검증
+      for (const embedding of embeddings) {
+        if (embedding.some((v) => !Number.isFinite(v))) {
+          throw new Error("임베딩에 유효하지 않은 값(NaN/Infinity)이 포함됨")
+        }
+      }
 
       const dbChunks = await prisma.documentChunk.findMany({
         where: { documentId: document.id },

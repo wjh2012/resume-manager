@@ -75,6 +75,13 @@ export function useFileUpload({ onSuccess }: UseFileUploadOptions = {}) {
           resolve(null)
         })
 
+        xhr.addEventListener("abort", () => {
+          xhrRef.current = null
+          setIsUploading(false)
+          setProgress(0)
+          resolve(null)
+        })
+
         xhr.open("POST", "/api/documents")
         xhr.send(formData)
       })
