@@ -22,7 +22,7 @@ export function UploadDialog() {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button>
-          <Plus className="mr-2 h-4 w-4" />
+          <Plus aria-hidden="true" className="mr-2 h-4 w-4" />
           업로드
         </Button>
       </DialogTrigger>

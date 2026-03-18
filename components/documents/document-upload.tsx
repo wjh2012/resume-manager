@@ -21,8 +21,9 @@ export function DocumentUpload({ onSuccess }: DocumentUploadProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [title, setTitle] = useState("")
   const inputRef = useRef<HTMLInputElement>(null)
+  const dragCounterRef = useRef(0)
 
-  const { isUploading, progress, isDragging, upload, handleDragOver, handleDragLeave, setIsDragging } =
+  const { isUploading, progress, isDragging, upload, setIsDragging } =
     useFileUpload({ onSuccess })
 
   const validateAndSetFile = useCallback((file: File) => {
@@ -42,14 +43,56 @@ export function DocumentUpload({ onSuccess }: DocumentUploadProps) {
     }
   }, [title])
 
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+  }, [])
+
+  const handleDragEnter = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault()
+      dragCounterRef.current += 1
+      if (dragCounterRef.current === 1) {
+        setIsDragging(true)
+      }
+    },
+    [setIsDragging],
+  )
+
+  const handleDragLeave = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault()
+      dragCounterRef.current -= 1
+      if (dragCounterRef.current === 0) {
+        setIsDragging(false)
+      }
+    },
+    [setIsDragging],
+  )
+
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
       e.preventDefault()
+      dragCounterRef.current = 0
       setIsDragging(false)
+      if (isUploading) return
       const file = e.dataTransfer.files[0]
       if (file) validateAndSetFile(file)
     },
-    [setIsDragging, validateAndSetFile],
+    [setIsDragging, validateAndSetFile, isUploading],
+  )
+
+  const handleDropzoneClick = useCallback(() => {
+    if (!isUploading) inputRef.current?.click()
+  }, [isUploading])
+
+  const handleDropzoneKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if ((e.key === "Enter" || e.key === " ") && !isUploading) {
+        e.preventDefault()
+        inputRef.current?.click()
+      }
+    },
+    [isUploading],
   )
 
   const handleFileChange = useCallback(
@@ -73,18 +116,26 @@ export function DocumentUpload({ onSuccess }: DocumentUploadProps) {
   return (
     <div className="space-y-4">
       <div
+        role="button"
+        tabIndex={0}
         onDragOver={handleDragOver}
+        onDragEnter={handleDragEnter}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        onClick={() => inputRef.current?.click()}
+        onClick={handleDropzoneClick}
+        onKeyDown={handleDropzoneKeyDown}
+        aria-disabled={isUploading}
         className={cn(
-          "flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-8 transition-colors",
+          "flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-8 transition-colors",
+          isUploading
+            ? "cursor-not-allowed opacity-50"
+            : "cursor-pointer",
           isDragging
             ? "border-primary bg-primary/5"
             : "border-muted-foreground/25 hover:border-primary/50",
         )}
       >
-        <Upload className="text-muted-foreground mb-2 h-8 w-8" />
+        <Upload aria-hidden="true" className="text-muted-foreground mb-2 h-8 w-8" />
         {selectedFile ? (
           <p className="text-sm font-medium">{selectedFile.name}</p>
         ) : (
@@ -103,33 +154,46 @@ export function DocumentUpload({ onSuccess }: DocumentUploadProps) {
           accept=".pdf,.docx,.txt"
           onChange={handleFileChange}
           className="hidden"
+          autoComplete="off"
         />
       </div>
 
-      {selectedFile && (
+      {selectedFile ? (
         <>
+          <label htmlFor="document-title" className="sr-only">
+            문서 제목
+          </label>
           <Input
-            placeholder="문서 제목"
+            id="document-title"
+            placeholder="문서 제목\u2026"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
+            autoComplete="off"
           />
-          {isUploading && (
-            <div className="bg-muted h-2 w-full overflow-hidden rounded-full">
+          {isUploading ? (
+            <div
+              role="progressbar"
+              aria-valuenow={progress}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-live="polite"
+              className="bg-muted h-2 w-full overflow-hidden rounded-full"
+            >
               <div
                 className="bg-primary h-full transition-all duration-300"
                 style={{ width: `${progress}%` }}
               />
             </div>
-          )}
+          ) : null}
           <Button
             onClick={handleSubmit}
             disabled={isUploading || !title.trim()}
             className="w-full"
           >
-            {isUploading ? `업로드 중... ${progress}%` : "업로드"}
+            {isUploading ? `업로드 중\u2026 ${progress}%` : "업로드"}
           </Button>
         </>
-      )}
+      ) : null}
 
     </div>
   )

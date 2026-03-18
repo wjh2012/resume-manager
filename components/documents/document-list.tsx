@@ -51,7 +51,7 @@ export function DocumentList({ documents }: DocumentListProps) {
   if (documents.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16">
-        <FileText className="text-muted-foreground mb-4 h-12 w-12" />
+        <FileText aria-hidden="true" className="text-muted-foreground mb-4 h-12 w-12" />
         <p className="text-muted-foreground text-lg">
           아직 업로드한 문서가 없습니다
         </p>

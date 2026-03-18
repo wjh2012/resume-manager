@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation"
 import { LogOut } from "lucide-react"
+import { toast } from "sonner"
 import { createClient } from "@/lib/supabase/client"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
@@ -24,8 +25,12 @@ export function UserMenu({ user }: UserMenuProps) {
   const supabase = createClient()
 
   const handleLogout = async () => {
-    await supabase.auth.signOut()
-    router.push("/login")
+    try {
+      await supabase.auth.signOut()
+      router.push("/login")
+    } catch {
+      toast.error("로그아웃에 실패했습니다.")
+    }
   }
 
   const initials = user.name
@@ -59,7 +64,7 @@ export function UserMenu({ user }: UserMenuProps) {
       </DropdownMenuTrigger>
       <DropdownMenuContent side="top" align="start" className="w-56">
         <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
-          <LogOut className="mr-2 h-4 w-4" />
+          <LogOut aria-hidden="true" className="mr-2 h-4 w-4" />
           로그아웃
         </DropdownMenuItem>
       </DropdownMenuContent>
