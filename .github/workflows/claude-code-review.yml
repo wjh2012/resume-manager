@@ -30,3 +30,4 @@ jobs:
             diff를 분석하고 코드 품질, 버그, 보안, 성능 문제를 검토한 뒤
             결과를 PR 코멘트로 게시해주세요.
           claude_args: "--max-turns 10"
+
