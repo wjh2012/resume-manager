@@ -33,9 +33,9 @@ async function DocumentContent({
             <ArrowLeft className="h-4 w-4" />
           </Link>
         </Button>
-        <div className="flex-1">
+        <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold">{document.title}</h1>
+            <h1 className="truncate text-2xl font-bold">{document.title}</h1>
             <Badge variant="secondary">
               {DOCUMENT_TYPE_LABELS[document.type as DocumentType] ?? document.type}
             </Badge>

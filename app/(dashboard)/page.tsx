@@ -1,7 +1,7 @@
 export default function DashboardPage() {
   return (
     <div>
-      <h1 className="text-2xl font-bold">
+      <h1 className="text-2xl font-bold text-balance">
         Resume Manager에 오신 것을 환영합니다
       </h1>
       <p className="text-muted-foreground mt-2">

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useOptimistic, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { FileText } from "lucide-react"
 import { toast } from "sonner"
@@ -22,11 +22,22 @@ interface DocumentListProps {
 
 export function DocumentList({ documents }: DocumentListProps) {
   const router = useRouter()
-  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set())
+  const [, startTransition] = useTransition()
+
+  const [optimisticDocs, removeOptimistic] = useOptimistic(
+    documents,
+    (state, deletedId: string) => state.filter((doc) => doc.id !== deletedId),
+  )
 
   const handleDelete = useCallback(
     async (id: string) => {
-      setDeletingId(id)
+      setDeletingIds((prev) => new Set(prev).add(id))
+
+      startTransition(() => {
+        removeOptimistic(id)
+      })
+
       try {
         const res = await fetch(`/api/documents/${id}`, { method: "DELETE" })
         const data = await res.json()
@@ -41,14 +52,19 @@ export function DocumentList({ documents }: DocumentListProps) {
         const message =
           err instanceof Error ? err.message : "삭제에 실패했습니다."
         toast.error(message)
+        router.refresh()
       } finally {
-        setDeletingId(null)
+        setDeletingIds((prev) => {
+          const next = new Set(prev)
+          next.delete(id)
+          return next
+        })
       }
     },
-    [router],
+    [router, removeOptimistic, startTransition],
   )
 
-  if (documents.length === 0) {
+  if (optimisticDocs.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16">
         <FileText aria-hidden="true" className="text-muted-foreground mb-4 h-12 w-12" />
@@ -64,12 +80,12 @@ export function DocumentList({ documents }: DocumentListProps) {
 
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-      {documents.map((doc) => (
+      {optimisticDocs.map((doc) => (
         <DocumentCard
           key={doc.id}
           document={doc}
           onDelete={handleDelete}
-          isDeleting={deletingId === doc.id}
+          isDeleting={deletingIds.has(doc.id)}
         />
       ))}
     </div>
