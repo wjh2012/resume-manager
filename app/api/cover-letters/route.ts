@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { createCoverLetterSchema } from "@/lib/validations/cover-letter"
-import { createCoverLetter } from "@/lib/cover-letters/service"
+import { createCoverLetter, CoverLetterForbiddenError } from "@/lib/cover-letters/service"
 
 export async function POST(request: Request) {
   const supabase = await createClient()
@@ -35,6 +35,9 @@ export async function POST(request: Request) {
     const result = await createCoverLetter(user.id, parsed.data)
     return NextResponse.json(result, { status: 201 })
   } catch (error) {
+    if (error instanceof CoverLetterForbiddenError) {
+      return NextResponse.json({ error: error.message }, { status: 403 })
+    }
     console.error("[POST /api/cover-letters]", error)
     return NextResponse.json(
       { error: "자기소개서 생성에 실패했습니다." },
