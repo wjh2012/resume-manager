@@ -40,6 +40,7 @@ export function CoverLetterEditor({
   const contentRef = useRef(content)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const isMountedRef = useRef(false)
 
   contentRef.current = content
 
@@ -75,8 +76,13 @@ export function CoverLetterEditor({
     }
   }, [coverLetterId])
 
-  // debounce 자동 저장
+  // debounce 자동 저장 (초기 마운트 시 스킵)
   useEffect(() => {
+    if (!isMountedRef.current) {
+      isMountedRef.current = true
+      return
+    }
+
     if (timerRef.current) {
       clearTimeout(timerRef.current)
     }

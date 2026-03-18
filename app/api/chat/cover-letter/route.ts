@@ -71,6 +71,19 @@ export async function POST(request: Request) {
       )
     }
 
+    // conversationId 소유권 검증
+    const conversation = await prisma.conversation.findUnique({
+      where: { id: conversationId },
+      select: { userId: true, coverLetterId: true },
+    })
+
+    if (!conversation || conversation.userId !== user.id || conversation.coverLetterId !== coverLetterId) {
+      return NextResponse.json(
+        { error: "대화를 찾을 수 없습니다." },
+        { status: 404 },
+      )
+    }
+
     // 마지막 user 메시지 추출
     const lastMessage = messages[messages.length - 1]
     const lastMessageContent = lastMessage.parts
@@ -79,7 +92,8 @@ export async function POST(request: Request) {
       .join("") || lastMessage.content || ""
 
     // RAG 컨텍스트, 모델, user 메시지 저장을 병렬 실행
-    const [context, model, _] = await Promise.all([
+    // 세 번째 요소(메시지 저장)는 결과가 필요 없으므로 destructure 생략
+    const [context, model] = await Promise.all([
       buildContext(user.id, {
         query: lastMessageContent,
         selectedDocumentIds,

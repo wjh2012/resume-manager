@@ -116,42 +116,34 @@ export async function updateCoverLetter(
   userId: string,
   data: UpdateCoverLetterData,
 ) {
-  const coverLetter = await prisma.coverLetter.findUnique({
-    where: { id },
-    select: { userId: true },
+  const result = await prisma.coverLetter.updateMany({
+    where: { id, userId },
+    data,
   })
 
-  if (!coverLetter) {
-    throw new CoverLetterNotFoundError()
-  }
-
-  if (coverLetter.userId !== userId) {
+  if (result.count === 0) {
+    const exists = await prisma.coverLetter.findUnique({ where: { id }, select: { id: true } })
+    if (!exists) throw new CoverLetterNotFoundError()
     throw new CoverLetterForbiddenError()
   }
 
-  return prisma.coverLetter.update({
+  return prisma.coverLetter.findUniqueOrThrow({
     where: { id },
-    data,
     select: { id: true, title: true, content: true, status: true, updatedAt: true },
   })
 }
 
 // 자기소개서 삭제 (cascade)
 export async function deleteCoverLetter(id: string, userId: string) {
-  const coverLetter = await prisma.coverLetter.findUnique({
-    where: { id },
-    select: { userId: true },
+  const result = await prisma.coverLetter.deleteMany({
+    where: { id, userId },
   })
 
-  if (!coverLetter) {
-    throw new CoverLetterNotFoundError()
-  }
-
-  if (coverLetter.userId !== userId) {
+  if (result.count === 0) {
+    const exists = await prisma.coverLetter.findUnique({ where: { id }, select: { id: true } })
+    if (!exists) throw new CoverLetterNotFoundError()
     throw new CoverLetterForbiddenError()
   }
-
-  await prisma.coverLetter.delete({ where: { id } })
 }
 
 // 참고 문서 선택 변경
@@ -171,6 +163,15 @@ export async function updateSelectedDocuments(
 
   if (coverLetter.userId !== userId) {
     throw new CoverLetterForbiddenError()
+  }
+
+  if (documentIds.length > 0) {
+    const ownedCount = await prisma.document.count({
+      where: { id: { in: documentIds }, userId },
+    })
+    if (ownedCount !== documentIds.length) {
+      throw new CoverLetterForbiddenError()
+    }
   }
 
   await prisma.$transaction(async (tx) => {

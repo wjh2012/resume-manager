@@ -10,7 +10,7 @@ export const createCoverLetterSchema = z.object({
 
 export const updateCoverLetterSchema = z.object({
   title: z.string().min(1, "제목을 입력해주세요.").max(100).optional(),
-  content: z.string().optional(),
+  content: z.string().max(50000, "내용은 50,000자 이하로 입력해주세요.").optional(),
   status: z.enum(["DRAFT", "COMPLETED"]).optional(),
 })
 
