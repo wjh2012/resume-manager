@@ -69,7 +69,7 @@ export function DocumentCard({
   const label = DOCUMENT_TYPE_LABELS[docType] ?? document.type
 
   return (
-    <Card className="group relative">
+    <Card className="group relative transition-shadow hover:shadow-md">
       <Link href={`/documents/${document.id}`}>
         <CardHeader>
           <div className="flex items-start justify-between">

@@ -80,13 +80,18 @@ export function DocumentList({ documents }: DocumentListProps) {
 
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-      {optimisticDocs.map((doc) => (
-        <DocumentCard
+      {optimisticDocs.map((doc, index) => (
+        <div
           key={doc.id}
-          document={doc}
-          onDelete={handleDelete}
-          isDeleting={deletingIds.has(doc.id)}
-        />
+          className="animate-fade-in-up"
+          style={{ animationDelay: `${index * 50}ms` }}
+        >
+          <DocumentCard
+            document={doc}
+            onDelete={handleDelete}
+            isDeleting={deletingIds.has(doc.id)}
+          />
+        </div>
       ))}
     </div>
   )
