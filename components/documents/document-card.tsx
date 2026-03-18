@@ -74,7 +74,7 @@ export function DocumentCard({
         <CardHeader>
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-2">
-              <Icon className={cn("h-5 w-5 shrink-0", typeColors[docType] ?? "text-muted-foreground")} />
+              <Icon aria-hidden="true" className={cn("h-5 w-5 shrink-0", typeColors[docType] ?? "text-muted-foreground")} />
               <CardTitle className="line-clamp-1 text-base">
                 {document.title}
               </CardTitle>
@@ -91,16 +91,21 @@ export function DocumentCard({
         </CardHeader>
       </Link>
 
-      <div className="absolute right-2 bottom-2">
+      <div
+        className="absolute right-2 bottom-2"
+        onClick={(e) => { e.preventDefault(); e.stopPropagation() }}
+        onKeyDown={(e) => e.stopPropagation()}
+      >
         <AlertDialog>
           <AlertDialogTrigger asChild>
             <Button
               variant="ghost"
               size="icon"
-              className="text-muted-foreground hover:text-destructive h-8 w-8 opacity-0 transition-opacity group-hover:opacity-100"
+              aria-label="문서 삭제"
+              className="text-muted-foreground hover:text-destructive h-8 w-8 opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100"
               disabled={isDeleting}
             >
-              <Trash2 className="h-4 w-4" />
+              <Trash2 aria-hidden="true" className="h-4 w-4" />
             </Button>
           </AlertDialogTrigger>
           <AlertDialogContent>

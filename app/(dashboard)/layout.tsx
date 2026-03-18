@@ -24,7 +24,7 @@ export default async function DashboardLayout({
       <AppSidebar user={extractUserInfo(user)} />
       <SidebarInset>
         <Topbar />
-        <main className="flex-1 p-6">{children}</main>
+        <main id="main-content" className="flex-1 p-6">{children}</main>
       </SidebarInset>
     </SidebarProvider>
   )

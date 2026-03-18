@@ -12,6 +12,14 @@
 - **원인**: 카카오 비즈니스 계정이 없으면 OAuth에서 이메일을 받아올 수 없음. 이메일 없이는 `users` 테이블 upsert가 불가하므로 비활성화.
 - **해결 조건**: 카카오 비즈앱 전환 후 활성화
 
+## ~~접근성~~
+
+### ~~icon button aria-label 누락~~
+
+- **상태**: ~~해결됨~~ (feature/a11y-fixes)
+- **원인**: shadcn/ui 아이콘 버튼에 `aria-label`이 누락되어 스크린리더에서 기능 식별 불가
+- **해결**: 모든 아이콘 버튼에 `aria-label` 추가, 장식용 아이콘에 `aria-hidden="true"` 적용
+
 ## 보안
 
 ### API 키 검증 엔드포인트 Rate Limiting 미적용

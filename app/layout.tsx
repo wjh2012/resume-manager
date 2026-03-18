@@ -1,4 +1,5 @@
-import { Geist_Mono, Inter } from "next/font/google"
+import { Geist_Mono } from "next/font/google"
+import localFont from "next/font/local"
 
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
@@ -6,7 +7,11 @@ import { Toaster } from "@/components/ui/sonner"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-sans" })
+const pretendard = localFont({
+  src: "./fonts/PretendardVariable.woff2",
+  weight: "45 920",
+  variable: "--font-sans",
+})
 
 const fontMono = Geist_Mono({
   subsets: ["latin"],
@@ -26,12 +31,18 @@ export default function RootLayout({
         "antialiased",
         fontMono.variable,
         "font-sans",
-        inter.variable,
+        pretendard.variable,
       )}
     >
       <body>
         <ThemeProvider>
           <TooltipProvider>
+            <a
+              href="#main-content"
+              className="bg-background text-foreground fixed left-2 top-2 z-50 rounded-md px-4 py-2 text-sm font-medium opacity-0 focus:opacity-100"
+            >
+              본문으로 건너뛰기
+            </a>
             {children}
             <Toaster />
           </TooltipProvider>

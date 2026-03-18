@@ -82,23 +82,11 @@ export function useFileUpload({ onSuccess }: UseFileUploadOptions = {}) {
     [onSuccess],
   )
 
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragging(true)
-  }, [])
-
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragging(false)
-  }, [])
-
   return {
     isUploading,
     progress,
     isDragging,
     upload,
-    handleDragOver,
-    handleDragLeave,
     setIsDragging,
   }
 }
