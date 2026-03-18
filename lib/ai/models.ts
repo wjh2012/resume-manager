@@ -23,8 +23,8 @@ const VALIDATION_ENDPOINTS: Record<
     },
   }),
   google: (apiKey) => ({
-    url: `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}&pageSize=1`,
-    headers: {},
+    url: "https://generativelanguage.googleapis.com/v1beta/models?pageSize=1",
+    headers: { "x-goog-api-key": apiKey },
   }),
 }
 
@@ -54,6 +54,11 @@ export async function validateApiKey(
     )
   } catch (error) {
     if (error instanceof ApiKeyValidationError) throw error
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw new ApiKeyValidationError(
+        "연결 시간이 초과되었습니다. 잠시 후 다시 시도해주세요.",
+      )
+    }
     throw new ApiKeyValidationError(
       "API 키 검증에 실패했습니다. 잠시 후 다시 시도해주세요.",
     )

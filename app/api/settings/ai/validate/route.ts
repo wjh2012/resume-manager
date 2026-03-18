@@ -13,11 +13,20 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 })
   }
 
+  let body: unknown
   try {
-    const body = await request.json()
-    const { provider, apiKey } = body
+    body = await request.json()
+  } catch {
+    return NextResponse.json(
+      { error: "잘못된 요청 형식입니다." },
+      { status: 400 },
+    )
+  }
 
-    if (!provider || !AI_PROVIDERS.includes(provider)) {
+  try {
+    const { provider, apiKey } = body as { provider?: string; apiKey?: string }
+
+    if (!provider || !(AI_PROVIDERS as readonly string[]).includes(provider)) {
       return NextResponse.json(
         { error: "유효하지 않은 제공자입니다." },
         { status: 400 },

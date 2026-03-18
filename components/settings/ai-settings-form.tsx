@@ -44,6 +44,7 @@ export function AiSettingsForm({ initialSettings }: AiSettingsFormProps) {
   const [apiKey, setApiKey] = useState("")
   const [isSaving, setIsSaving] = useState(false)
   const [keyStatus, setKeyStatus] = useState<KeyStatus>("idle")
+  const [keyError, setKeyError] = useState("")
 
   const models = PROVIDER_MODELS[provider]
   const hasNewApiKey = apiKey.trim().length > 0
@@ -54,9 +55,11 @@ export function AiSettingsForm({ initialSettings }: AiSettingsFormProps) {
     const newProvider = value as AIProvider
     setProvider(newProvider)
     setModel(PROVIDER_MODELS[newProvider][0].value)
-    // 제공자 변경 시 검증 초기화
+    // 제공자 변경 시 키 입력 및 검증 초기화
     if (hasNewApiKey) {
+      setApiKey("")
       setKeyStatus("idle")
+      setKeyError("")
     }
   }
 
@@ -65,6 +68,7 @@ export function AiSettingsForm({ initialSettings }: AiSettingsFormProps) {
     // 키 변경 시 검증 초기화
     if (keyStatus !== "idle") {
       setKeyStatus("idle")
+      setKeyError("")
     }
   }
 
@@ -83,14 +87,14 @@ export function AiSettingsForm({ initialSettings }: AiSettingsFormProps) {
 
       if (res.ok && data.valid) {
         setKeyStatus("valid")
-        toast.success("API 키가 유효합니다.")
+        setKeyError("")
       } else {
         setKeyStatus("invalid")
-        toast.error(data.error || "유효하지 않은 API 키입니다.")
+        setKeyError(data.error || "유효하지 않은 API 키입니다.")
       }
     } catch {
       setKeyStatus("invalid")
-      toast.error("API 키 검증에 실패했습니다.")
+      setKeyError("API 키 검증에 실패했습니다. 잠시 후 다시 시도해주세요.")
     }
   }
 
@@ -143,9 +147,9 @@ export function AiSettingsForm({ initialSettings }: AiSettingsFormProps) {
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium">제공자</label>
+            <label htmlFor="provider" className="text-sm font-medium">제공자</label>
             <Select value={provider} onValueChange={handleProviderChange}>
-              <SelectTrigger className="w-full">
+              <SelectTrigger id="provider" className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -159,9 +163,9 @@ export function AiSettingsForm({ initialSettings }: AiSettingsFormProps) {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">모델</label>
+            <label htmlFor="model" className="text-sm font-medium">모델</label>
             <Select key={provider} value={model} onValueChange={setModel}>
-              <SelectTrigger className="w-full">
+              <SelectTrigger id="model" className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -176,7 +180,7 @@ export function AiSettingsForm({ initialSettings }: AiSettingsFormProps) {
 
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <label className="text-sm font-medium">API 키</label>
+              <label htmlFor="apiKey" className="text-sm font-medium">API 키</label>
               {initialSettings.hasApiKey && (
                 <Badge variant="secondary">
                   <CheckCircle2 className="h-3 w-3 text-emerald-500" />
@@ -186,6 +190,7 @@ export function AiSettingsForm({ initialSettings }: AiSettingsFormProps) {
             </div>
             <div className="flex gap-2">
               <Input
+                id="apiKey"
                 type="password"
                 value={apiKey}
                 onChange={handleApiKeyChange}
@@ -218,10 +223,8 @@ export function AiSettingsForm({ initialSettings }: AiSettingsFormProps) {
                     : "연결 테스트"}
               </Button>
             </div>
-            {keyStatus === "invalid" && (
-              <p className="text-sm text-destructive">
-                API 키 검증에 실패했습니다. 키를 확인 후 다시 시도해주세요.
-              </p>
+            {keyStatus === "invalid" && keyError && (
+              <p className="text-sm text-destructive">{keyError}</p>
             )}
           </div>
 

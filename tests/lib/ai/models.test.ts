@@ -94,15 +94,15 @@ describe("validateApiKey()", () => {
       )
     })
 
-    it("google 제공자 — API 키가 URL 쿼리 파라미터에 포함되어야 한다", async () => {
+    it("google 제공자 — x-goog-api-key 헤더로 API 키를 전달해야 한다", async () => {
       vi.mocked(global.fetch).mockResolvedValue(makeFetchResponse(200, true))
 
       await validateApiKey("google", "google-api-key")
 
       expect(global.fetch).toHaveBeenCalledWith(
-        "https://generativelanguage.googleapis.com/v1beta/models?key=google-api-key&pageSize=1",
+        "https://generativelanguage.googleapis.com/v1beta/models?pageSize=1",
         expect.objectContaining({
-          headers: {},
+          headers: { "x-goog-api-key": "google-api-key" },
         }),
       )
     })
@@ -242,9 +242,9 @@ describe("validateApiKey()", () => {
     })
   })
 
-  // ── AbortSignal 전달 ────────────────────────────────────────────────────────
+  // ── 타임아웃 오류 ──────────────────────────────────────────────────────────
 
-  describe("AbortSignal 전달", () => {
+  describe("타임아웃 오류", () => {
     it("fetch 호출에 signal이 포함되어야 한다", async () => {
       vi.mocked(global.fetch).mockResolvedValue(makeFetchResponse(200, true))
 
@@ -253,6 +253,15 @@ describe("validateApiKey()", () => {
       expect(global.fetch).toHaveBeenCalledWith(
         expect.any(String),
         expect.objectContaining({ signal: expect.any(AbortSignal) }),
+      )
+    })
+
+    it("AbortError 발생 시 타임아웃 메시지를 포함한 ApiKeyValidationError를 던져야 한다", async () => {
+      const abortError = new DOMException("The operation was aborted", "AbortError")
+      vi.mocked(global.fetch).mockRejectedValue(abortError)
+
+      await expect(validateApiKey("openai", "sk-test")).rejects.toThrow(
+        "연결 시간이 초과되었습니다. 잠시 후 다시 시도해주세요.",
       )
     })
   })

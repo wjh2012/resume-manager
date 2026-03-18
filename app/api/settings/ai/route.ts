@@ -35,8 +35,17 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 })
   }
 
+  let body: unknown
   try {
-    const body = await request.json()
+    body = await request.json()
+  } catch {
+    return NextResponse.json(
+      { error: "잘못된 요청 형식입니다." },
+      { status: 400 },
+    )
+  }
+
+  try {
     const parsed = aiSettingsUpdateSchema.safeParse(body)
 
     if (!parsed.success) {

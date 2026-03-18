@@ -14,6 +14,12 @@
 
 ## 보안
 
+### API 키 검증 엔드포인트 Rate Limiting 미적용
+
+- **상태**: `POST /api/settings/ai/validate` 엔드포인트에 Rate Limiting 없음
+- **원인**: Redis/Upstash 등 외부 인프라 의존. 인증된 사용자만 호출 가능하나, 반복 호출 시 외부 API(OpenAI/Anthropic/Google)에 과도한 요청 발생 가능
+- **해결 조건**: Rate Limiting 인프라 도입 후 userId 기반 분당 호출 제한 적용
+
 ### AiSettings.apiKey 평문 저장
 
 - **상태**: `prisma/schema.prisma`의 `apiKey` 필드가 평문으로 저장됨
