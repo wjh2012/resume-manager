@@ -95,6 +95,7 @@ export function CoverLetterChat({
         ? selectedDocIds.filter((id) => id !== docId)
         : [...selectedDocIds, docId]
 
+      setSelectedDocIds(newIds)
       setIsUpdatingDocs(true)
       try {
         const res = await fetch(`/api/cover-letters/${coverLetterId}/documents`, {
@@ -104,9 +105,8 @@ export function CoverLetterChat({
         })
 
         if (!res.ok) throw new Error()
-
-        setSelectedDocIds(newIds)
       } catch {
+        setSelectedDocIds(selectedDocIds)
         toast.error("참고 문서 변경에 실패했습니다.")
       } finally {
         setIsUpdatingDocs(false)

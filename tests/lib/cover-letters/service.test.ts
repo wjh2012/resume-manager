@@ -86,6 +86,7 @@ describe("createCoverLetter()", () => {
         coverLetter: { create: vi.fn().mockResolvedValue({ id: "cl-1" }) },
         conversation: { create: vi.fn().mockResolvedValue({}) },
         coverLetterDocument: { createMany: vi.fn().mockResolvedValue({}) },
+        document: { count: vi.fn().mockResolvedValue(2) },
       }
       capturedTx = tx as unknown as Record<string, unknown>
       return fn(tx)
@@ -108,6 +109,28 @@ describe("createCoverLetter()", () => {
         { coverLetterId: "cl-1", documentId: "doc-2" },
       ],
     })
+  })
+
+  it("selectedDocumentIds 중 소유하지 않은 문서가 있으면 CoverLetterForbiddenError를 던져야 한다", async () => {
+    // Arrange
+    mockPrisma.$transaction.mockImplementation(async (fn) => {
+      const tx = {
+        coverLetter: { create: vi.fn().mockResolvedValue({ id: "cl-1" }) },
+        conversation: { create: vi.fn().mockResolvedValue({}) },
+        coverLetterDocument: { createMany: vi.fn().mockResolvedValue({}) },
+        document: { count: vi.fn().mockResolvedValue(1) }, // 2개 요청했는데 1개만 소유
+      }
+      return fn(tx)
+    })
+    const data = {
+      title: "카카오 자소서",
+      companyName: "카카오",
+      position: "백엔드 개발자",
+      selectedDocumentIds: ["doc-1", "doc-other"],
+    }
+
+    // Act & Assert
+    await expect(createCoverLetter("user-1", data)).rejects.toThrow(CoverLetterForbiddenError)
   })
 
   it("selectedDocumentIds가 빈 배열이면 coverLetterDocument.createMany를 호출하지 않아야 한다", async () => {

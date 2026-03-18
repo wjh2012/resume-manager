@@ -49,6 +49,13 @@ export async function createCoverLetter(userId: string, data: CreateCoverLetterD
     })
 
     if (data.selectedDocumentIds && data.selectedDocumentIds.length > 0) {
+      const ownedCount = await tx.document.count({
+        where: { id: { in: data.selectedDocumentIds }, userId },
+      })
+      if (ownedCount !== data.selectedDocumentIds.length) {
+        throw new CoverLetterForbiddenError()
+      }
+
       await tx.coverLetterDocument.createMany({
         data: data.selectedDocumentIds.map((documentId) => ({
           coverLetterId: coverLetter.id,
