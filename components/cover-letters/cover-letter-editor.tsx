@@ -3,7 +3,9 @@
 import { useRef, useEffect, useState, useCallback } from "react"
 import Link from "next/link"
 import { ChevronLeft } from "lucide-react"
+import { toast } from "sonner"
 import { Textarea } from "@/components/ui/textarea"
+import { Button } from "@/components/ui/button"
 
 type SaveStatus = "idle" | "saving" | "saved" | "error"
 
@@ -33,6 +35,7 @@ export function CoverLetterEditor({
   onContentChange,
 }: CoverLetterEditorProps) {
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle")
+  const [isCompleting, setIsCompleting] = useState(false)
   const contentRef = useRef(content)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -104,6 +107,23 @@ export function CoverLetterEditor({
     }
   }, [])
 
+  const handleComplete = useCallback(async () => {
+    setIsCompleting(true)
+    try {
+      const res = await fetch(`/api/cover-letters/${coverLetterId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "COMPLETED" }),
+      })
+      if (!res.ok) throw new Error()
+      toast.success("자기소개서가 완료 처리되었습니다.")
+    } catch {
+      toast.error("완료 처리에 실패했습니다.")
+    } finally {
+      setIsCompleting(false)
+    }
+  }, [coverLetterId])
+
   const charCount = content.length
 
   return (
@@ -121,12 +141,18 @@ export function CoverLetterEditor({
         </div>
         <div className="flex items-center gap-3 text-xs">
           <span className="text-muted-foreground">{charCount.toLocaleString()}자</span>
-          <span
-            aria-live="polite"
-            className={STATUS_COLOR[saveStatus]}
-          >
+          <span aria-live="polite" className={STATUS_COLOR[saveStatus]}>
             {STATUS_TEXT[saveStatus]}
           </span>
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 text-xs"
+            onClick={handleComplete}
+            disabled={isCompleting}
+          >
+            완료
+          </Button>
         </div>
       </div>
       <div className="flex-1 p-4">
