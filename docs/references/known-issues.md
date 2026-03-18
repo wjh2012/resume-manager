@@ -54,6 +54,40 @@
 - **원인**: `getLanguageModel()`에서 provider만 검증하고 model은 검증 없이 SDK에 전달
 - **해결**: `PROVIDER_MODELS`에서 model 존재 여부 검증, 미지원 모델 시 에러 throw
 
+## AI / 임베딩
+
+### 임베딩 모델 OpenAI 고정
+
+- **상태**: 미해결
+- **증상**: `OPENAI_API_KEY` 환경 변수가 없으면 문서 업로드 및 RAG 컨텍스트 빌드 시 `AI_LoadAPIKeyError` 발생
+- **원인**: `lib/ai/embedding.ts`가 `text-embedding-3-small` (OpenAI)로 하드코딩. 서버 전용 `OPENAI_API_KEY` env var 필요
+- **제한사항**: 임베딩 벡터 차원이 OpenAI 1536으로 고정되어 있어 다른 모델(Google text-embedding-004: 768차원 등)로 교체 시 기존 벡터 데이터 마이그레이션 필요
+- **해결 조건**: 서버 `.env`에 `OPENAI_API_KEY` 설정 필수. 임베딩 모델 교체는 pgvector 스키마 및 기존 데이터 마이그레이션과 함께 검토
+
+## 자기소개서 작업공간
+
+### 에디터 부분 삽입 미지원
+
+- **상태**: 미해결
+- **증상**: "에디터에 반영" 버튼 클릭 시 AI 응답이 에디터 끝에 단순 추가됨
+- **개선 방향**: git diff처럼 변경 구간을 `-`/`+`로 시각적으로 표시하고 사용자가 수락/거절할 수 있는 인라인 패치 UI 구현
+- **구현 참고**:
+  - `diff-match-patch` 또는 `fast-diff` 라이브러리로 기존 텍스트와 AI 제안 텍스트를 비교
+  - 변경 구간을 배경색으로 하이라이트 (삭제: 빨강, 추가: 초록)
+  - 수락 시 변경사항 적용, 거절 시 원본 유지
+  - textarea 한계로 인라인 하이라이트가 어렵다면 contenteditable 또는 CodeMirror/ProseMirror 기반 에디터로 교체 필요
+  - textarea 유지 시 `selectionStart`/`selectionEnd`로 커서 위치 삽입은 가능
+
+## UI / 렌더링
+
+### Radix UI Hydration ID Mismatch
+
+- **상태**: 미해결
+- **증상**: 대시보드 레이아웃 진입 시 콘솔에 React hydration 경고. SSR에서 생성된 `radix-_R_...` ID와 클라이언트에서 생성된 ID가 불일치
+- **영향 범위**: `UserMenu` (DropdownMenuTrigger), AI 설정 폼 (SelectTrigger × 2). 기능 동작에는 영향 없음
+- **원인**: Radix UI 내부 ID 카운터가 SSR/클라이언트 컴포넌트 트리 순서 차이로 달라짐
+- **해결 조건**: Radix UI 업그레이드 또는 SSR/클라이언트 렌더 트리 구조 일치 확인
+
 ## 스토리지
 
 ### Storage 고아 파일 가능성

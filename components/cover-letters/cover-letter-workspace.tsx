@@ -41,7 +41,7 @@ export function CoverLetterWorkspace({
 
   return (
     <ResizablePanelGroup orientation="horizontal" className="h-full">
-      <ResizablePanel defaultSize={50} minSize={30}>
+      <ResizablePanel defaultSize={50} minSize={30} className="overflow-hidden">
         <CoverLetterEditor
           coverLetterId={coverLetterId}
           content={content}
@@ -49,7 +49,7 @@ export function CoverLetterWorkspace({
         />
       </ResizablePanel>
       <ResizableHandle withHandle />
-      <ResizablePanel defaultSize={50} minSize={30}>
+      <ResizablePanel defaultSize={50} minSize={30} className="overflow-hidden">
         <CoverLetterChat
           coverLetterId={coverLetterId}
           conversationId={conversationId}
