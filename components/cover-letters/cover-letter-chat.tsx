@@ -97,8 +97,8 @@ export function CoverLetterChat({
 
       setIsUpdatingDocs(true)
       try {
-        const res = await fetch(`/api/cover-letters/${coverLetterId}`, {
-          method: "PUT",
+        const res = await fetch(`/api/cover-letters/${coverLetterId}/documents`, {
+          method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ documentIds: newIds }),
         })

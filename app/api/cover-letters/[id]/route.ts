@@ -1,14 +1,10 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
-import {
-  updateCoverLetterSchema,
-  updateSelectedDocumentsSchema,
-} from "@/lib/validations/cover-letter"
+import { updateCoverLetterSchema } from "@/lib/validations/cover-letter"
 import {
   getCoverLetter,
   updateCoverLetter,
   deleteCoverLetter,
-  updateSelectedDocuments,
   CoverLetterNotFoundError,
   CoverLetterForbiddenError,
 } from "@/lib/cover-letters/service"
@@ -87,27 +83,6 @@ export async function PUT(
       { error: "유효하지 않은 요청입니다." },
       { status: 400 },
     )
-  }
-
-  // selectedDocuments 업데이트 요청인지 확인
-  const docsParsed = updateSelectedDocumentsSchema.safeParse(body)
-  if (docsParsed.success) {
-    try {
-      await updateSelectedDocuments(id, user.id, docsParsed.data.documentIds)
-      return NextResponse.json({ success: true })
-    } catch (error) {
-      if (error instanceof CoverLetterNotFoundError) {
-        return NextResponse.json({ error: error.message }, { status: 404 })
-      }
-      if (error instanceof CoverLetterForbiddenError) {
-        return NextResponse.json({ error: error.message }, { status: 403 })
-      }
-      console.error("[PUT /api/cover-letters/[id]] documents", error)
-      return NextResponse.json(
-        { error: "참고 문서 변경에 실패했습니다." },
-        { status: 500 },
-      )
-    }
   }
 
   const parsed = updateCoverLetterSchema.safeParse(body)

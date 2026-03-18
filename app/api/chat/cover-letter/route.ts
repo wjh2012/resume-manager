@@ -1,6 +1,7 @@
 import { streamText, convertToModelMessages, type UIMessage } from "ai"
 import { NextResponse } from "next/server"
 import { z } from "zod"
+import { MessageRole } from "@prisma/client"
 import { createClient } from "@/lib/supabase/server"
 import { prisma } from "@/lib/prisma"
 import { getLanguageModel, AiSettingsNotFoundError } from "@/lib/ai/provider"
@@ -91,8 +92,7 @@ export async function POST(request: Request) {
       .map((p: { text: string }) => p.text)
       .join("") || lastMessage.content || ""
 
-    // RAG 컨텍스트, 모델, user 메시지 저장을 병렬 실행
-    // 세 번째 요소(메시지 저장)는 결과가 필요 없으므로 destructure 생략
+    // RAG 컨텍스트, 모델을 병렬 로드
     const [context, model] = await Promise.all([
       buildContext(user.id, {
         query: lastMessageContent,
@@ -100,15 +100,6 @@ export async function POST(request: Request) {
         includeInsights: true,
       }),
       getLanguageModel(user.id),
-      lastMessage.role === "user" && lastMessageContent
-        ? prisma.message.create({
-            data: {
-              conversationId,
-              role: "USER",
-              content: lastMessageContent,
-            },
-          })
-        : Promise.resolve(),
     ])
 
     // 시스템 프롬프트 생성
@@ -128,13 +119,26 @@ export async function POST(request: Request) {
       system,
       messages: modelMessages,
       onFinish: async ({ text }) => {
-        await prisma.message.create({
-          data: {
-            conversationId,
-            role: "ASSISTANT",
-            content: text,
-          },
-        })
+        // USER + ASSISTANT 메시지를 트랜잭션으로 원자적 저장
+        const ops = [
+          ...(lastMessage.role === "user" && lastMessageContent
+            ? [
+                prisma.message.create({
+                  data: { conversationId, role: MessageRole.USER, content: lastMessageContent },
+                }),
+              ]
+            : []),
+          ...(text
+            ? [
+                prisma.message.create({
+                  data: { conversationId, role: MessageRole.ASSISTANT, content: text },
+                }),
+              ]
+            : []),
+        ]
+        if (ops.length > 0) {
+          await prisma.$transaction(ops)
+        }
       },
     })
 

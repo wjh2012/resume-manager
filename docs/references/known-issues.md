@@ -64,6 +64,22 @@
 - **제한사항**: 임베딩 벡터 차원이 OpenAI 1536으로 고정되어 있어 다른 모델(Google text-embedding-004: 768차원 등)로 교체 시 기존 벡터 데이터 마이그레이션 필요
 - **해결 조건**: 서버 `.env`에 `OPENAI_API_KEY` 설정 필수. 임베딩 모델 교체는 pgvector 스키마 및 기존 데이터 마이그레이션과 함께 검토
 
+## 자기소개서 API
+
+### ~~PUT /api/cover-letters/[id] 이중 스키마 판별~~
+
+- **상태**: ~~해결됨~~ (feature/cover-letters)
+- **증상**: `{ content: "hello", documentIds: ["..."] }` body가 `updateSelectedDocumentsSchema`에 먼저 매칭되어 내용 저장 요청이 문서 업데이트로 오처리될 수 있음
+- **해결**: `PATCH /api/cover-letters/[id]/documents` 별도 엔드포인트로 분리. PUT에서 `updateSelectedDocuments` 분기 제거
+- **출처**: [PR #17 @claude 리뷰](https://github.com/wjh2012/resume-manager/pull/17)
+
+### ~~스트리밍 중 에러 시 메시지 히스토리 불일치~~
+
+- **상태**: ~~해결됨~~ (feature/cover-letters)
+- **증상**: 스트리밍 도중 에러 발생 시 USER 메시지는 저장되지만 ASSISTANT 메시지는 누락
+- **해결**: USER 메시지 저장을 `onFinish`로 이동하여 USER+ASSISTANT를 `$transaction`으로 원자적 저장
+- **출처**: [PR #17 @claude 리뷰](https://github.com/wjh2012/resume-manager/pull/17)
+
 ## 자기소개서 작업공간
 
 ### 에디터 부분 삽입 미지원

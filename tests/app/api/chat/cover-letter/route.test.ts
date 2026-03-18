@@ -1,0 +1,420 @@
+import { describe, it, expect, vi, beforeEach } from "vitest"
+
+// ─── 외부 의존성 mock (vi.mock은 호이스팅되어 import 전에 실행됨) ─────────────
+
+vi.mock("@/lib/supabase/server", () => ({
+  createClient: vi.fn(),
+}))
+
+vi.mock("@/lib/prisma", () => ({
+  prisma: {
+    coverLetter: {
+      findUnique: vi.fn(),
+    },
+    conversation: {
+      findUnique: vi.fn(),
+    },
+    message: {
+      create: vi.fn(),
+    },
+    $transaction: vi.fn(),
+  },
+}))
+
+vi.mock("@/lib/ai/provider", () => ({
+  getLanguageModel: vi.fn(),
+  AiSettingsNotFoundError: class AiSettingsNotFoundError extends Error {
+    constructor(message = "AI 설정을 찾을 수 없습니다.") {
+      super(message)
+    }
+  },
+}))
+
+vi.mock("@/lib/ai/context", () => ({
+  buildContext: vi.fn(),
+}))
+
+vi.mock("@/lib/ai/prompts/cover-letter", () => ({
+  buildCoverLetterSystemPrompt: vi.fn(),
+}))
+
+vi.mock("ai", () => ({
+  streamText: vi.fn(),
+  convertToModelMessages: vi.fn(),
+  embedMany: vi.fn().mockResolvedValue({ embeddings: [] }),
+}))
+
+// prisma.ts가 임베딩 관련 SDK를 import할 수 있으므로 사전 mock 처리
+vi.mock("@ai-sdk/openai", () => ({
+  openai: { embedding: vi.fn().mockReturnValue({ modelId: "text-embedding-3-small" }) },
+}))
+
+// ─── 실제 모듈 import ─────────────────────────────────────────────────────────
+
+import { POST } from "@/app/api/chat/cover-letter/route"
+import { createClient } from "@/lib/supabase/server"
+import { prisma } from "@/lib/prisma"
+import { getLanguageModel, AiSettingsNotFoundError } from "@/lib/ai/provider"
+import { buildContext } from "@/lib/ai/context"
+import { buildCoverLetterSystemPrompt } from "@/lib/ai/prompts/cover-letter"
+import { streamText, convertToModelMessages } from "ai"
+
+// ─── mock 타입 캐스팅 헬퍼 ───────────────────────────────────────────────────
+
+const mockCreateClient = vi.mocked(createClient)
+const mockPrisma = vi.mocked(prisma)
+const mockGetLanguageModel = vi.mocked(getLanguageModel)
+const mockBuildContext = vi.mocked(buildContext)
+const mockBuildCoverLetterSystemPrompt = vi.mocked(buildCoverLetterSystemPrompt)
+const mockStreamText = vi.mocked(streamText)
+const mockConvertToModelMessages = vi.mocked(convertToModelMessages)
+
+// ─── 상수 픽스처 ──────────────────────────────────────────────────────────────
+
+const VALID_USER_ID = "a0000000-0000-4000-8000-000000000001"
+const VALID_COVER_LETTER_ID = "b0000000-0000-4000-8000-000000000001"
+const VALID_CONVERSATION_ID = "c0000000-0000-4000-8000-000000000001"
+const VALID_DOC_ID = "d0000000-0000-4000-8000-000000000001"
+
+const MOCK_COVER_LETTER = {
+  userId: VALID_USER_ID,
+  companyName: "카카오",
+  position: "백엔드 개발자",
+  jobPostingText: null,
+}
+
+const MOCK_CONVERSATION = {
+  userId: VALID_USER_ID,
+  coverLetterId: VALID_COVER_LETTER_ID,
+}
+
+// 기본 유효한 user 메시지 픽스처
+const BASE_USER_MESSAGE = {
+  id: "msg-1",
+  role: "user" as const,
+  content: "자기소개서 작성 도와주세요",
+  parts: [{ type: "text", text: "자기소개서 작성 도와주세요" }],
+}
+
+// ─── 헬퍼 함수 ────────────────────────────────────────────────────────────────
+
+function makeSupabaseMock(user: { id: string } | null) {
+  return {
+    auth: {
+      getUser: vi.fn().mockResolvedValue({ data: { user } }),
+    },
+  }
+}
+
+function makeRequest(body: unknown): Request {
+  return new Request("http://localhost/api/chat/cover-letter", {
+    method: "POST",
+    body: JSON.stringify(body),
+    headers: { "Content-Type": "application/json" },
+  })
+}
+
+function makeValidBody(overrides?: Partial<{
+  messages: unknown[]
+  conversationId: string
+  coverLetterId: string
+  selectedDocumentIds: string[]
+}>) {
+  return {
+    messages: [BASE_USER_MESSAGE],
+    conversationId: VALID_CONVERSATION_ID,
+    coverLetterId: VALID_COVER_LETTER_ID,
+    ...overrides,
+  }
+}
+
+// streamText mock에서 onFinish 콜백을 캡처하고 나중에 직접 호출하는 헬퍼
+function captureOnFinish(): { getOnFinish: () => ((args: { text: string }) => Promise<void>) | undefined } {
+  let capturedOnFinish: ((args: { text: string }) => Promise<void>) | undefined
+  mockStreamText.mockImplementation((opts: Parameters<typeof streamText>[0]) => {
+    capturedOnFinish = opts.onFinish as (args: { text: string }) => Promise<void>
+    return {
+      toUIMessageStreamResponse: vi.fn().mockReturnValue(new Response("stream", { status: 200 })),
+    } as never
+  })
+  return { getOnFinish: () => capturedOnFinish }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+beforeEach(() => {
+  vi.clearAllMocks()
+
+  // 기본 성공 경로 설정
+  mockCreateClient.mockResolvedValue(
+    makeSupabaseMock({ id: VALID_USER_ID }) as never,
+  )
+  mockPrisma.coverLetter.findUnique.mockResolvedValue(MOCK_COVER_LETTER as never)
+  mockPrisma.conversation.findUnique.mockResolvedValue(MOCK_CONVERSATION as never)
+  mockPrisma.$transaction.mockResolvedValue([])
+  mockPrisma.message.create.mockResolvedValue({ id: "msg-created" } as never)
+
+  mockGetLanguageModel.mockResolvedValue({ modelId: "gpt-4o" } as never)
+  mockBuildContext.mockResolvedValue("컨텍스트 내용" as never)
+  mockBuildCoverLetterSystemPrompt.mockReturnValue("시스템 프롬프트")
+  mockConvertToModelMessages.mockResolvedValue([] as never)
+
+  mockStreamText.mockReturnValue({
+    toUIMessageStreamResponse: vi.fn().mockReturnValue(new Response("stream", { status: 200 })),
+  } as never)
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("POST /api/chat/cover-letter", () => {
+  // ── 인증 검증 ──────────────────────────────────────────────────────────────
+  describe("인증이 없을 때", () => {
+    it("401을 반환해야 한다", async () => {
+      // Arrange
+      mockCreateClient.mockResolvedValue(makeSupabaseMock(null) as never)
+      const request = makeRequest(makeValidBody())
+
+      // Act
+      const response = await POST(request)
+      const body = await response.json()
+
+      // Assert
+      expect(response.status).toBe(401)
+      expect(body).toEqual({ error: "인증이 필요합니다." })
+    })
+  })
+
+  // ── CoverLetter 소유권 검증 ────────────────────────────────────────────────
+  describe("CoverLetter가 없거나 소유자가 다를 때", () => {
+    it("coverLetter가 null이면 404를 반환해야 한다", async () => {
+      // Arrange
+      mockPrisma.coverLetter.findUnique.mockResolvedValue(null)
+      const request = makeRequest(makeValidBody())
+
+      // Act
+      const response = await POST(request)
+      const body = await response.json()
+
+      // Assert
+      expect(response.status).toBe(404)
+      expect(body).toEqual({ error: "자기소개서를 찾을 수 없습니다." })
+    })
+
+    it("coverLetter.userId가 인증된 사용자와 다르면 404를 반환해야 한다", async () => {
+      // Arrange — 다른 사용자 소유의 CoverLetter
+      mockPrisma.coverLetter.findUnique.mockResolvedValue({
+        ...MOCK_COVER_LETTER,
+        userId: "e0000000-0000-4000-8000-000000000099",
+      } as never)
+      const request = makeRequest(makeValidBody())
+
+      // Act
+      const response = await POST(request)
+      const body = await response.json()
+
+      // Assert
+      expect(response.status).toBe(404)
+      expect(body).toEqual({ error: "자기소개서를 찾을 수 없습니다." })
+    })
+  })
+
+  // ── Conversation 소유권 검증 ──────────────────────────────────────────────
+  describe("잘못된 conversationId일 때", () => {
+    it("conversation이 null이면 404를 반환해야 한다", async () => {
+      // Arrange
+      mockPrisma.conversation.findUnique.mockResolvedValue(null)
+      const request = makeRequest(makeValidBody())
+
+      // Act
+      const response = await POST(request)
+      const body = await response.json()
+
+      // Assert
+      expect(response.status).toBe(404)
+      expect(body).toEqual({ error: "대화를 찾을 수 없습니다." })
+    })
+
+    it("conversation.userId가 인증된 사용자와 다르면 404를 반환해야 한다", async () => {
+      // Arrange — 다른 사용자 소유의 Conversation
+      mockPrisma.conversation.findUnique.mockResolvedValue({
+        userId: "e0000000-0000-4000-8000-000000000099",
+        coverLetterId: VALID_COVER_LETTER_ID,
+      } as never)
+      const request = makeRequest(makeValidBody())
+
+      // Act
+      const response = await POST(request)
+      const body = await response.json()
+
+      // Assert
+      expect(response.status).toBe(404)
+      expect(body).toEqual({ error: "대화를 찾을 수 없습니다." })
+    })
+
+    it("conversation.coverLetterId가 요청의 coverLetterId와 다르면 404를 반환해야 한다", async () => {
+      // Arrange — 다른 CoverLetter에 속한 Conversation
+      mockPrisma.conversation.findUnique.mockResolvedValue({
+        userId: VALID_USER_ID,
+        coverLetterId: "f0000000-0000-4000-8000-000000000099",
+      } as never)
+      const request = makeRequest(makeValidBody())
+
+      // Act
+      const response = await POST(request)
+      const body = await response.json()
+
+      // Assert
+      expect(response.status).toBe(404)
+      expect(body).toEqual({ error: "대화를 찾을 수 없습니다." })
+    })
+  })
+
+  // ── AiSettingsNotFoundError ────────────────────────────────────────────────
+  describe("AI 설정이 없을 때", () => {
+    it("400을 반환해야 한다", async () => {
+      // Arrange
+      mockGetLanguageModel.mockRejectedValue(new AiSettingsNotFoundError("AI 설정을 찾을 수 없습니다."))
+      const request = makeRequest(makeValidBody())
+
+      // Act
+      const response = await POST(request)
+      const body = await response.json()
+
+      // Assert
+      expect(response.status).toBe(400)
+      expect(body.error).toContain("AI 설정을 찾을 수 없습니다.")
+    })
+  })
+
+  // ── onFinish 트랜잭션 로직 ────────────────────────────────────────────────
+  describe("onFinish 콜백", () => {
+    it("lastMessage.role==='user'이고 text가 있으면 USER + ASSISTANT 메시지를 트랜잭션으로 저장해야 한다", async () => {
+      // Arrange
+      const { getOnFinish } = captureOnFinish()
+      const request = makeRequest(makeValidBody({
+        messages: [BASE_USER_MESSAGE],
+      }))
+
+      // Act — route 핸들러를 호출하여 onFinish 콜백을 캡처
+      await POST(request)
+      const onFinish = getOnFinish()
+      expect(onFinish).toBeDefined()
+
+      // onFinish 콜백을 직접 실행
+      await onFinish!({ text: "AI 응답 내용입니다." })
+
+      // Assert — $transaction이 USER와 ASSISTANT 두 create 연산으로 호출되어야 함
+      expect(mockPrisma.$transaction).toHaveBeenCalledOnce()
+      const transactionArg = mockPrisma.$transaction.mock.calls[0][0] as unknown[]
+      expect(transactionArg).toHaveLength(2)
+    })
+
+    it("text가 빈 문자열이면 USER create만 트랜잭션에 포함되어야 한다", async () => {
+      // Arrange
+      const { getOnFinish } = captureOnFinish()
+      const request = makeRequest(makeValidBody({
+        messages: [BASE_USER_MESSAGE],
+      }))
+
+      // Act
+      await POST(request)
+      const onFinish = getOnFinish()
+      expect(onFinish).toBeDefined()
+
+      // text가 빈 문자열 → ASSISTANT create는 포함되지 않아야 함
+      await onFinish!({ text: "" })
+
+      // Assert — USER create만 포함 (1개)
+      expect(mockPrisma.$transaction).toHaveBeenCalledOnce()
+      const transactionArg = mockPrisma.$transaction.mock.calls[0][0] as unknown[]
+      expect(transactionArg).toHaveLength(1)
+    })
+
+    it("lastMessage.role==='assistant'이면 ASSISTANT create만 트랜잭션에 포함되어야 한다", async () => {
+      // Arrange
+      const { getOnFinish } = captureOnFinish()
+      const assistantMessage = {
+        id: "msg-2",
+        role: "assistant" as const,
+        content: "이전 AI 응답",
+        parts: [{ type: "text", text: "이전 AI 응답" }],
+      }
+      const request = makeRequest(makeValidBody({
+        messages: [BASE_USER_MESSAGE, assistantMessage],
+      }))
+
+      // Act
+      await POST(request)
+      const onFinish = getOnFinish()
+      expect(onFinish).toBeDefined()
+
+      // lastMessage가 assistant → USER create는 포함되지 않아야 함
+      await onFinish!({ text: "새 AI 응답" })
+
+      // Assert — ASSISTANT create만 포함 (1개)
+      expect(mockPrisma.$transaction).toHaveBeenCalledOnce()
+      const transactionArg = mockPrisma.$transaction.mock.calls[0][0] as unknown[]
+      expect(transactionArg).toHaveLength(1)
+    })
+
+    it("onFinish에서 올바른 conversationId, role, content로 message.create를 호출해야 한다", async () => {
+      // Arrange
+      const { getOnFinish } = captureOnFinish()
+      const userContent = "자기소개서 초안을 작성해주세요"
+      const userMessage = {
+        id: "msg-1",
+        role: "user" as const,
+        content: userContent,
+        parts: [{ type: "text", text: userContent }],
+      }
+      const request = makeRequest(makeValidBody({ messages: [userMessage] }))
+
+      // Act
+      await POST(request)
+      const onFinish = getOnFinish()
+      await onFinish!({ text: "AI가 생성한 자기소개서 내용" })
+
+      // Assert — message.create가 USER와 ASSISTANT 데이터로 각각 호출되어야 함
+      expect(mockPrisma.message.create).toHaveBeenCalledWith({
+        data: { conversationId: VALID_CONVERSATION_ID, role: "USER", content: userContent },
+      })
+      expect(mockPrisma.message.create).toHaveBeenCalledWith({
+        data: { conversationId: VALID_CONVERSATION_ID, role: "ASSISTANT", content: "AI가 생성한 자기소개서 내용" },
+      })
+    })
+  })
+
+  // ── 성공 경로 ─────────────────────────────────────────────────────────────
+  describe("성공적으로 처리될 때", () => {
+    it("streamText.toUIMessageStreamResponse() 결과를 반환해야 한다", async () => {
+      // Arrange
+      const mockStreamResponse = new Response("stream-data", { status: 200 })
+      mockStreamText.mockReturnValue({
+        toUIMessageStreamResponse: vi.fn().mockReturnValue(mockStreamResponse),
+      } as never)
+      const request = makeRequest(makeValidBody())
+
+      // Act
+      const response = await POST(request)
+
+      // Assert
+      expect(response.status).toBe(200)
+    })
+
+    it("selectedDocumentIds를 buildContext에 전달해야 한다", async () => {
+      // Arrange
+      const request = makeRequest(makeValidBody({
+        selectedDocumentIds: [VALID_DOC_ID],
+      }))
+
+      // Act
+      await POST(request)
+
+      // Assert
+      expect(mockBuildContext).toHaveBeenCalledWith(
+        VALID_USER_ID,
+        expect.objectContaining({ selectedDocumentIds: [VALID_DOC_ID] }),
+      )
+    })
+  })
+})

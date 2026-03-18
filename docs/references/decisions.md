@@ -39,6 +39,28 @@
 - **근거**: 사용자 시선이 입력 필드에 있으므로 인라인이 직관적이며, toast와 인라인이 다른 메시지를 보여주면 혼란스럽다.
 - **출처**: [PR #7 @claude 1차 리뷰](https://github.com/wjh2012/resume-manager/pull/7#issuecomment-4079164110) — 인라인 에러 메시지 고정값 지적
 
+## 소유권 검증: updateMany/deleteMany 원자적 처리
+
+- **결정**: 소유권 확인 후 수정/삭제하는 패턴은 `findUnique` + `update/delete` 2-쿼리 대신 `updateMany/deleteMany`에 `userId` 조건을 포함하여 단일 쿼리로 처리한다.
+- **근거**: `findUnique` 후 `update/delete` 사이의 시간 창에서 TOCTOU 경쟁 조건이 이론적으로 존재. 단일 쿼리로 원자성 보장.
+- **패턴**:
+  ```ts
+  const result = await prisma.coverLetter.updateMany({ where: { id, userId }, data })
+  if (result.count === 0) {
+    const exists = await prisma.coverLetter.findUnique({ where: { id }, select: { id: true } })
+    if (!exists) throw new NotFoundError()
+    throw new ForbiddenError()
+  }
+  ```
+- **출처**: [PR #17 @claude 리뷰](https://github.com/wjh2012/resume-manager/pull/17)
+
+## conversationId 소유권 검증 필수
+
+- **결정**: 채팅 API에서 `coverLetterId` 검증 외에 `conversationId`도 별도로 소유권 및 연결 관계를 검증한다.
+- **근거**: `conversationId`를 검증하지 않으면 다른 사용자의 대화에 메시지를 삽입할 수 있는 보안 취약점이 존재.
+- **패턴**: `conversation.userId === user.id && conversation.coverLetterId === coverLetterId` 동시 검증.
+- **출처**: [PR #17 @claude 리뷰](https://github.com/wjh2012/resume-manager/pull/17)
+
 ## 접근성: label-input 연결 필수
 
 - **결정**: `<label>`에는 `htmlFor`, 대응하는 입력 요소에는 `id`를 반드시 부여한다.
