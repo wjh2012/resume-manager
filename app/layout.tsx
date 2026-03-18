@@ -48,7 +48,7 @@ export default function RootLayout({
           <TooltipProvider>
             <a
               href="#main-content"
-              className="bg-background text-foreground fixed left-2 top-2 z-50 rounded-md px-4 py-2 text-sm font-medium opacity-0 focus:opacity-100"
+              className="bg-background text-foreground sr-only rounded-md px-4 py-2 text-sm font-medium focus:not-sr-only focus:fixed focus:left-2 focus:top-2 focus:z-50"
             >
               본문으로 건너뛰기
             </a>
