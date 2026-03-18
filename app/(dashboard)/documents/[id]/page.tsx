@@ -1,31 +1,27 @@
+import { Suspense } from "react"
 import { notFound, redirect } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
 
-import { createClient } from "@/lib/supabase/server"
+import { getAuthUser } from "@/lib/supabase/user"
 import { getDocument } from "@/lib/documents/service"
 import { DOCUMENT_TYPE_LABELS } from "@/lib/validations/document"
 import { formatFileSize } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { Skeleton } from "@/components/ui/skeleton"
 import { DeleteButton } from "@/components/documents/delete-button"
 import type { DocumentType } from "@/lib/validations/document"
 
-export default async function DocumentDetailPage({
-  params,
+async function DocumentContent({
+  id,
+  userId,
 }: {
-  params: Promise<{ id: string }>
+  id: string
+  userId: string
 }) {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) redirect("/login")
-
-  const { id } = await params
-  const document = await getDocument(id, user.id)
+  const document = await getDocument(id, userId)
 
   if (!document) notFound()
 
@@ -73,5 +69,48 @@ export default async function DocumentDetailPage({
         </ScrollArea>
       </div>
     </div>
+  )
+}
+
+function DocumentDetailSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center gap-4">
+        <Skeleton className="h-10 w-10 rounded-md" />
+        <div className="flex-1 space-y-2">
+          <Skeleton className="h-7 w-48" />
+          <Skeleton className="h-4 w-64" />
+        </div>
+        <Skeleton className="h-9 w-16" />
+      </div>
+      <div className="rounded-lg border">
+        <div className="border-b px-4 py-3">
+          <Skeleton className="h-5 w-24" />
+        </div>
+        <div className="space-y-2 p-4">
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-3/4" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-5/6" />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default async function DocumentDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>
+}) {
+  const [user, { id }] = await Promise.all([getAuthUser(), params])
+
+  if (!user) redirect("/login")
+
+  return (
+    <Suspense fallback={<DocumentDetailSkeleton />}>
+      <DocumentContent id={id} userId={user.id} />
+    </Suspense>
   )
 }

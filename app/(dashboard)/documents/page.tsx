@@ -1,24 +1,27 @@
+import { Suspense } from "react"
 import { redirect } from "next/navigation"
-import { createClient } from "@/lib/supabase/server"
+import { getAuthUser } from "@/lib/supabase/user"
 import { listDocuments } from "@/lib/documents/service"
 import { DocumentList } from "@/components/documents/document-list"
 import { UploadDialog } from "@/components/documents/upload-dialog"
+import { DocumentListSkeleton } from "@/components/documents/document-list-skeleton"
 
-export default async function DocumentsPage() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) redirect("/login")
-
-  const documents = await listDocuments(user.id)
+async function DocumentListSection({ userId }: { userId: string }) {
+  const documents = await listDocuments(userId)
 
   // Date를 직렬화 가능한 형태로 변환
   const serialized = documents.map((doc) => ({
     ...doc,
     createdAt: doc.createdAt.toISOString(),
   }))
+
+  return <DocumentList documents={serialized} />
+}
+
+export default async function DocumentsPage() {
+  const user = await getAuthUser()
+
+  if (!user) redirect("/login")
 
   return (
     <div className="space-y-6">
@@ -32,7 +35,9 @@ export default async function DocumentsPage() {
         <UploadDialog />
       </div>
 
-      <DocumentList documents={serialized} />
+      <Suspense fallback={<DocumentListSkeleton />}>
+        <DocumentListSection userId={user.id} />
+      </Suspense>
     </div>
   )
 }
