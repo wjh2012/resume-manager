@@ -69,3 +69,21 @@
 - **스펙**: `claude-sonnet-4-6`
 - **실제**: `claude-sonnet-4-20250514`
 - **이유**: AI SDK에서 사용하는 정식 모델 ID (날짜 기반 버전 형식)
+
+## shadcn/ui 컴포넌트 수정
+
+아래 shadcn/ui 생성 파일에 프로젝트 요구사항에 맞는 커스터마이징 적용:
+
+### `components/ui/button.tsx`
+
+- `transition-all` → `transition-[color,background-color,border-color,box-shadow,opacity,transform]` (성능 개선)
+- default variant `[a]:hover:bg-primary/80` → `hover:bg-primary/80` (일반 hover로 수정)
+
+### `components/ui/dialog.tsx`
+
+- sr-only "Close" → "닫기" (한국어 서비스)
+- Footer close 버튼 텍스트 "Close" → "닫기"
+
+### `components/ui/sidebar.tsx`
+
+- "Toggle Sidebar" → "사이드바 토글" (한국어 서비스)

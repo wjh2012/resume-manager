@@ -46,9 +46,9 @@ const typeIcons: Record<DocumentType, typeof FileText> = {
 }
 
 const typeColors: Record<DocumentType, string> = {
-  pdf: "text-red-500",
-  docx: "text-blue-500",
-  txt: "text-gray-500",
+  pdf: "text-type-pdf",
+  docx: "text-type-docx",
+  txt: "text-type-txt",
 }
 
 function formatDate(dateStr: string): string {
