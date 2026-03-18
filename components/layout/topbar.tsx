@@ -10,7 +10,7 @@ export function Topbar() {
   const title = getPageTitle(pathname)
 
   return (
-    <header className="flex h-14 items-center gap-2 border-b px-4">
+    <header className="bg-background/80 sticky top-0 z-10 flex h-14 items-center gap-2 border-b px-4 backdrop-blur-sm">
       <SidebarTrigger />
       <Separator orientation="vertical" className="h-6" />
       {title && <h1 className="text-sm font-medium">{title}</h1>}
