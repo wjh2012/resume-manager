@@ -207,6 +207,13 @@ export async function listDocuments(userId: string) {
   })
 }
 
+// 사용자 문서 수 조회
+export async function countDocuments(userId: string) {
+  return prisma.document.count({
+    where: { userId },
+  })
+}
+
 // 문서 상세 조회 (소유권 검증 포함)
 export async function getDocument(documentId: string, userId: string) {
   const document = await prisma.document.findUnique({
