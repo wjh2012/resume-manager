@@ -25,14 +25,15 @@ export default async function CoverLetterWorkspacePage({
   if (!user) redirect("/login")
 
   const { id } = await params
-  const coverLetter = await getCoverLetter(id, user.id)
+  const [coverLetter, documents] = await Promise.all([
+    getCoverLetter(id, user.id),
+    listDocuments(user.id),
+  ])
 
   if (!coverLetter) notFound()
 
   const conversation = coverLetter.conversations[0]
   if (!conversation) notFound()
-
-  const documents = await listDocuments(user.id)
   const serializedDocs = documents.map((doc) => ({
     id: doc.id,
     title: doc.title,

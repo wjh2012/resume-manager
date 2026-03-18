@@ -78,12 +78,24 @@ export async function POST(request: Request) {
       .map((p: { text: string }) => p.text)
       .join("") || lastMessage.content || ""
 
-    // RAG 컨텍스트 빌드
-    const context = await buildContext(user.id, {
-      query: lastMessageContent,
-      selectedDocumentIds,
-      includeInsights: true,
-    })
+    // RAG 컨텍스트, 모델, user 메시지 저장을 병렬 실행
+    const [context, model] = await Promise.all([
+      buildContext(user.id, {
+        query: lastMessageContent,
+        selectedDocumentIds,
+        includeInsights: true,
+      }),
+      getLanguageModel(user.id),
+      lastMessage.role === "user" && lastMessageContent
+        ? prisma.message.create({
+            data: {
+              conversationId,
+              role: "USER",
+              content: lastMessageContent,
+            },
+          })
+        : Promise.resolve(),
+    ])
 
     // 시스템 프롬프트 생성
     const system = buildCoverLetterSystemPrompt({
@@ -92,20 +104,6 @@ export async function POST(request: Request) {
       jobPostingText: coverLetter.jobPostingText ?? undefined,
       context,
     })
-
-    // 마지막 user 메시지 DB 저장
-    if (lastMessage.role === "user" && lastMessageContent) {
-      await prisma.message.create({
-        data: {
-          conversationId,
-          role: "USER",
-          content: lastMessageContent,
-        },
-      })
-    }
-
-    // 모델 가져오기 및 스트리밍
-    const model = await getLanguageModel(user.id)
 
     const modelMessages = await convertToModelMessages(
       messages as UIMessage[],

@@ -123,7 +123,7 @@ export function CoverLetterChat({
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="outline" size="sm" className="h-7 text-xs">
-                <FileText className="mr-1.5 h-3.5 w-3.5" />
+                <FileText aria-hidden="true" className="mr-1.5 h-3.5 w-3.5" />
                 참고 문서 ({selectedDocIds.length})
               </Button>
             </PopoverTrigger>
@@ -172,7 +172,7 @@ export function CoverLetterChat({
                     className="text-muted-foreground hover:text-foreground h-7 text-xs"
                     onClick={() => onAppendToEditor(extractTextFromMessage(message))}
                   >
-                    <ClipboardPaste className="mr-1.5 h-3.5 w-3.5" />
+                    <ClipboardPaste aria-hidden="true" className="mr-1.5 h-3.5 w-3.5" />
                     에디터에 반영
                   </Button>
                 </div>

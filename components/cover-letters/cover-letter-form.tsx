@@ -94,6 +94,7 @@ export function CoverLetterForm({ documents }: CoverLetterFormProps) {
           id="title"
           name="title"
           placeholder="예: 카카오 백엔드 개발자 자기소개서"
+          autoComplete="off"
           disabled={isSubmitting}
         />
         {errors.title && (
@@ -110,6 +111,7 @@ export function CoverLetterForm({ documents }: CoverLetterFormProps) {
             id="companyName"
             name="companyName"
             placeholder="예: 카카오"
+            autoComplete="organization"
             disabled={isSubmitting}
           />
           {errors.companyName && (
@@ -125,6 +127,7 @@ export function CoverLetterForm({ documents }: CoverLetterFormProps) {
             id="position"
             name="position"
             placeholder="예: 백엔드 개발자"
+            autoComplete="organization-title"
             disabled={isSubmitting}
           />
           {errors.position && (
@@ -180,7 +183,7 @@ export function CoverLetterForm({ documents }: CoverLetterFormProps) {
           취소
         </Button>
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          {isSubmitting && <Loader2 aria-hidden="true" className="mr-2 h-4 w-4 animate-spin" />}
           생성
         </Button>
       </div>

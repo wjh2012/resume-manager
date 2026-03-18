@@ -36,7 +36,7 @@ export default async function CoverLettersPage() {
         </div>
         <Button asChild>
           <Link href="/cover-letters/new">
-            <Plus className="mr-2 h-4 w-4" />
+            <Plus aria-hidden="true" className="mr-2 h-4 w-4" />
             새 자기소개서
           </Link>
         </Button>
