@@ -43,5 +43,29 @@
 ## 서비스 레이어 분리
 
 - **스펙**: API route에 비즈니스 로직 직접 구현
-- **실제**: `lib/documents/service.ts`로 분리
+- **실제**: `lib/documents/service.ts`, `lib/settings/service.ts`로 분리
 - **이유**: 관심사 분리, 테스트 용이성
+
+## 에러 응답 형식
+
+- **스펙**: `{ error: { code, message } }` 구조화된 에러 객체
+- **실제**: `{ error: string }` 단순 문자열
+- **이유**: 기존 API 패턴 일관성 유지
+
+## ChatContext 타입 삭제
+
+- **스펙**: `ChatContext` 인터페이스 정의
+- **실제**: `BuildContextOptions`로 대체
+- **이유**: 실제 `buildContext()` 함수 시그니처와 일치시킴
+
+## UIMessage 타임스탬프
+
+- **스펙**: 채팅 메시지에 HH:mm 타임스탬프 표시
+- **실제**: 타임스탬프 미표시
+- **이유**: AI SDK v6의 `UIMessage` 타입에 `createdAt` 필드가 존재하지 않음
+
+## Anthropic 모델 ID
+
+- **스펙**: `claude-sonnet-4-6`
+- **실제**: `claude-sonnet-4-20250514`
+- **이유**: AI SDK에서 사용하는 정식 모델 ID (날짜 기반 버전 형식)
