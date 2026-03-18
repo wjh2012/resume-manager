@@ -19,7 +19,8 @@ export async function POST(request: Request) {
   }
 
   const formData = await request.formData()
-  const file = formData.get("file") as File | null
+  const fileEntry = formData.get("file")
+  const file = fileEntry instanceof File ? fileEntry : null
   const title = formData.get("title") as string | null
 
   if (!file) {

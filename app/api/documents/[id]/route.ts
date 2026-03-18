@@ -7,6 +7,8 @@ import {
   DocumentForbiddenError,
 } from "@/lib/documents/service"
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -21,6 +23,13 @@ export async function GET(
   }
 
   const { id } = await params
+
+  if (!UUID_RE.test(id)) {
+    return NextResponse.json(
+      { error: "잘못된 문서 ID 형식입니다." },
+      { status: 400 },
+    )
+  }
 
   try {
     const document = await getDocument(id, user.id)
@@ -56,6 +65,13 @@ export async function DELETE(
   }
 
   const { id } = await params
+
+  if (!UUID_RE.test(id)) {
+    return NextResponse.json(
+      { error: "잘못된 문서 ID 형식입니다." },
+      { status: 400 },
+    )
+  }
 
   try {
     await deleteDocument(id, user.id)

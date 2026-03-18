@@ -10,7 +10,9 @@ export async function uploadFile(
   file: Blob,
 ): Promise<string> {
   const supabase = await createClient()
-  const ext = fileName.slice(fileName.lastIndexOf(".")).toLowerCase()
+  const rawExt = fileName.slice(fileName.lastIndexOf(".")).toLowerCase()
+  // 경로 조작 문자 제거 (.. / \ 등)
+  const ext = rawExt.replace(/[^a-z0-9.]/g, "")
   const path = `${userId}/${Date.now()}-${randomUUID()}${ext}`
 
   const { error } = await supabase.storage.from(BUCKET).upload(path, file, {

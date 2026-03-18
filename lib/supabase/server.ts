@@ -1,12 +1,18 @@
 import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 
+function getEnvVar(name: string): string {
+  const value = process.env[name]
+  if (!value) throw new Error(`${name} 환경변수를 설정하세요.`)
+  return value
+}
+
 export async function createClient() {
   const cookieStore = await cookies()
 
   return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    getEnvVar("NEXT_PUBLIC_SUPABASE_URL"),
+    getEnvVar("NEXT_PUBLIC_SUPABASE_ANON_KEY"),
     {
       cookies: {
         getAll() {
