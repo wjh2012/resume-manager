@@ -27,7 +27,7 @@ export default async function DocumentsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">참고자료</h1>
+          <h1 className="text-2xl font-bold text-balance">참고자료</h1>
           <p className="text-muted-foreground mt-1">
             이력서, 경력기술서 등 참고 문서를 관리합니다
           </p>

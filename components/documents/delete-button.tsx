@@ -55,7 +55,7 @@ export function DeleteButton({ documentId, documentTitle }: DeleteButtonProps) {
       <AlertDialogTrigger asChild>
         <Button variant="destructive" size="sm" disabled={isDeleting}>
           <Trash2 aria-hidden="true" className="mr-2 h-4 w-4" />
-          {isDeleting ? "삭제 중..." : "삭제"}
+          {isDeleting ? "삭제 중\u2026" : "삭제"}
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
