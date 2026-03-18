@@ -223,4 +223,102 @@ describe("getLanguageModel()", () => {
       )
     })
   })
+
+  describe("모델 유효성 검사", () => {
+    it("openai의 유효한 모델(gpt-4o)이면 LanguageModel을 반환해야 한다", async () => {
+      vi.mocked(prisma.aiSettings.findUnique).mockResolvedValue({
+        provider: "openai",
+        model: "gpt-4o",
+        apiKey: "sk-valid-key",
+      } as never)
+
+      const result = await getLanguageModel("user-valid-model")
+
+      expect(result).toBe(mockModel)
+    })
+
+    it("openai의 유효한 모델(gpt-4o-mini)이면 LanguageModel을 반환해야 한다", async () => {
+      vi.mocked(prisma.aiSettings.findUnique).mockResolvedValue({
+        provider: "openai",
+        model: "gpt-4o-mini",
+        apiKey: "sk-valid-key",
+      } as never)
+
+      const result = await getLanguageModel("user-valid-model-mini")
+
+      expect(result).toBe(mockModel)
+    })
+
+    it("anthropic의 유효한 모델이면 LanguageModel을 반환해야 한다", async () => {
+      vi.mocked(prisma.aiSettings.findUnique).mockResolvedValue({
+        provider: "anthropic",
+        model: "claude-haiku-4-5-20251001",
+        apiKey: "sk-ant-valid",
+      } as never)
+
+      const result = await getLanguageModel("user-valid-anthropic")
+
+      expect(result).toBe(mockModel)
+    })
+
+    it("google의 유효한 모델이면 LanguageModel을 반환해야 한다", async () => {
+      vi.mocked(prisma.aiSettings.findUnique).mockResolvedValue({
+        provider: "google",
+        model: "gemini-2.5-pro",
+        apiKey: "google-valid-key",
+      } as never)
+
+      const result = await getLanguageModel("user-valid-google")
+
+      expect(result).toBe(mockModel)
+    })
+
+    it("openai 제공자에 존재하지 않는 모델이면 Error를 던져야 한다", async () => {
+      vi.mocked(prisma.aiSettings.findUnique).mockResolvedValue({
+        provider: "openai",
+        model: "gpt-999-ultra",
+        apiKey: "sk-valid-key",
+      } as never)
+
+      await expect(getLanguageModel("user-bad-model")).rejects.toThrow(
+        "지원하지 않는 모델입니다: gpt-999-ultra (openai)",
+      )
+    })
+
+    it("anthropic 제공자에 존재하지 않는 모델이면 Error를 던져야 한다", async () => {
+      vi.mocked(prisma.aiSettings.findUnique).mockResolvedValue({
+        provider: "anthropic",
+        model: "claude-fake-model",
+        apiKey: "sk-ant-valid",
+      } as never)
+
+      await expect(getLanguageModel("user-bad-anthropic-model")).rejects.toThrow(
+        "지원하지 않는 모델입니다: claude-fake-model (anthropic)",
+      )
+    })
+
+    it("google 제공자에 존재하지 않는 모델이면 Error를 던져야 한다", async () => {
+      vi.mocked(prisma.aiSettings.findUnique).mockResolvedValue({
+        provider: "google",
+        model: "gemini-unknown",
+        apiKey: "google-valid-key",
+      } as never)
+
+      await expect(getLanguageModel("user-bad-google-model")).rejects.toThrow(
+        "지원하지 않는 모델입니다: gemini-unknown (google)",
+      )
+    })
+
+    it("모델 유효성 오류는 AiSettingsNotFoundError가 아니어야 한다", async () => {
+      vi.mocked(prisma.aiSettings.findUnique).mockResolvedValue({
+        provider: "openai",
+        model: "gpt-999-ultra",
+        apiKey: "sk-valid-key",
+      } as never)
+
+      await expect(getLanguageModel("user-bad-model")).rejects.not.toThrow(
+        AiSettingsNotFoundError,
+      )
+    })
+  })
 })
