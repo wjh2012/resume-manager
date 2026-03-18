@@ -15,8 +15,8 @@ export default async function DashboardLayout({
     redirect("/login")
   }
 
+  // !min-h-0: SidebarProvider 기본 min-h-svh를 해제하여 자식이 뷰포트를 넘지 않도록 제약
   return (
-    {/* !min-h-0: SidebarProvider 기본 min-h-svh를 해제하여 자식이 뷰포트를 넘지 않도록 제약 */}
     <SidebarProvider className="h-svh !min-h-0">
       <AppSidebar user={extractUserInfo(user)} />
       <SidebarInset>
