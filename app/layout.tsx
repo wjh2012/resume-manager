@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import { Geist_Mono } from "next/font/google"
 import localFont from "next/font/local"
 
@@ -17,6 +18,14 @@ const fontMono = Geist_Mono({
   subsets: ["latin"],
   variable: "--font-mono",
 })
+
+export const metadata: Metadata = {
+  title: {
+    default: "Resume Manager",
+    template: "%s | Resume Manager",
+  },
+  description: "이력서, 자기소개서, 경력기술서 작성을 돕는 이력서 관리 서비스",
+}
 
 export default function RootLayout({
   children,
