@@ -149,7 +149,7 @@ export function CoverLetterChat({
       </div>
 
       {/* 메시지 영역 */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto">
+      <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto">
         <div className="mx-auto max-w-3xl space-y-4 p-4">
           {messages.length === 0 && (
             <div className="flex h-[50vh] items-center justify-center">
@@ -197,6 +197,8 @@ export function CoverLetterChat({
             size="icon"
             className="h-8 w-8 rounded-full shadow-md"
             onClick={scrollToBottom}
+            tabIndex={isAtBottom ? -1 : 0}
+            aria-hidden={isAtBottom || undefined}
           >
             <ArrowDown className="h-4 w-4" />
             <span className="sr-only">맨 아래로 스크롤</span>
