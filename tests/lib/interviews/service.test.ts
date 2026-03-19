@@ -7,6 +7,7 @@ vi.mock("@/lib/prisma", () => ({
       findUnique: vi.fn(),
       findUniqueOrThrow: vi.fn(),
       findMany: vi.fn(),
+      update: vi.fn(),
     },
     interviewDocument: {
       createMany: vi.fn(),
@@ -35,6 +36,7 @@ import {
   deleteInterview,
   InterviewNotFoundError,
   InterviewForbiddenError,
+  InterviewAlreadyCompletedError,
 } from "@/lib/interviews/service"
 
 const mockPrisma = vi.mocked(prisma)
@@ -156,36 +158,43 @@ describe("listInterviews()", () => {
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe("completeInterview()", () => {
+  let mockTx: {
+    interviewSession: { findUnique: ReturnType<typeof vi.fn>; update: ReturnType<typeof vi.fn> }
+  }
+
   beforeEach(() => {
-    vi.clearAllMocks()
+    mockTx = {
+      interviewSession: {
+        findUnique: vi.fn(),
+        update: vi.fn(),
+      },
+    }
+    mockPrisma.$transaction.mockImplementation(async (fn) => fn(mockTx))
   })
 
   it("status를 COMPLETED로 변경해야 한다", async () => {
-    mockPrisma.$transaction.mockImplementation(async (fn) => {
-      const tx = {
-        interviewSession: {
-          findUnique: vi.fn().mockResolvedValue({ id: SESSION_ID, userId: USER_ID }),
-          update: vi.fn().mockResolvedValue({ id: SESSION_ID, status: "COMPLETED" }),
-        },
-      }
-      return fn(tx)
+    mockTx.interviewSession.findUnique.mockResolvedValue({
+      id: SESSION_ID,
+      userId: USER_ID,
+      status: "IN_PROGRESS",
+    })
+    mockTx.interviewSession.update.mockResolvedValue({
+      id: SESSION_ID,
+      status: "COMPLETED",
+      updatedAt: new Date(),
     })
 
     const result = await completeInterview(SESSION_ID, USER_ID)
-    expect(mockPrisma.$transaction).toHaveBeenCalledOnce()
+    expect(mockTx.interviewSession.update).toHaveBeenCalledWith({
+      where: { id: SESSION_ID },
+      data: { status: "COMPLETED" },
+      select: { id: true, status: true, updatedAt: true },
+    })
     expect(result).toMatchObject({ id: SESSION_ID, status: "COMPLETED" })
   })
 
   it("세션이 없으면 InterviewNotFoundError를 던져야 한다", async () => {
-    mockPrisma.$transaction.mockImplementation(async (fn) => {
-      const tx = {
-        interviewSession: {
-          findUnique: vi.fn().mockResolvedValue(null),
-          update: vi.fn(),
-        },
-      }
-      return fn(tx)
-    })
+    mockTx.interviewSession.findUnique.mockResolvedValue(null)
 
     await expect(completeInterview(SESSION_ID, USER_ID)).rejects.toThrow(
       InterviewNotFoundError,
@@ -193,18 +202,26 @@ describe("completeInterview()", () => {
   })
 
   it("소유권이 없으면 InterviewForbiddenError를 던져야 한다", async () => {
-    mockPrisma.$transaction.mockImplementation(async (fn) => {
-      const tx = {
-        interviewSession: {
-          findUnique: vi.fn().mockResolvedValue({ id: SESSION_ID, userId: "other-user" }),
-          update: vi.fn(),
-        },
-      }
-      return fn(tx)
+    mockTx.interviewSession.findUnique.mockResolvedValue({
+      id: SESSION_ID,
+      userId: "other-user",
+      status: "IN_PROGRESS",
     })
 
     await expect(completeInterview(SESSION_ID, USER_ID)).rejects.toThrow(
       InterviewForbiddenError,
+    )
+  })
+
+  it("이미 완료된 세션이면 InterviewAlreadyCompletedError를 던져야 한다", async () => {
+    mockTx.interviewSession.findUnique.mockResolvedValue({
+      id: SESSION_ID,
+      userId: USER_ID,
+      status: "COMPLETED",
+    })
+
+    await expect(completeInterview(SESSION_ID, USER_ID)).rejects.toThrow(
+      InterviewAlreadyCompletedError,
     )
   })
 })

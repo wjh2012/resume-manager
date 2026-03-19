@@ -12,6 +12,12 @@ export class InterviewForbiddenError extends Error {
   }
 }
 
+export class InterviewAlreadyCompletedError extends Error {
+  constructor() {
+    super("이미 종료된 면접 세션입니다.")
+  }
+}
+
 interface CreateInterviewData {
   title: string
   companyName?: string
@@ -114,9 +120,15 @@ export async function listInterviews(userId: string) {
 // 면접 종료 (status → COMPLETED)
 export async function completeInterview(id: string, userId: string) {
   return prisma.$transaction(async (tx) => {
-    const record = await tx.interviewSession.findUnique({ where: { id }, select: { id: true, userId: true } })
+    const record = await tx.interviewSession.findUnique({
+      where: { id },
+      select: { id: true, userId: true, status: true },
+    })
+
     if (!record) throw new InterviewNotFoundError()
     if (record.userId !== userId) throw new InterviewForbiddenError()
+    if (record.status === "COMPLETED") throw new InterviewAlreadyCompletedError()
+
     return tx.interviewSession.update({
       where: { id },
       data: { status: "COMPLETED" },
