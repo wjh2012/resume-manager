@@ -56,12 +56,9 @@
 | 4 | `updateCoverLetter`/`deleteCoverLetter` TOCTOU (설계) | 해결됨 | `9edf15e` -- `updateMany`/`deleteMany` 원자적 패턴, `decisions.md` 기록 |
 | 5 | 에디터 최초 마운트 시 불필요한 저장 (버그) | 해결됨 | `9edf15e` -- `isMountedRef` 초기 마운트 스킵 |
 
-## 스펙 대비 의도적 차이 (이미 `spec-deviations.md`에 등록된 패턴)
+## 스펙 대비 의도적 차이
 
-- **서비스 레이어 분리**: 스펙은 API route 직접 구현이나, `lib/cover-letters/service.ts`로 분리
-- **에러 응답 형식**: `{ error: string }` 단순 문자열 (기존 패턴 동일)
-- **status enum 케이스**: 스펙 `"draft"/"completed"` vs 구현 `"DRAFT"/"COMPLETED"` (Prisma enum 적응)
-- **toDataStreamResponse -> toUIMessageStreamResponse**: AI SDK v6에서 UIMessage 기반 응답 포맷 사용
+→ [`docs/references/spec-deviations.md`](../references/spec-deviations.md) 참조
 
 ## 스펙 보강 사항 (추가 구현, 스펙 범위 초과)
 
