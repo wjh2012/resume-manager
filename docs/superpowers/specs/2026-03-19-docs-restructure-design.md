@@ -7,7 +7,7 @@
 
 ## 목표
 
-분산된 문서 디렉토리를 `docs/` 단일 루트로 통합하고, 플랜 파일을 한 곳으로 모으며, 관리 비용이 낮은 파일을 적절한 위치로 이전한다.
+분산된 문서 디렉토리를 `docs/` 단일 루트로 통합하고, 중복 콘텐츠를 제거하며, 각 문서의 역할을 명확히 구분한다.
 
 ---
 
@@ -19,6 +19,11 @@
 | 플랜 분산 | `docs/plans/` + `docs/superpowers/plans/` 두 곳에 혼재 |
 | 이슈 관리 | `docs/references/known-issues.md`가 GitHub Issues 역할 중복 |
 | 불필요 파일 | `docs/changelog/spec-review-updates.md` 내용 중복 |
+| 완료된 플랜 파일 | 구현 완료된 작업 플랜이 docs에 잔류 (git history로 충분) |
+| 중간 리뷰 보고서 | phase-3 리뷰 중간본/최종본 공존 |
+| 스펙 이탈 산재 | `spec-deviations.md`와 리뷰 보고서에 이중 기록 |
+| API 엔드포인트 중복 | `specs/api-reference.md`와 `docs/features/`에 이중 나열 |
+| 문서 역할 불명확 | `specs/phases/`(요구사항)와 `docs/features/`(구현 결과) 역할 미구분 |
 
 ---
 
@@ -49,7 +54,7 @@ docs/
       phase-6-resume.md
       phase-7-polish.md
   superpowers/
-    plans/               ← docs/plans/ 3개 + 기존 1개 통합
+    plans/               ← 삭제 (완료된 플랜이므로 git history로 대체)
     specs/               ← 브레인스토밍 설계 문서 (이미 존재, 이 파일이 위치하는 곳)
   ← changelog/ 삭제
 
@@ -65,14 +70,16 @@ specs/                   ← 삭제 (docs/specs/로 이동)
 | 소스 | 대상 |
 |------|------|
 | `specs/` 전체 | `docs/specs/` |
-| `docs/plans/*.md` (3개) | `docs/superpowers/plans/` |
 
 ### 2. 디렉토리/파일 삭제
 
 | 대상 | 이유 |
 |------|------|
 | `docs/changelog/` 디렉토리 전체 | 내용 중복, 불필요. 현재 파일 1개(`spec-review-updates.md`)만 존재 |
+| `docs/plans/` 디렉토리 전체 (3개 파일) | 구현 완료된 플랜. git history로 대체 |
+| `docs/superpowers/plans/2026-03-19-phase-4-interview.md` | 구현 완료된 플랜. git history로 대체 |
 | `docs/references/known-issues.md` | GitHub Issues로 이전 후 삭제 |
+| `docs/reports/2026-03-18-phase-review-phase-3.md` | 중간본. 최종본(`-final`)으로 대체 |
 
 ### 3. GitHub Issues 등록
 
@@ -88,7 +95,21 @@ specs/                   ← 삭제 (docs/specs/로 이동)
 | Radix UI Hydration ID Mismatch | bug |
 | Storage 고아 파일 가능성 | enhancement |
 
-### 4. 참조 업데이트
+### 4. 콘텐츠 정리
+
+| 파일 | 작업 |
+|------|------|
+| `docs/reports/2026-03-18-phase-review-phase-3-final.md` | 스펙 이탈 섹션 → `docs/references/spec-deviations.md` 참조 링크로 교체 |
+| `docs/reports/2026-03-19-phase-review-phase-4.md` | 스펙 이탈 섹션 → `docs/references/spec-deviations.md` 참조 링크로 교체 |
+| `docs/features/06-cover-letters.md` | API 엔드포인트 나열 섹션 → `docs/specs/api-reference.md` 참조 링크로 교체 |
+| `docs/features/07-interviews.md` | API 엔드포인트 나열 섹션 → `docs/specs/api-reference.md` 참조 링크로 교체 |
+
+**문서 역할 구분 원칙** (신규 문서 작성 시 준수):
+- `docs/specs/phases/` — 요구사항 및 설계 명세 (WHAT & WHY)
+- `docs/features/` — 실제 구현 결과 기록 (WHAT WAS BUILT)
+- API 엔드포인트 상세는 `docs/specs/api-reference.md` 단일 출처 유지
+
+### 5. 참조 업데이트
 
 | 파일 | 변경 내용 |
 |------|-----------|
@@ -104,7 +125,7 @@ specs/                   ← 삭제 (docs/specs/로 이동)
 
 ## 범위 외
 
-- `docs/features/`, `docs/guides/`, `docs/reports/` — 변경 없음
-- `docs/rules/` — `workflow-rule.md`만 참조 업데이트 필요 (위 섹션 4 참고), 나머지 파일 변경 없음
+- `docs/guides/` — 변경 없음
+- `docs/rules/` — `workflow-rule.md`만 참조 업데이트 필요 (위 섹션 5 참고), 나머지 파일 변경 없음
 - 완료된 phase 스펙(0~4)은 아카이브 없이 그대로 유지
 - CLAUDE.md — `docs/rules/`, `docs/references/spec-deviations.md` 경로 변동 없으므로 수정 불필요
