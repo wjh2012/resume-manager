@@ -7,6 +7,7 @@ import {
   deleteInterview,
   InterviewNotFoundError,
   InterviewForbiddenError,
+  InterviewAlreadyCompletedError,
 } from "@/lib/interviews/service"
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -102,6 +103,9 @@ export async function PUT(
     }
     if (error instanceof InterviewForbiddenError) {
       return NextResponse.json({ error: error.message }, { status: 403 })
+    }
+    if (error instanceof InterviewAlreadyCompletedError) {
+      return NextResponse.json({ error: error.message }, { status: 409 })
     }
     console.error("[PUT /api/interviews/[id]]", error)
     return NextResponse.json(
