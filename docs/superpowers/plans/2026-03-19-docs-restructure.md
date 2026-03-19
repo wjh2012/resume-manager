@@ -165,7 +165,7 @@ git commit -m "refactor(docs): remove obsolete files (plans, changelog, known-is
 
 - [ ] **Step 1: phase-3-final 보고서 수정**
 
-`docs/reports/2026-03-18-phase-review-phase-3-final.md`의 아래 섹션(line 59~77)을 찾아 교체한다:
+`docs/reports/2026-03-18-phase-review-phase-3-final.md`의 아래 섹션(line 59~64)을 찾아 교체한다:
 
 현재:
 ```markdown
@@ -184,20 +184,15 @@ git commit -m "refactor(docs): remove obsolete files (plans, changelog, known-is
 → [`docs/references/spec-deviations.md`](../references/spec-deviations.md) 참조
 ```
 
-- [ ] **Step 2: phase-4 보고서에서 spec-deviations 관련 섹션 확인 및 수정**
+- [ ] **Step 2: phase-4 보고서 확인 (no-op)**
 
-`docs/reports/2026-03-19-phase-review-phase-4.md`를 읽고 "스펙 대비 의도적 차이" 또는 "spec-deviations" 관련 섹션을 찾아 동일하게 참조 링크로 교체한다.
+`docs/reports/2026-03-19-phase-review-phase-4.md`에는 별도의 "스펙 대비 의도적 차이" 섹션이 없다. `spec-deviations.md` 언급은 표 셀과 권장 조치사항 bullet 안에만 산재해 있어 교체 불필요. 이 파일은 수정하지 않는다.
 
 ```bash
 grep -n "스펙 대비 의도적\|spec-deviation" docs/reports/2026-03-19-phase-review-phase-4.md
 ```
 
-동일한 패턴으로 교체:
-```markdown
-## 스펙 대비 의도적 차이
-
-→ [`docs/references/spec-deviations.md`](../references/spec-deviations.md) 참조
-```
+Expected: 섹션 헤더 없이 산재된 언급만 출력됨 — 수정 없이 통과
 
 - [ ] **Step 3: 커밋**
 
@@ -218,7 +213,7 @@ git commit -m "refactor(docs): replace spec-deviations content in reports with r
 
 - [ ] **Step 1: 06-cover-letters.md API 섹션 교체**
 
-`docs/features/06-cover-letters.md`의 `## API` 섹션(line 36~46)을 교체:
+`docs/features/06-cover-letters.md`의 `## API` 섹션(line 36~45)을 교체:
 
 현재:
 ```markdown
@@ -328,13 +323,20 @@ look in `docs/`, `docs/specs/`, or any directory containing project specificatio
 
 - [ ] **Step 3: docs-sync/SKILL.md 업데이트**
 
-`.claude/skills/docs-sync/SKILL.md` 디렉토리 테이블에서 `docs/changelog/` 행 제거:
+`.claude/skills/docs-sync/SKILL.md` 디렉토리 테이블에서 `docs/changelog/` 행 제거하고, `docs/references/` 설명에서 `known-issues` 언급 제거:
 
 현재:
 ```markdown
 | `docs/changelog/` | 대규모 변경 이력 |
+| `docs/references/` | 프로젝트 참고 자료 (known-issues, spec-deviations 등) |
 ```
-→ 이 행 전체 삭제
+
+교체 후:
+```markdown
+| `docs/references/` | 프로젝트 참고 자료 (spec-deviations, decisions 등) |
+```
+
+(changelog 행 삭제 + references 설명에서 known-issues 제거)
 
 - [ ] **Step 4: workflow-rule.md 업데이트 (3곳)**
 
@@ -367,7 +369,17 @@ look in `docs/`, `docs/specs/`, or any directory containing project specificatio
 ```
 → 이 섹션 전체 삭제
 
-- [ ] **Step 5: 커밋**
+- [ ] **Step 5: docs/specs/README.md 내부 링크 확인**
+
+이동 후 `docs/specs/README.md`의 내부 링크가 유효한지 확인한다. 모든 링크가 상대 경로(`./phases/...`, `./architecture.md` 등)이므로 파일과 함께 이동된 경우 변동 없음.
+
+```bash
+grep "\[.*\](.*)" docs/specs/README.md
+```
+
+Expected: `./phases/phase-*.md`, `./architecture.md`, `./database-schema.md`, `./api-reference.md` 형태의 상대 경로. 외부 절대 경로 없음 확인.
+
+- [ ] **Step 6: 커밋**
 
 ```bash
 git add README.md .claude/ docs/rules/workflow-rule.md
@@ -381,8 +393,8 @@ git commit -m "refactor(docs): update all references after docs restructure"
 - [ ] **Step 1: 구 경로 참조 잔존 여부 확인**
 
 ```bash
-# specs/ 루트 참조 잔존 확인 (docs/specs/는 정상이므로 제외)
-grep -r "\bspecs/" D:/prj/resume-manager --include="*.md" --include="*.json" | grep -v "docs/specs/" | grep -v "node_modules" | grep -v ".git"
+# specs/ 루트 참조 잔존 확인 (docs/specs/는 정상이므로 제외, 플랜 파일 자체도 제외)
+grep -r "\bspecs/" D:/prj/resume-manager --include="*.md" --include="*.json" | grep -v "docs/specs/" | grep -v "docs/superpowers/plans/" | grep -v "node_modules" | grep -v ".git"
 ```
 
 Expected: 출력 없음 (잔존 참조 없음)
