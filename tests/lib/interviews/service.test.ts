@@ -179,6 +179,15 @@ describe("deleteInterview()", () => {
       InterviewNotFoundError,
     )
   })
+
+  it("소유권이 없으면 InterviewForbiddenError를 던져야 한다", async () => {
+    mockPrisma.interviewSession.deleteMany.mockResolvedValue({ count: 0 })
+    mockPrisma.interviewSession.findUnique.mockResolvedValue({ id: SESSION_ID } as never)
+
+    await expect(deleteInterview(SESSION_ID, USER_ID)).rejects.toThrow(
+      InterviewForbiddenError,
+    )
+  })
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
