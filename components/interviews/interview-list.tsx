@@ -60,7 +60,7 @@ export function InterviewList({ interviews }: InterviewListProps) {
         })
       }
     },
-    [removeOptimistic, router],
+    [removeOptimistic, router, startTransition],
   )
 
   if (optimisticList.length === 0) {

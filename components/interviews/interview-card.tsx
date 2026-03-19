@@ -15,6 +15,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { format } from "date-fns"
 import { ko } from "date-fns/locale"
@@ -51,7 +52,7 @@ export function InterviewCard({
         isDeleting && "pointer-events-none opacity-50",
       )}
     >
-      <a href={`/interviews/${id}`} className="absolute inset-0" aria-label={title} />
+      <Link href={`/interviews/${id}`} className="absolute inset-0" aria-label={title} />
 
       <div className="mb-3 flex items-start justify-between gap-2">
         <h3 className="line-clamp-2 font-semibold leading-tight">{title}</h3>
@@ -81,6 +82,7 @@ export function InterviewCard({
             size="icon"
             className="absolute right-3 top-3 h-7 w-7 opacity-0 transition-opacity group-hover:opacity-100"
             aria-label="삭제"
+            disabled={isDeleting}
             onClick={(e) => e.preventDefault()}
           >
             <Trash2 className="h-3.5 w-3.5" />

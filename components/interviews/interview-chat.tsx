@@ -77,7 +77,7 @@ export function InterviewChat({
     sendMessage({ role: "user", content: "면접을 시작합니다." })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const { scrollRef, isAtBottom, scrollToBottom } = useChatScroll([messages])
+  const { scrollRef, isAtBottom, scrollToBottom } = useChatScroll([messages.length, isLoading])
 
   const handleSend = () => {
     if (!input.trim() || isLoading || completed) return

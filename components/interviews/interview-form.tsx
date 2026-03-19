@@ -88,6 +88,7 @@ export function InterviewForm({ documents }: InterviewFormProps) {
           onChange={(e) => setTitle(e.target.value)}
           placeholder="예: 카카오 백엔드 모의면접"
           maxLength={100}
+          disabled={isSubmitting}
         />
         {errors.title && (
           <p className="text-sm text-destructive">{errors.title}</p>
@@ -103,6 +104,7 @@ export function InterviewForm({ documents }: InterviewFormProps) {
             onChange={(e) => setCompanyName(e.target.value)}
             placeholder="카카오"
             maxLength={100}
+            disabled={isSubmitting}
           />
         </div>
         <div className="space-y-2">
@@ -113,6 +115,7 @@ export function InterviewForm({ documents }: InterviewFormProps) {
             onChange={(e) => setPosition(e.target.value)}
             placeholder="백엔드 개발자"
             maxLength={100}
+            disabled={isSubmitting}
           />
         </div>
       </div>
@@ -139,6 +142,7 @@ export function InterviewForm({ documents }: InterviewFormProps) {
                   id={doc.id}
                   checked={selectedDocIds.includes(doc.id)}
                   onCheckedChange={() => toggleDoc(doc.id)}
+                  disabled={isSubmitting}
                 />
                 <label
                   htmlFor={doc.id}
