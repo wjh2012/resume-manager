@@ -2,7 +2,7 @@
 
 export function ChatLoading() {
   return (
-    <div className="flex justify-start">
+    <div className="flex justify-start" role="status" aria-live="polite" aria-label="응답 생성 중">
       <div className="bg-muted rounded-2xl px-4 py-3">
         <div className="flex items-center gap-1">
           <span

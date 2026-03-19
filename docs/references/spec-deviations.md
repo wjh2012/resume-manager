@@ -87,3 +87,31 @@
 ### `components/ui/sidebar.tsx`
 
 - "Toggle Sidebar" → "사이드바 토글" (한국어 서비스)
+
+---
+
+## Phase 4: AI 모의면접
+
+### `@/components/ui/label` 미사용
+
+- **스펙**: Label 컴포넌트 사용 암시
+- **실제**: 네이티브 `<label>` 요소 직접 사용
+- **이유**: 프로젝트에 `components/ui/label.tsx`가 존재하지 않음
+
+### `date-fns` 미사용
+
+- **스펙**: 날짜 포매팅에 date-fns 사용 암시
+- **실제**: `toLocaleDateString("ko-KR", ...)` 네이티브 API 사용
+- **이유**: date-fns 패키지가 프로젝트에 설치되지 않음
+
+### 파일명 변경: `interview-setup.tsx` → `interview-form.tsx`
+
+- **스펙**: `interview-setup.tsx`
+- **실제**: `interview-form.tsx`
+- **이유**: 컴포넌트 역할이 "설정"보다 "폼 입력"에 가까워 더 명확한 명칭으로 변경
+
+### `sendMessage` API
+
+- **스펙**: `sendMessage({ role, content })` 형태 암시
+- **실제**: `sendMessage({ text })` 사용
+- **이유**: AI SDK v6 `useChat` hook의 실제 sendMessage 시그니처
