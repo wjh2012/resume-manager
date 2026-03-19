@@ -115,3 +115,19 @@
 - **스펙**: `sendMessage({ role, content })` 형태 암시
 - **실제**: `sendMessage({ text })` 사용
 - **이유**: AI SDK v6 `useChat` hook의 실제 sendMessage 시그니처
+
+---
+
+## Phase 5: 인사이트 추출
+
+### `app/api/insights/route.ts` 생략
+
+- **스펙**: `app/api/insights/route.ts` 신규 생성 (목록 조회 API)
+- **실제**: API route 미생성, Server Component에서 `listInsights()` 직접 호출
+- **이유**: 기존 코드베이스 패턴 (interviews, cover-letters 목록 모두 SC 직접 호출)
+
+### `insight-edit-dialog.tsx` 신규 추가
+
+- **스펙**: `insight-card.tsx`에서 "인라인 편집 또는 다이얼로그"
+- **실제**: 별도 `insight-edit-dialog.tsx` 컴포넌트로 분리
+- **이유**: 다이얼로그 방식 선택 + 컴포넌트 관심사 분리
