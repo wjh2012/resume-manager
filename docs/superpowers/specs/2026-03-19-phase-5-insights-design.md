@@ -13,6 +13,9 @@
 | 면접 종료 시 유도 | 종료 다이얼로그에 자동 추출 체크박스 | 자연스러운 플로우, 별도 조작 불필요 |
 | 대시보드 정렬 | 카테고리 탭 필터 + 시간순/카테고리 그룹핑 토글 | 스펙 그대로 |
 | 구현 순서 | API → 버튼 → 대시보드 (A안) | Phase 1-4 검증된 패턴, 서비스 레이어 일괄 작성 |
+| 목록 API route 생략 | Server Component 직접 호출 | phase spec의 `app/api/insights/route.ts` 대체 — 기존 코드베이스 패턴 (interviews, cover-letters 목록 모두 SC 직접 호출) |
+| 추출 응답 코드 | 200 | 기존 코드베이스의 생성 응답과 일관 (interviews POST도 200) |
+| 편집 다이얼로그 분리 | `insight-edit-dialog.tsx` 신규 | phase spec의 "인라인 또는 다이얼로그" 중 다이얼로그 선택, 별도 컴포넌트로 분리 |
 
 ## 기존 인프라 (이미 구현됨)
 
@@ -50,18 +53,25 @@ updateInsightSchema: {
 | `countByCategory(userId)` | `groupBy`로 카테고리별 개수 집계 |
 
 `extractInsights` 내부에서:
-1. conversationId로 대화 조회 + userId 소유권 검증
+1. conversationId로 대화 조회 + `userId` 소유권 검증 (`findFirst({ where: { id, userId } })`)
+   - **`updateMany` 패턴 미사용 이유**: 대화 메시지를 로드해야 하므로 레코드 데이터가 필요 → `findFirst` + 소유권 조건으로 검증
+   - conversationId만 받으므로 부모 엔티티(coverLetter/interview) 관계 검증 불필요 — `userId` 일치만으로 충분
 2. 해당 대화의 메시지 전체 로드
-3. 기존 인사이트 있으면 삭제 (재추출)
+3. 기존 인사이트 있으면 삭제 (재추출 — 사용자가 편집한 인사이트도 삭제됨, UI에서 확인 다이얼로그로 안내)
 4. `generateObject` + `insightExtractionPrompt` + Zod 스키마로 구조화 추출
 5. `$transaction`으로 인사이트 일괄 생성
+
+**에러 처리**:
+- `AiSettingsNotFoundError` → 400 ("AI 설정이 필요합니다")
+- AI 모델 에러 (rate limit, invalid response) → 500 ("인사이트 추출에 실패했습니다")
 
 ### 3. API Routes
 
 #### `POST /api/insights/extract`
 - Body: `{ conversationId }`
 - 인증 → `extractInsightsSchema.safeParse` → `extractInsights()` 호출
-- 응답: `{ insights: Insight[] }`, 201
+- 에러: `AiSettingsNotFoundError` → 400, AI 모델 에러 → 500
+- 응답: `{ insights: Insight[] }`, 200
 
 #### `PUT /api/insights/[id]`
 - Body: `{ title, content, category }`
@@ -116,7 +126,7 @@ updateInsightSchema: {
 ### 6. 컨텍스트 자동 통합
 
 - 이미 `lib/ai/context.ts`에 구현 완료
-- 면접 채팅 API에도 `includeInsights: true` 추가 (`app/api/chat/interview/route.ts`)
+- 면접 채팅 API에도 `includeInsights: true` 추가 (`app/api/chat/interview/route.ts`의 `buildContext` 호출에 옵션 추가)
 - 검증: 인사이트 축적 후 새 자기소개서/면접에서 AI가 활용하는지 확인
 
 ## 생성/수정할 파일
