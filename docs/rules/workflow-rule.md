@@ -20,7 +20,9 @@
 
 ## PR 플로우 (Phase 완료 시)
 
-1. **`docs/features/` 문서화** — 주요 기능 추가 시 해당 기능 문서 작성
+> `superpowers:finishing-a-development-branch`에서 PR 옵션을 선택한 경우, push + PR 생성(3번) 후 이 플로우의 나머지 단계(1, 2, 4~7)를 이어서 진행한다.
+
+1. **`/docs-sync`** — 주요 기능 추가 시 docs 동기화 실행 (features 문서 포함)
 2. **`[project-manager]` 점검** — 스펙 대비 구현 상태 검증
 3. **PR 생성** — `.github/pull_request_template.md` 템플릿 사용. Test Plan의 체크박스는 실제로 검증 완료한 항목만 체크한다.
 4. **`@claude` 리뷰** — PR에 `@claude` 호출하여 코드 리뷰. 비동기(GitHub Actions)이므로 `/loop 2m` 으로 리뷰 도착을 폴링한다.
