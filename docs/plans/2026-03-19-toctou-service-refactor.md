@@ -109,7 +109,9 @@ git commit -m "refactor(cover-letters): replace TOCTOU pattern with transaction-
 
 - [ ] **Step 1: 테스트 먼저 수정** — `completeInterview` mock을 `$transaction + findUnique + update` 패턴으로 변경
 
-- [ ] **Step 2: `completeInterview` 구현 변경**
+- [ ] **Step 2: 실패 확인** — `npx vitest run tests/lib/interviews/service.test.ts`
+
+- [ ] **Step 3: `completeInterview` 구현 변경**
 
 ```ts
 export async function completeInterview(id: string, userId: string) {
@@ -126,9 +128,9 @@ export async function completeInterview(id: string, userId: string) {
 }
 ```
 
-- [ ] **Step 3: 테스트 먼저 수정** — `deleteInterview` mock을 `$transaction + findUnique + delete` 패턴으로 변경
+- [ ] **Step 4: 테스트 먼저 수정** — `deleteInterview` mock을 `$transaction + findUnique + delete` 패턴으로 변경
 
-- [ ] **Step 4: `deleteInterview` 구현 변경**
+- [ ] **Step 5: `deleteInterview` 구현 변경**
 
 ```ts
 export async function deleteInterview(id: string, userId: string) {
@@ -141,9 +143,9 @@ export async function deleteInterview(id: string, userId: string) {
 }
 ```
 
-- [ ] **Step 5: 통과 확인** — `npx vitest run tests/lib/interviews/service.test.ts`
+- [ ] **Step 6: 통과 확인** — `npx vitest run tests/lib/interviews/service.test.ts`
 
-- [ ] **Step 6: 커밋**
+- [ ] **Step 7: 커밋**
 
 ```bash
 git add lib/interviews/service.ts tests/lib/interviews/service.test.ts
