@@ -9,7 +9,7 @@
 
 > 표기법: `/name` = 스킬 (Skill tool), `[name]` = 에이전트 (Agent tool)
 
-1. **`docs/references/` 참조** — 구현 전 `decisions.md`, `known-issues.md`, `spec-deviations.md`를 확인하여 기존 결정사항·제약사항을 반영한다.
+1. **`docs/references/` 참조** — 구현 전 `decisions.md`, `spec-deviations.md`를 확인하고, GitHub Issues에서 알려진 이슈를 확인하여 기존 결정사항·제약사항을 반영한다.
 2. **구현** — 기능 코드 작성. 기능 추가·버그 수정 시 `[test-writer]`로 테스트도 함께 작성
 
 ## 커밋 플로우 (매 커밋마다)
@@ -24,14 +24,9 @@
 2. **`[project-manager]` 점검** — 스펙 대비 구현 상태 검증
 3. **PR 생성** — `.github/pull_request_template.md` 템플릿 사용. Test Plan의 체크박스는 실제로 검증 완료한 항목만 체크한다.
 4. **`@claude` 리뷰** — PR에 `@claude` 호출하여 코드 리뷰. 비동기(GitHub Actions)이므로 `/loop 2m` 으로 리뷰 도착을 폴링한다.
-5. **리뷰 피드백 반영** — `@claude` 지적사항 수정 (커밋 플로우 적용). 당장 해결 불가하거나 보류할 항목은 PR 코멘트로 사유를 남기고 `docs/references/known-issues.md`에 등록한다. 리뷰에서 도출된 결정사항은 `docs/references/decisions.md`에 출처(PR URL)와 함께 기록한다. 수정 후 `@claude 피드백 반영 커밋 포함하여 전체 변경사항을 다시 리뷰해주세요.`로 재리뷰 요청 → 지적사항 해소될 때까지 4↔5 반복.
+5. **리뷰 피드백 반영** — `@claude` 지적사항 수정 (커밋 플로우 적용). 당장 해결 불가하거나 보류할 항목은 PR 코멘트로 사유를 남기고 GitHub Issues에 등록한다. 리뷰에서 도출된 결정사항은 `docs/references/decisions.md`에 출처(PR URL)와 함께 기록한다. 수정 후 `@claude 피드백 반영 커밋 포함하여 전체 변경사항을 다시 리뷰해주세요.`로 재리뷰 요청 → 지적사항 해소될 때까지 4↔5 반복.
 6. **`[project-manager]` 최종 점검** — 변경사항 반영 후 스펙 대비 재검증
 7. **머지**
-
-## Changelog
-
-- 대규모 변경(아키텍처 변경, 핵심 로직 재설계 등)이 발생하면 `docs/changelog/`에 변경 이력 문서를 작성한다.
-- 파일명: `{변경-주제}.md`
 
 ## Action Restrictions
 
