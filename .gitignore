@@ -38,3 +38,4 @@ next-env.d.ts
 /.claude/settings.local.json
 /.claude/agent-memory/
 /.claude/scheduled_tasks.lock
+.worktrees/
