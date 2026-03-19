@@ -35,14 +35,7 @@
 
 ## API
 
-| 메서드 | 경로 | 용도 |
-|--------|------|------|
-| POST | `/api/cover-letters` | 생성 (+ Conversation + CoverLetterDocument) |
-| GET | `/api/cover-letters/[id]` | 상세 조회 |
-| PUT | `/api/cover-letters/[id]` | 내용/상태 업데이트 |
-| PATCH | `/api/cover-letters/[id]/documents` | 참고 문서 변경 |
-| DELETE | `/api/cover-letters/[id]` | 삭제 (cascade) |
-| POST | `/api/chat/cover-letter` | AI 스트리밍 채팅 |
+→ [`docs/specs/api-reference.md`](../specs/api-reference.md) 참조
 
 ## 작업공간 구조
 
