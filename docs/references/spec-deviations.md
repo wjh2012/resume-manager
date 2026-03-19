@@ -126,6 +126,12 @@
 - **실제**: API route 미생성, Server Component에서 `listInsights()` 직접 호출
 - **이유**: 기존 코드베이스 패턴 (interviews, cover-letters 목록 모두 SC 직접 호출)
 
+### 인사이트 추출 확인 다이얼로그 항상 표시
+
+- **스펙**: 기존 인사이트 존재 시에만 "다시 추출하시겠습니까?" 확인 다이얼로그
+- **실제**: 추출 버튼 클릭 시 항상 확인 다이얼로그 표시
+- **이유**: AI API 호출 비용이 발생하므로 항상 확인하는 것이 더 나은 UX
+
 ### `insight-edit-dialog.tsx` 신규 추가
 
 - **스펙**: `insight-card.tsx`에서 "인라인 편집 또는 다이얼로그"

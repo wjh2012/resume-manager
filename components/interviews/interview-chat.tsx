@@ -128,19 +128,7 @@ export function InterviewChat({
       toast.success("면접이 종료되었습니다.")
       router.refresh()
       if (extractOnComplete) {
-        try {
-          const extractRes = await fetch("/api/insights/extract", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ conversationId }),
-          })
-          const extractData = await extractRes.json()
-          if (extractRes.ok) {
-            toast.success(`${extractData.insights.length}개의 인사이트가 추출되었습니다.`)
-          }
-        } catch {
-          toast.error("인사이트 추출에 실패했습니다.")
-        }
+        await handleExtractInsights()
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : "종료에 실패했습니다."
