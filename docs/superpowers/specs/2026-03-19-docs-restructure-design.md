@@ -50,7 +50,7 @@ docs/
       phase-7-polish.md
   superpowers/
     plans/               ← docs/plans/ 3개 + 기존 1개 통합
-    specs/               ← 브레인스토밍 설계 문서 (신규)
+    specs/               ← 브레인스토밍 설계 문서 (이미 존재, 이 파일이 위치하는 곳)
   ← changelog/ 삭제
 
 specs/                   ← 삭제 (docs/specs/로 이동)
@@ -93,13 +93,18 @@ specs/                   ← 삭제 (docs/specs/로 이동)
 | 파일 | 변경 내용 |
 |------|-----------|
 | `README.md` | `specs/README.md` → `docs/specs/README.md` |
-| `.claude/agents/project-manager.md` | `specs/phases/` → `docs/specs/phases/` |
+| `.claude/agents/project-manager.md` (line 13) | 검색 가이드의 `specs/` → `docs/specs/` |
+| `.claude/agents/project-manager.md` (line 30) | `specs/phases/` → `docs/specs/phases/` |
+| `.claude/agents/project-manager.md` (line 47) | `known-issues.md` 참조 → GitHub Issues 레이블 확인 지침으로 교체 |
+| `.claude/skills/docs-sync/SKILL.md` | 디렉토리 테이블에서 `docs/changelog/` 항목 제거 |
+| `docs/rules/workflow-rule.md` | `known-issues.md` 언급 2곳 → GitHub Issues 포인터로 교체 |
 | `docs/specs/README.md` | 내부 링크 확인 (상대 경로이므로 변동 없음) |
 
 ---
 
 ## 범위 외
 
-- `docs/features/`, `docs/guides/`, `docs/reports/`, `docs/rules/` — 변경 없음
+- `docs/features/`, `docs/guides/`, `docs/reports/` — 변경 없음
+- `docs/rules/` — `workflow-rule.md`만 참조 업데이트 필요 (위 섹션 4 참고), 나머지 파일 변경 없음
 - 완료된 phase 스펙(0~4)은 아카이브 없이 그대로 유지
 - CLAUDE.md — `docs/rules/`, `docs/references/spec-deviations.md` 경로 변동 없으므로 수정 불필요
