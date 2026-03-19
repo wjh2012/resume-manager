@@ -22,10 +22,11 @@ interface CreateInterviewData {
 // 면접 세션 생성: InterviewSession + InterviewDocument + Conversation 트랜잭션
 export async function createInterview(userId: string, data: CreateInterviewData) {
   return prisma.$transaction(async (tx) => {
+    const uniqueDocIds = [...new Set(data.documentIds)]
     const ownedCount = await tx.document.count({
-      where: { id: { in: data.documentIds }, userId },
+      where: { id: { in: uniqueDocIds }, userId },
     })
-    if (ownedCount !== data.documentIds.length) {
+    if (ownedCount !== uniqueDocIds.length) {
       throw new InterviewForbiddenError()
     }
 
@@ -40,7 +41,7 @@ export async function createInterview(userId: string, data: CreateInterviewData)
     })
 
     await tx.interviewDocument.createMany({
-      data: data.documentIds.map((documentId) => ({
+      data: uniqueDocIds.map((documentId) => ({
         interviewSessionId: session.id,
         documentId,
       })),
@@ -146,21 +147,4 @@ export async function deleteInterview(id: string, userId: string) {
     if (!exists) throw new InterviewNotFoundError()
     throw new InterviewForbiddenError()
   }
-}
-
-// 대화 메시지 조회 (소유권 검증 포함)
-export async function getConversationMessages(conversationId: string, userId: string) {
-  const conversation = await prisma.conversation.findUnique({
-    where: { id: conversationId },
-    select: { userId: true },
-  })
-
-  if (!conversation) return null
-  if (conversation.userId !== userId) return null
-
-  return prisma.message.findMany({
-    where: { conversationId },
-    select: { id: true, role: true, content: true, createdAt: true },
-    orderBy: { createdAt: "asc" },
-  })
 }

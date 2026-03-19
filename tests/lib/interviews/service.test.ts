@@ -35,7 +35,6 @@ import {
   listInterviews,
   completeInterview,
   deleteInterview,
-  getConversationMessages,
   InterviewNotFoundError,
   InterviewForbiddenError,
 } from "@/lib/interviews/service"
@@ -190,22 +189,3 @@ describe("deleteInterview()", () => {
   })
 })
 
-// ─────────────────────────────────────────────────────────────────────────────
-describe("getConversationMessages()", () => {
-  it("다른 사용자의 대화면 null을 반환해야 한다", async () => {
-    mockPrisma.conversation.findUnique.mockResolvedValue({
-      userId: "other-user",
-    } as never)
-    const result = await getConversationMessages(CONV_ID, USER_ID)
-    expect(result).toBeNull()
-  })
-
-  it("소유자라면 메시지 목록을 반환해야 한다", async () => {
-    mockPrisma.conversation.findUnique.mockResolvedValue({ userId: USER_ID } as never)
-    mockPrisma.message.findMany.mockResolvedValue([
-      { id: "m1", role: "USER", content: "안녕", createdAt: new Date() },
-    ] as never)
-    const result = await getConversationMessages(CONV_ID, USER_ID)
-    expect(result).toHaveLength(1)
-  })
-})

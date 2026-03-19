@@ -44,13 +44,20 @@ export async function POST(request: Request) {
     // InterviewSession 로드 (기업 정보)
     const session = await prisma.interviewSession.findUnique({
       where: { id: interviewSessionId },
-      select: { userId: true, companyName: true, position: true },
+      select: { userId: true, companyName: true, position: true, status: true },
     })
 
     if (!session || session.userId !== user.id) {
       return NextResponse.json(
         { error: "면접 세션을 찾을 수 없습니다." },
         { status: 404 },
+      )
+    }
+
+    if (session.status === "COMPLETED") {
+      return NextResponse.json(
+        { error: "종료된 면접 세션입니다." },
+        { status: 400 },
       )
     }
 
@@ -83,7 +90,7 @@ export async function POST(request: Request) {
     const lastMessageContent =
       lastMessage.parts
         ?.filter((p: { type: string }) => p.type === "text")
-        .map((p: { text: string }) => p.text)
+        .map((p: { text?: string }) => p.text ?? "")
         .join("") ||
       lastMessage.content ||
       ""
