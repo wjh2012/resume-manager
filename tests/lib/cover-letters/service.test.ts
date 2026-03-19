@@ -8,9 +8,7 @@ vi.mock("@/lib/prisma", () => ({
       findUniqueOrThrow: vi.fn(),
       findMany: vi.fn(),
       update: vi.fn(),
-      updateMany: vi.fn(),
       delete: vi.fn(),
-      deleteMany: vi.fn(),
     },
     conversation: {
       create: vi.fn(),

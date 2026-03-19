@@ -7,8 +7,6 @@ vi.mock("@/lib/prisma", () => ({
       findUnique: vi.fn(),
       findUniqueOrThrow: vi.fn(),
       findMany: vi.fn(),
-      updateMany: vi.fn(),
-      deleteMany: vi.fn(),
     },
     interviewDocument: {
       createMany: vi.fn(),
