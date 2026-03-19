@@ -100,6 +100,7 @@ export async function POST(request: Request) {
       buildContext(user.id, {
         query: lastMessageContent,
         limitToDocumentIds: allowedDocIds,
+        includeInsights: true,
       }),
       getLanguageModel(user.id),
     ])
