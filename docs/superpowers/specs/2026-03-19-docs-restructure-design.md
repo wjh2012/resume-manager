@@ -67,11 +67,11 @@ specs/                   ← 삭제 (docs/specs/로 이동)
 | `specs/` 전체 | `docs/specs/` |
 | `docs/plans/*.md` (3개) | `docs/superpowers/plans/` |
 
-### 2. 파일 삭제
+### 2. 디렉토리/파일 삭제
 
-| 파일 | 이유 |
+| 대상 | 이유 |
 |------|------|
-| `docs/changelog/spec-review-updates.md` | 내용 중복, 불필요 |
+| `docs/changelog/` 디렉토리 전체 | 내용 중복, 불필요. 현재 파일 1개(`spec-review-updates.md`)만 존재 |
 | `docs/references/known-issues.md` | GitHub Issues로 이전 후 삭제 |
 
 ### 3. GitHub Issues 등록
@@ -92,12 +92,12 @@ specs/                   ← 삭제 (docs/specs/로 이동)
 
 | 파일 | 변경 내용 |
 |------|-----------|
-| `README.md` | `specs/README.md` → `docs/specs/README.md` |
+| `README.md` | line 20: `specs/README.md` → `docs/specs/README.md`; line 21: `specs/` 항목 삭제 또는 설명 업데이트 (`docs/`가 스펙 포함함을 반영) |
 | `.claude/agents/project-manager.md` (line 13) | 검색 가이드의 `specs/` → `docs/specs/` |
 | `.claude/agents/project-manager.md` (line 30) | `specs/phases/` → `docs/specs/phases/` |
 | `.claude/agents/project-manager.md` (line 47) | `known-issues.md` 참조 → GitHub Issues 레이블 확인 지침으로 교체 |
 | `.claude/skills/docs-sync/SKILL.md` | 디렉토리 테이블에서 `docs/changelog/` 항목 제거 |
-| `docs/rules/workflow-rule.md` | `known-issues.md` 언급 2곳 → GitHub Issues 포인터로 교체 |
+| `docs/rules/workflow-rule.md` | `known-issues.md` 언급 2곳 → GitHub Issues 포인터로 교체; `docs/changelog/` 작성 지침(changelog 섹션) → 제거 |
 | `docs/specs/README.md` | 내부 링크 확인 (상대 경로이므로 변동 없음) |
 
 ---
