@@ -20,10 +20,8 @@ export default async function InterviewWorkspacePage({
 }: {
   params: Promise<{ id: string }>
 }) {
-  const user = await getAuthUser()
+  const [user, { id }] = await Promise.all([getAuthUser(), params])
   if (!user) redirect("/login")
-
-  const { id } = await params
   const session = await getInterview(id, user.id)
 
   if (!session) notFound()

@@ -83,6 +83,7 @@ export function InterviewForm({ documents }: InterviewFormProps) {
         </label>
         <Input
           id="title"
+          name="title"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="예: 카카오 백엔드 모의면접"
@@ -90,7 +91,7 @@ export function InterviewForm({ documents }: InterviewFormProps) {
           disabled={isSubmitting}
         />
         {errors.title && (
-          <p className="text-sm text-destructive">{errors.title}</p>
+          <p className="text-sm text-destructive" aria-live="polite">{errors.title}</p>
         )}
       </div>
 
@@ -99,6 +100,7 @@ export function InterviewForm({ documents }: InterviewFormProps) {
           <label htmlFor="companyName" className="text-sm font-medium leading-none">기업명 (선택)</label>
           <Input
             id="companyName"
+            name="companyName"
             value={companyName}
             onChange={(e) => setCompanyName(e.target.value)}
             placeholder="카카오"
@@ -110,6 +112,7 @@ export function InterviewForm({ documents }: InterviewFormProps) {
           <label htmlFor="position" className="text-sm font-medium leading-none">직무 (선택)</label>
           <Input
             id="position"
+            name="position"
             value={position}
             onChange={(e) => setPosition(e.target.value)}
             placeholder="백엔드 개발자"
@@ -158,7 +161,7 @@ export function InterviewForm({ documents }: InterviewFormProps) {
         )}
 
         {errors.documentIds && (
-          <p className="text-sm text-destructive">{errors.documentIds}</p>
+          <p className="text-sm text-destructive" aria-live="polite">{errors.documentIds}</p>
         )}
       </div>
 
