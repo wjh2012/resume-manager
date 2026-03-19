@@ -163,17 +163,20 @@ export function CoverLetterChat({
             <PopoverContent align="end" className="w-64 p-2">
               <div className="space-y-1">
                 {documents.map((doc) => (
-                  <label
+                  <div
                     key={doc.id}
                     className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors hover:bg-accent"
                   >
                     <Checkbox
+                      id={`doc-${doc.id}`}
                       checked={selectedDocIds.includes(doc.id)}
                       onCheckedChange={() => handleDocToggle(doc.id)}
                       disabled={isUpdatingDocs}
                     />
-                    <span className="line-clamp-1">{doc.title}</span>
-                  </label>
+                    <label htmlFor={`doc-${doc.id}`} className="line-clamp-1 cursor-pointer">
+                      {doc.title}
+                    </label>
+                  </div>
                 ))}
               </div>
             </PopoverContent>

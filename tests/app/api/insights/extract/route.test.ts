@@ -14,8 +14,8 @@ vi.mock("@/lib/supabase/server", () => ({
 const mockExtract = vi.fn()
 vi.mock("@/lib/insights/service", () => ({
   extractInsights: (...args: unknown[]) => mockExtract(...args),
-  InsightNotFoundError: class extends Error {
-    constructor() { super("not found") }
+  ConversationNotFoundError: class extends Error {
+    constructor() { super("대화를 찾을 수 없습니다.") }
   },
   InsightForbiddenError: class extends Error {
     constructor() { super("forbidden") }

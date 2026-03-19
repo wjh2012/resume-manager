@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server"
 import { extractInsightsSchema } from "@/lib/validations/insight"
 import {
   extractInsights,
-  InsightNotFoundError,
+  ConversationNotFoundError,
 } from "@/lib/insights/service"
 import { AiSettingsNotFoundError } from "@/lib/ai/provider"
 
@@ -46,7 +46,7 @@ export async function POST(request: Request) {
     const insights = await extractInsights(user.id, parsed.data.conversationId)
     return NextResponse.json({ insights })
   } catch (error) {
-    if (error instanceof InsightNotFoundError) {
+    if (error instanceof ConversationNotFoundError) {
       return NextResponse.json({ error: error.message }, { status: 404 })
     }
     if (error instanceof AiSettingsNotFoundError) {

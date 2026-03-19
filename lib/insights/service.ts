@@ -14,6 +14,12 @@ export class InsightNotFoundError extends Error {
   }
 }
 
+export class ConversationNotFoundError extends Error {
+  constructor() {
+    super("대화를 찾을 수 없습니다.")
+  }
+}
+
 export class InsightForbiddenError extends Error {
   constructor() {
     super("이 인사이트에 대한 권한이 없습니다.")
@@ -35,7 +41,7 @@ export async function extractInsights(userId: string, conversationId: string) {
     where: { id: conversationId, userId },
   })
   if (!conversation) {
-    throw new InsightNotFoundError()
+    throw new ConversationNotFoundError()
   }
 
   const messages = await prisma.message.findMany({
@@ -47,8 +53,7 @@ export async function extractInsights(userId: string, conversationId: string) {
     return []
   }
 
-  await prisma.insight.deleteMany({ where: { conversationId, userId } })
-
+  // AI 호출을 먼저 수행 — 실패해도 기존 인사이트 보존
   const model = await getLanguageModel(userId)
   const { object } = await generateObject({
     model,
@@ -57,8 +62,10 @@ export async function extractInsights(userId: string, conversationId: string) {
     prompt: messages.map((m) => `${m.role}: ${m.content}`).join("\n"),
   })
 
-  const created = await prisma.$transaction(
-    object.insights.map((insight) =>
+  // 삭제 + 생성을 트랜잭션으로 원자적 처리
+  const created = await prisma.$transaction([
+    prisma.insight.deleteMany({ where: { conversationId, userId } }),
+    ...object.insights.map((insight) =>
       prisma.insight.create({
         data: {
           userId,
@@ -69,9 +76,10 @@ export async function extractInsights(userId: string, conversationId: string) {
         },
       }),
     ),
-  )
+  ])
 
-  return created
+  // $transaction 배열 결과: [deleteResult, ...createdInsights]
+  return created.slice(1)
 }
 
 export async function listInsights(userId: string, category?: string) {

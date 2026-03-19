@@ -35,19 +35,20 @@ import {
   countByCategory,
   InsightNotFoundError,
   InsightForbiddenError,
+  ConversationNotFoundError,
 } from "@/lib/insights/service"
 
 const userId = "user-1"
 const insightId = "insight-1"
 
 describe("extractInsights", () => {
-  it("throws InsightNotFoundError when conversation not found", async () => {
+  it("throws ConversationNotFoundError when conversation not found", async () => {
     vi.mocked(prisma.conversation.findFirst).mockResolvedValue(null)
 
     const { extractInsights } = await import("@/lib/insights/service")
     await expect(
       extractInsights(userId, "conv-1"),
-    ).rejects.toThrow(InsightNotFoundError)
+    ).rejects.toThrow(ConversationNotFoundError)
   })
 
   it("returns empty array when no messages", async () => {
