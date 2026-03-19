@@ -2,7 +2,7 @@ import { z } from "zod"
 
 export const createInterviewSchema = z.object({
   title: z
-    .string("제목을 입력해주세요.")
+    .string({ error: "제목을 입력해주세요." })
     .min(1, "제목을 입력해주세요.")
     .max(100, "제목은 100자 이하로 입력해주세요."),
   companyName: z
