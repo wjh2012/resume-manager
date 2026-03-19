@@ -87,6 +87,35 @@ describe("createInterview()", () => {
       createInterview(USER_ID, { title: "테스트", documentIds: [DOC_ID] }),
     ).rejects.toThrow(InterviewForbiddenError)
   })
+
+  it("중복된 documentIds가 전달되면 중복 제거 후 소유권을 검증해야 한다", async () => {
+    const countFn = vi.fn().mockResolvedValue(1)
+    const createManyFn = vi.fn().mockResolvedValue({})
+    mockPrisma.$transaction.mockImplementation(async (fn) => {
+      const tx = {
+        document: { count: countFn },
+        interviewSession: { create: vi.fn().mockResolvedValue({ id: SESSION_ID }) },
+        interviewDocument: { createMany: createManyFn },
+        conversation: { create: vi.fn().mockResolvedValue({}) },
+      }
+      return fn(tx)
+    })
+
+    const result = await createInterview(USER_ID, {
+      title: "중복 테스트",
+      documentIds: [DOC_ID, DOC_ID],
+    })
+
+    // 중복 제거 후 count는 1개 기준으로 호출
+    expect(countFn).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: { in: [DOC_ID] }, userId: USER_ID } }),
+    )
+    // createMany도 중복 제거된 1개만 전달
+    expect(createManyFn).toHaveBeenCalledWith(
+      expect.objectContaining({ data: [{ interviewSessionId: SESSION_ID, documentId: DOC_ID }] }),
+    )
+    expect(result).toEqual({ id: SESSION_ID })
+  })
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
