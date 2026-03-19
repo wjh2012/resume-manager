@@ -17,8 +17,14 @@ import {
 } from "@/components/ui/alert-dialog"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
-import { format } from "date-fns"
-import { ko } from "date-fns/locale"
+
+function formatDate(dateStr: string) {
+  return new Date(dateStr).toLocaleDateString("ko-KR", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  })
+}
 
 interface InterviewCardProps {
   id: string
@@ -72,7 +78,7 @@ export function InterviewCard({
           <FileText className="h-3 w-3" />
           {documentCount}개 문서
         </span>
-        <span>{format(new Date(updatedAt), "yyyy.MM.dd", { locale: ko })}</span>
+        <span>{formatDate(updatedAt)}</span>
       </div>
 
       <AlertDialog>

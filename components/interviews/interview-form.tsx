@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
 
@@ -79,9 +78,9 @@ export function InterviewForm({ documents }: InterviewFormProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="space-y-2">
-        <Label htmlFor="title">
+        <label htmlFor="title" className="text-sm font-medium leading-none">
           제목 <span className="text-destructive">*</span>
-        </Label>
+        </label>
         <Input
           id="title"
           value={title}
@@ -97,7 +96,7 @@ export function InterviewForm({ documents }: InterviewFormProps) {
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="companyName">기업명 (선택)</Label>
+          <label htmlFor="companyName" className="text-sm font-medium leading-none">기업명 (선택)</label>
           <Input
             id="companyName"
             value={companyName}
@@ -108,7 +107,7 @@ export function InterviewForm({ documents }: InterviewFormProps) {
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="position">직무 (선택)</Label>
+          <label htmlFor="position" className="text-sm font-medium leading-none">직무 (선택)</label>
           <Input
             id="position"
             value={position}
@@ -122,9 +121,9 @@ export function InterviewForm({ documents }: InterviewFormProps) {
 
       <div className="space-y-3">
         <div>
-          <Label>
+          <label className="text-sm font-medium leading-none">
             참고 문서 <span className="text-destructive">*</span>
-          </Label>
+          </label>
           <p className="mt-1 text-sm text-muted-foreground">
             면접관은 선택한 문서만 참고합니다.
           </p>
