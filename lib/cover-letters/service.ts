@@ -123,34 +123,26 @@ export async function updateCoverLetter(
   userId: string,
   data: UpdateCoverLetterData,
 ) {
-  const result = await prisma.coverLetter.updateMany({
-    where: { id, userId },
-    data,
-  })
-
-  if (result.count === 0) {
-    const exists = await prisma.coverLetter.findUnique({ where: { id }, select: { id: true } })
-    if (!exists) throw new CoverLetterNotFoundError()
-    throw new CoverLetterForbiddenError()
-  }
-
-  return prisma.coverLetter.findUniqueOrThrow({
-    where: { id },
-    select: { id: true, title: true, content: true, status: true, updatedAt: true },
+  return prisma.$transaction(async (tx) => {
+    const record = await tx.coverLetter.findUnique({ where: { id }, select: { id: true, userId: true } })
+    if (!record) throw new CoverLetterNotFoundError()
+    if (record.userId !== userId) throw new CoverLetterForbiddenError()
+    return tx.coverLetter.update({
+      where: { id },
+      data,
+      select: { id: true, title: true, content: true, status: true, updatedAt: true },
+    })
   })
 }
 
 // 자기소개서 삭제 (cascade)
 export async function deleteCoverLetter(id: string, userId: string) {
-  const result = await prisma.coverLetter.deleteMany({
-    where: { id, userId },
+  return prisma.$transaction(async (tx) => {
+    const record = await tx.coverLetter.findUnique({ where: { id }, select: { id: true, userId: true } })
+    if (!record) throw new CoverLetterNotFoundError()
+    if (record.userId !== userId) throw new CoverLetterForbiddenError()
+    await tx.coverLetter.delete({ where: { id } })
   })
-
-  if (result.count === 0) {
-    const exists = await prisma.coverLetter.findUnique({ where: { id }, select: { id: true } })
-    if (!exists) throw new CoverLetterNotFoundError()
-    throw new CoverLetterForbiddenError()
-  }
 }
 
 // 참고 문서 선택 변경

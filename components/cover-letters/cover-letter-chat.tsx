@@ -3,11 +3,22 @@
 import { useState, useCallback, useRef, useMemo } from "react"
 import { useChat } from "@ai-sdk/react"
 import { DefaultChatTransport, type UIMessage } from "ai"
-import { ArrowDown, ClipboardPaste, FileText } from "lucide-react"
+import { ArrowDown, ClipboardPaste, FileText, Lightbulb, Loader2 } from "lucide-react"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import {
   Popover,
   PopoverContent,
@@ -49,6 +60,7 @@ export function CoverLetterChat({
   const [selectedDocIds, setSelectedDocIds] = useState<string[]>(initialSelectedDocIds)
   const [isUpdatingDocs, setIsUpdatingDocs] = useState(false)
   const [input, setInput] = useState("")
+  const [isExtracting, setIsExtracting] = useState(false)
 
   // useRef로 최신 selectedDocIds를 body에 반영
   const selectedDocIdsRef = useRef(selectedDocIds)
@@ -88,6 +100,27 @@ export function CoverLetterChat({
     sendMessage({ text: input })
     setInput("")
   }, [input, isLoading, sendMessage])
+
+  const handleExtractInsights = useCallback(async () => {
+    setIsExtracting(true)
+    try {
+      const res = await fetch("/api/insights/extract", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ conversationId }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        throw new Error(data.error || "인사이트 추출에 실패했습니다.")
+      }
+      toast.success(`${data.insights.length}개의 인사이트가 추출되었습니다.`)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "인사이트 추출에 실패했습니다."
+      toast.error(message)
+    } finally {
+      setIsExtracting(false)
+    }
+  }, [conversationId])
 
   const handleDocToggle = useCallback(
     async (docId: string) => {
@@ -130,22 +163,54 @@ export function CoverLetterChat({
             <PopoverContent align="end" className="w-64 p-2">
               <div className="space-y-1">
                 {documents.map((doc) => (
-                  <label
+                  <div
                     key={doc.id}
                     className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors hover:bg-accent"
                   >
                     <Checkbox
+                      id={`doc-${doc.id}`}
                       checked={selectedDocIds.includes(doc.id)}
                       onCheckedChange={() => handleDocToggle(doc.id)}
                       disabled={isUpdatingDocs}
                     />
-                    <span className="line-clamp-1">{doc.title}</span>
-                  </label>
+                    <label htmlFor={`doc-${doc.id}`} className="line-clamp-1 cursor-pointer">
+                      {doc.title}
+                    </label>
+                  </div>
                 ))}
               </div>
             </PopoverContent>
           </Popover>
         )}
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              disabled={isExtracting || messages.length === 0}
+              aria-label="인사이트 추출"
+            >
+              {isExtracting ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Lightbulb className="h-3.5 w-3.5" />
+              )}
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>인사이트 추출</AlertDialogTitle>
+              <AlertDialogDescription>
+                이 대화에서 인사이트를 추출합니다. 이미 추출된 인사이트가 있으면 수동 편집 내용을 포함하여 모두 삭제 후 다시 추출됩니다.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>취소</AlertDialogCancel>
+              <AlertDialogAction onClick={handleExtractInsights}>추출하기</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
 
       {/* 메시지 영역 */}

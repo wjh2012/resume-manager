@@ -139,16 +139,10 @@ export async function completeInterview(id: string, userId: string) {
 
 // 면접 세션 삭제 (cascade)
 export async function deleteInterview(id: string, userId: string) {
-  const result = await prisma.interviewSession.deleteMany({
-    where: { id, userId },
+  return prisma.$transaction(async (tx) => {
+    const record = await tx.interviewSession.findUnique({ where: { id }, select: { id: true, userId: true } })
+    if (!record) throw new InterviewNotFoundError()
+    if (record.userId !== userId) throw new InterviewForbiddenError()
+    await tx.interviewSession.delete({ where: { id } })
   })
-
-  if (result.count === 0) {
-    const exists = await prisma.interviewSession.findUnique({
-      where: { id },
-      select: { id: true },
-    })
-    if (!exists) throw new InterviewNotFoundError()
-    throw new InterviewForbiddenError()
-  }
 }

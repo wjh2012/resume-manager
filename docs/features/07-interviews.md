@@ -26,13 +26,7 @@ InterviewSession (면접 세션)
 
 ### API 엔드포인트
 
-| Method | Path | 설명 |
-|--------|------|------|
-| POST | `/api/interviews` | 면접 세션 생성 (트랜잭션: Session + Documents + Conversation) |
-| GET | `/api/interviews/[id]` | 면접 세션 상세 조회 |
-| PUT | `/api/interviews/[id]` | 면접 종료 (`status: "COMPLETED"`) |
-| DELETE | `/api/interviews/[id]` | 면접 세션 삭제 |
-| POST | `/api/chat/interview` | 면접 채팅 스트리밍 |
+→ [`docs/specs/api-reference.md`](../specs/api-reference.md) 참조
 
 ### 문서 격리 (RAG)
 

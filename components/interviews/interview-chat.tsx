@@ -2,13 +2,15 @@
 "use client"
 
 import { useEffect, useRef, useMemo, useState } from "react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useChat } from "@ai-sdk/react"
 import { DefaultChatTransport, type UIMessage } from "ai"
-import { Square } from "lucide-react"
+import { ChevronLeft, Lightbulb, Loader2, Square } from "lucide-react"
 import { toast } from "sonner"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -45,6 +47,8 @@ export function InterviewChat({
   const router = useRouter()
   const [isCompleting, setIsCompleting] = useState(false)
   const [completed, setCompleted] = useState(isCompleted)
+  const [isExtracting, setIsExtracting] = useState(false)
+  const [extractOnComplete, setExtractOnComplete] = useState(true)
   const hasSentInitialRef = useRef(false)
   const [input, setInput] = useState("")
 
@@ -85,6 +89,27 @@ export function InterviewChat({
     setInput("")
   }
 
+  const handleExtractInsights = async () => {
+    setIsExtracting(true)
+    try {
+      const res = await fetch("/api/insights/extract", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ conversationId }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        throw new Error(data.error || "인사이트 추출에 실패했습니다.")
+      }
+      toast.success(`${data.insights.length}개의 인사이트가 추출되었습니다.`)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "인사이트 추출에 실패했습니다."
+      toast.error(message)
+    } finally {
+      setIsExtracting(false)
+    }
+  }
+
   const handleComplete = async () => {
     setIsCompleting(true)
     try {
@@ -102,6 +127,9 @@ export function InterviewChat({
       setCompleted(true)
       toast.success("면접이 종료되었습니다.")
       router.refresh()
+      if (extractOnComplete) {
+        await handleExtractInsights()
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : "종료에 실패했습니다."
       toast.error(message)
@@ -114,7 +142,15 @@ export function InterviewChat({
     <div className="flex h-full flex-col">
       {/* 헤더 */}
       <div className="flex items-center justify-between border-b px-6 py-4">
-        <div className="min-w-0">
+        <div className="flex items-center gap-4 min-w-0">
+          <Link
+            href="/interviews"
+            className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-xs transition-colors"
+          >
+            <ChevronLeft className="h-3.5 w-3.5" />
+            목록
+          </Link>
+          <div className="min-w-0">
           <div className="flex items-center gap-2">
             <h1 className="truncate text-lg font-semibold">{title}</h1>
             <Badge variant={completed ? "secondary" : "default"}>
@@ -126,9 +162,40 @@ export function InterviewChat({
               {[companyName, position].filter(Boolean).join(" · ")}
             </p>
           )}
+          </div>
         </div>
 
-        {!completed && (
+        <div className="flex items-center gap-2">
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                disabled={isExtracting || messages.length === 0}
+                aria-label="인사이트 추출"
+              >
+                {isExtracting ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Lightbulb className="h-3.5 w-3.5" />
+                )}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>인사이트 추출</AlertDialogTitle>
+                <AlertDialogDescription>
+                  이 대화에서 인사이트를 추출합니다. 이미 추출된 인사이트가 있으면 수동 편집 내용을 포함하여 모두 삭제 후 다시 추출됩니다.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>취소</AlertDialogCancel>
+                <AlertDialogAction onClick={handleExtractInsights}>추출하기</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+          {!completed && (
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button variant="outline" size="sm" disabled={isCompleting}>
@@ -143,13 +210,24 @@ export function InterviewChat({
                   종료 후에는 채팅을 계속할 수 없습니다. 면접 기록은 유지됩니다.
                 </AlertDialogDescription>
               </AlertDialogHeader>
+              <div className="flex items-center space-x-2 mt-4">
+                <Checkbox
+                  id="extract-insights"
+                  checked={extractOnComplete}
+                  onCheckedChange={(checked) => setExtractOnComplete(checked === true)}
+                />
+                <label htmlFor="extract-insights" className="text-sm">
+                  면접 종료 후 인사이트 자동 추출
+                </label>
+              </div>
               <AlertDialogFooter>
                 <AlertDialogCancel>취소</AlertDialogCancel>
                 <AlertDialogAction onClick={handleComplete}>종료</AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
-        )}
+          )}
+        </div>
       </div>
 
       {/* 채팅 영역 */}
