@@ -61,20 +61,22 @@ export function ExperienceEditor({ items, onChange }: ExperienceEditorProps) {
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-sm font-medium">
+              <label htmlFor={`${item._tempId}-company`} className="text-sm font-medium">
                 회사명 <span className="text-destructive">*</span>
               </label>
               <Input
+                id={`${item._tempId}-company`}
                 value={item.company}
                 onChange={(e) => onFieldChange("company", e.target.value)}
                 placeholder="주식회사 테크"
               />
             </div>
             <div>
-              <label className="text-sm font-medium">
+              <label htmlFor={`${item._tempId}-position`} className="text-sm font-medium">
                 직위 <span className="text-destructive">*</span>
               </label>
               <Input
+                id={`${item._tempId}-position`}
                 value={item.position}
                 onChange={(e) => onFieldChange("position", e.target.value)}
                 placeholder="시니어 개발자"
@@ -83,10 +85,11 @@ export function ExperienceEditor({ items, onChange }: ExperienceEditorProps) {
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-sm font-medium">시작일</label>
+              <label htmlFor={`${item._tempId}-startDate`} className="text-sm font-medium">시작일</label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
+                    id={`${item._tempId}-startDate`}
                     variant="outline"
                     className={cn(
                       "w-full justify-start text-left font-normal",
@@ -110,10 +113,11 @@ export function ExperienceEditor({ items, onChange }: ExperienceEditorProps) {
               </Popover>
             </div>
             <div>
-              <label className="text-sm font-medium">종료일</label>
+              <label htmlFor={`${item._tempId}-endDate`} className="text-sm font-medium">종료일</label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
+                    id={`${item._tempId}-endDate`}
                     variant="outline"
                     className={cn(
                       "w-full justify-start text-left font-normal",
@@ -139,16 +143,18 @@ export function ExperienceEditor({ items, onChange }: ExperienceEditorProps) {
           </div>
           <div className="flex items-center gap-2">
             <Checkbox
+              id={`${item._tempId}-isCurrent`}
               checked={item.isCurrent}
               onCheckedChange={(checked) =>
                 onFieldChange("isCurrent", Boolean(checked))
               }
             />
-            <label className="text-sm font-medium">재직 중</label>
+            <label htmlFor={`${item._tempId}-isCurrent`} className="text-sm font-medium">재직 중</label>
           </div>
           <div>
-            <label className="text-sm font-medium">설명</label>
+            <label htmlFor={`${item._tempId}-description`} className="text-sm font-medium">설명</label>
             <Textarea
+              id={`${item._tempId}-description`}
               value={item.description}
               onChange={(e) => onFieldChange("description", e.target.value)}
               placeholder="담당 업무와 성과를 입력하세요"

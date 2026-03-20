@@ -45,10 +45,11 @@ export function SkillEditor({ items, onChange }: SkillEditorProps) {
       renderItem={(item, _index, onFieldChange) => (
         <div className="space-y-3">
           <div>
-            <label className="text-sm font-medium">
+            <label htmlFor={`${item._tempId}-name`} className="text-sm font-medium">
               기술명 <span className="text-destructive">*</span>
             </label>
             <Input
+              id={`${item._tempId}-name`}
               value={item.name}
               onChange={(e) => onFieldChange("name", e.target.value)}
               placeholder="TypeScript"
@@ -56,12 +57,12 @@ export function SkillEditor({ items, onChange }: SkillEditorProps) {
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-sm font-medium">숙련도</label>
+              <label htmlFor={`${item._tempId}-level`} className="text-sm font-medium">숙련도</label>
               <Select
                 value={item.level}
                 onValueChange={(value) => onFieldChange("level", value)}
               >
-                <SelectTrigger className="w-full">
+                <SelectTrigger id={`${item._tempId}-level`} className="w-full">
                   <SelectValue placeholder="선택" />
                 </SelectTrigger>
                 <SelectContent>
@@ -73,12 +74,12 @@ export function SkillEditor({ items, onChange }: SkillEditorProps) {
               </Select>
             </div>
             <div>
-              <label className="text-sm font-medium">카테고리</label>
+              <label htmlFor={`${item._tempId}-category`} className="text-sm font-medium">카테고리</label>
               <Select
                 value={item.category}
                 onValueChange={(value) => onFieldChange("category", value)}
               >
-                <SelectTrigger className="w-full">
+                <SelectTrigger id={`${item._tempId}-category`} className="w-full">
                   <SelectValue placeholder="선택" />
                 </SelectTrigger>
                 <SelectContent>

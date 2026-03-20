@@ -1,6 +1,7 @@
 import { redirect, notFound } from "next/navigation"
 import { getAuthUser } from "@/lib/supabase/user"
 import { getResume } from "@/lib/resumes/service"
+import { UUID_RE } from "@/lib/utils"
 import { PreviewClient } from "./preview-client"
 
 // Convert Date | null to string | null
@@ -17,6 +18,8 @@ export default async function ResumePreviewPage({
   if (!user) redirect("/login")
 
   const { id } = await params
+  if (!UUID_RE.test(id)) notFound()
+
   const resume = await getResume(id, user.id)
   if (!resume) notFound()
 

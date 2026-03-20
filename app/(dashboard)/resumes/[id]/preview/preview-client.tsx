@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import { toast } from "sonner"
 import { ArrowLeft, Download } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -53,7 +54,7 @@ export function PreviewClient({ resume }: PreviewClientProps) {
       document.body.removeChild(a)
       URL.revokeObjectURL(url)
     } catch {
-      // TODO: toast notification
+      toast.error("PDF 다운로드에 실패했습니다.")
     } finally {
       setDownloading(false)
     }

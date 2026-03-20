@@ -57,18 +57,20 @@ export function CertificationEditor({
       renderItem={(item, _index, onFieldChange) => (
         <div className="space-y-3">
           <div>
-            <label className="text-sm font-medium">
+            <label htmlFor={`${item._tempId}-name`} className="text-sm font-medium">
               자격증명 <span className="text-destructive">*</span>
             </label>
             <Input
+              id={`${item._tempId}-name`}
               value={item.name}
               onChange={(e) => onFieldChange("name", e.target.value)}
               placeholder="정보처리기사"
             />
           </div>
           <div>
-            <label className="text-sm font-medium">발급기관</label>
+            <label htmlFor={`${item._tempId}-issuer`} className="text-sm font-medium">발급기관</label>
             <Input
+              id={`${item._tempId}-issuer`}
               value={item.issuer}
               onChange={(e) => onFieldChange("issuer", e.target.value)}
               placeholder="한국산업인력공단"
@@ -76,10 +78,11 @@ export function CertificationEditor({
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-sm font-medium">취득일</label>
+              <label htmlFor={`${item._tempId}-issueDate`} className="text-sm font-medium">취득일</label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
+                    id={`${item._tempId}-issueDate`}
                     variant="outline"
                     className={cn(
                       "w-full justify-start text-left font-normal",
@@ -103,10 +106,11 @@ export function CertificationEditor({
               </Popover>
             </div>
             <div>
-              <label className="text-sm font-medium">만료일</label>
+              <label htmlFor={`${item._tempId}-expiryDate`} className="text-sm font-medium">만료일</label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
+                    id={`${item._tempId}-expiryDate`}
                     variant="outline"
                     className={cn(
                       "w-full justify-start text-left font-normal",

@@ -4,6 +4,7 @@ import { createElement } from "react"
 import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { getResume } from "@/lib/resumes/service"
+import { UUID_RE } from "@/lib/utils"
 import { renderToBuffer } from "@react-pdf/renderer"
 // Import font registration (side effect)
 import "@/components/resumes/pdf/font-register"
@@ -11,8 +12,6 @@ import { ClassicPdfTemplate } from "@/components/resumes/pdf/classic-pdf"
 import { ModernPdfTemplate } from "@/components/resumes/pdf/modern-pdf"
 import { MinimalPdfTemplate } from "@/components/resumes/pdf/minimal-pdf"
 import type { ResumeData } from "@/components/resumes/types"
-
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 const TEMPLATES: Record<string, React.FC<{ data: ResumeData }>> = {
   classic: ClassicPdfTemplate,

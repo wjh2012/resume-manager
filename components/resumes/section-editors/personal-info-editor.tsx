@@ -32,20 +32,22 @@ export function PersonalInfoEditor({ data, onChange }: PersonalInfoEditorProps) 
   return (
     <div className="space-y-4">
       <div>
-        <label className="text-sm font-medium">
+        <label htmlFor="personal-name" className="text-sm font-medium">
           이름 <span className="text-destructive">*</span>
         </label>
         <Input
+          id="personal-name"
           value={current.name}
           onChange={(e) => handleChange("name", e.target.value)}
           placeholder="홍길동"
         />
       </div>
       <div>
-        <label className="text-sm font-medium">
+        <label htmlFor="personal-email" className="text-sm font-medium">
           이메일 <span className="text-destructive">*</span>
         </label>
         <Input
+          id="personal-email"
           type="email"
           value={current.email}
           onChange={(e) => handleChange("email", e.target.value)}
@@ -53,24 +55,27 @@ export function PersonalInfoEditor({ data, onChange }: PersonalInfoEditorProps) 
         />
       </div>
       <div>
-        <label className="text-sm font-medium">전화번호</label>
+        <label htmlFor="personal-phone" className="text-sm font-medium">전화번호</label>
         <Input
+          id="personal-phone"
           value={current.phone ?? ""}
           onChange={(e) => handleChange("phone", e.target.value)}
           placeholder="010-1234-5678"
         />
       </div>
       <div>
-        <label className="text-sm font-medium">주소</label>
+        <label htmlFor="personal-address" className="text-sm font-medium">주소</label>
         <Input
+          id="personal-address"
           value={current.address ?? ""}
           onChange={(e) => handleChange("address", e.target.value)}
           placeholder="서울특별시 강남구"
         />
       </div>
       <div>
-        <label className="text-sm font-medium">자기소개</label>
+        <label htmlFor="personal-bio" className="text-sm font-medium">자기소개</label>
         <Textarea
+          id="personal-bio"
           value={current.bio ?? ""}
           onChange={(e) => handleChange("bio", e.target.value)}
           placeholder="간단한 자기소개를 입력하세요"
