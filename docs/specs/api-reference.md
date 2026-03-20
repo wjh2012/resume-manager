@@ -3,7 +3,7 @@
 ## 인증
 
 모든 `(dashboard)` 하위 라우트 및 `/api/*` 라우트는 Supabase Auth 세션이 필요하다.
-`middleware.ts`에서 세션 검증 후, 미인증 시 `/login`으로 리다이렉트한다.
+`proxy.ts`에서 세션 검증 후, 미인증 시 `/login`으로 리다이렉트한다.
 
 ## 목록 조회 전략
 
@@ -16,19 +16,16 @@
 
 ```json
 {
-  "error": {
-    "code": "VALIDATION_ERROR",
-    "message": "구체적인 에러 메시지"
-  }
+  "error": "구체적인 에러 메시지"
 }
 ```
 
-주요 에러 코드:
-- `VALIDATION_ERROR` (400): 입력 검증 실패
-- `UNAUTHORIZED` (401): 인증 실패
-- `FORBIDDEN` (403): 권한 없음 (소유자가 아닌 경우)
-- `NOT_FOUND` (404): 리소스 없음
-- `PAYLOAD_TOO_LARGE` (413): 파일 크기 초과
+주요 HTTP 상태 코드:
+- `400`: 입력 검증 실패
+- `401`: 인증 실패
+- `403`: 권한 없음 (소유자가 아닌 경우)
+- `404`: 리소스 없음
+- `413`: 파일 크기 초과
 
 ---
 
@@ -42,7 +39,7 @@
 - **Body**: `file` (File), `title` (string, optional)
 - **처리 흐름**:
   1. Supabase Storage에 파일 업로드 (`documents/{userId}/{id}.ext`)
-  2. 파일 타입별 텍스트 추출 (pdf-parse / mammoth / 직접 읽기)
+  2. 파일 타입별 텍스트 추출 (unpdf / mammoth / 직접 읽기)
   3. 텍스트 청크 분할
   4. 각 청크에 대해 임베딩 생성
   5. `Document` + `DocumentChunk[]` DB 저장
@@ -172,13 +169,6 @@
     }))
   })
   ```
-
-### `GET /api/insights`
-
-사용자의 인사이트 목록 조회.
-
-- **Query**: `category` (optional, 필터)
-- **Response**: `200 OK` — 인사이트 배열
 
 ### `PUT /api/insights/[id]`
 
@@ -330,6 +320,18 @@
 ### `DELETE /api/cover-letters/[id]`
 
 자기소개서 삭제.
+
+### `PATCH /api/cover-letters/[id]/documents`
+
+자기소개서에 연결된 참고 문서 목록 업데이트.
+
+- **Body**:
+  ```json
+  {
+    "documentIds": ["uuid", "uuid"]
+  }
+  ```
+- **Response**: `200 OK`
 
 ---
 
