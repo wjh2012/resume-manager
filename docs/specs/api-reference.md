@@ -215,7 +215,7 @@
     "template": "classic"
   }
   ```
-- **Response**: `201 Created` — 생성된 이력서 (빈 섹션 포함)
+- **Response**: `201 Created` — `{ "id": "uuid" }`
 
 ### `GET /api/resumes/[id]`
 
@@ -238,26 +238,67 @@
 
 ### `PUT /api/resumes/[id]`
 
-이력서 전체 업데이트 (제목, 템플릿 + 모든 섹션).
+이력서 메타 정보 수정 (제목, 템플릿).
 
-- **Body**: 이력서 전체 데이터 (GET 응답과 동일 구조)
-- **처리**: 트랜잭션으로 하위 섹션 upsert/delete
+- **Body**: `{ "title": "...", "template": "modern" }` (모두 optional)
 - **Response**: `200 OK`
 
 ### `DELETE /api/resumes/[id]`
 
 이력서 삭제 (모든 하위 섹션 Cascade).
 
-- **Response**: `204 No Content`
+- **Response**: `200 OK` — `{ "success": true }`
+
+### 섹션별 API
+
+각 섹션은 독립 API로 개별 저장한다 (자동 저장 시 변경된 섹션만 전송).
+
+#### `PUT /api/resumes/[id]/personal-info`
+
+개인정보 upsert.
+
+- **Body**: `{ "name": "...", "email": "...", "phone": "...", "address": "...", "bio": "..." }`
+- **Response**: `200 OK` — 갱신된 개인정보
+
+#### `PUT /api/resumes/[id]/educations`
+
+학력 전체 교체 (deleteMany + createMany).
+
+- **Body**: `{ "items": [{ "school": "...", "degree": "...", ... }] }`
+- **Response**: `200 OK` — 갱신된 학력 배열
+
+#### `PUT /api/resumes/[id]/experiences`
+
+경력 전체 교체.
+
+- **Body**: `{ "items": [{ "company": "...", "position": "...", ... }] }`
+
+#### `PUT /api/resumes/[id]/skills`
+
+기술 전체 교체.
+
+- **Body**: `{ "items": [{ "name": "...", "level": "...", "category": "..." }] }`
+
+#### `PUT /api/resumes/[id]/projects`
+
+프로젝트 전체 교체.
+
+- **Body**: `{ "items": [{ "name": "...", "role": "...", ... }] }`
+
+#### `PUT /api/resumes/[id]/certifications`
+
+자격증 전체 교체.
+
+- **Body**: `{ "items": [{ "name": "...", "issuer": "...", ... }] }`
 
 ### `GET /api/resumes/[id]/pdf`
 
 이력서 PDF 생성 및 다운로드.
 
-- **Query**: `template` (optional, 오버라이드)
-- **처리**: `@react-pdf/renderer`로 서버사이드 PDF 생성
+- **Query**: `template` (optional, classic/modern/minimal)
+- **처리**: `@react-pdf/renderer`로 서버사이드 PDF 생성 (Node.js runtime)
 - **Response**: `application/pdf` 스트림
-- **주의**: Noto Sans KR 폰트 등록 필요 (한국어 렌더링)
+- **폰트**: Pretendard Regular/Bold (한국어 렌더링)
 
 ---
 

@@ -137,3 +137,37 @@
 - **스펙**: `insight-card.tsx`에서 "인라인 편집 또는 다이얼로그"
 - **실제**: 별도 `insight-edit-dialog.tsx` 컴포넌트로 분리
 - **이유**: 다이얼로그 방식 선택 + 컴포넌트 관심사 분리
+
+---
+
+## Phase 6: 이력서 빌더
+
+### API 구조: 전체 PUT → 섹션별 PUT
+
+- **스펙**: `PUT /api/resumes/[id]`로 전체 업데이트
+- **실제**: 메타(title/template)만 `PUT /api/resumes/[id]`, 섹션별 독립 API (`PUT /api/resumes/[id]/educations` 등)
+- **이유**: 자동 저장 시 변경 섹션만 전송 + 향후 블록 조합 기능 확장 대비
+
+### 한국어 폰트: Noto Sans KR → Pretendard
+
+- **스펙**: Noto Sans KR
+- **실제**: Pretendard Regular/Bold
+- **이유**: 사용자 선호
+
+### 컴포넌트 이름: `resume-form.tsx` → `resume-editor.tsx`
+
+- **스펙**: `components/resumes/resume-form.tsx`
+- **실제**: `components/resumes/resume-editor.tsx`
+- **이유**: 폼 입력보다 편집기 역할에 가까움
+
+### 목록 API route 미생성
+
+- **스펙**: `GET /api/resumes` route 포함
+- **실제**: SC에서 `listResumes()` 직접 호출
+- **이유**: 기존 패턴 (cover-letters, interviews, insights 동일)
+
+### 날짜 입력: `type="month"` → MonthPicker
+
+- **스펙**: HTML native `<input type="month">`
+- **실제**: shadcn 기반 MonthPicker + Popover
+- **이유**: 브라우저 간 일관된 UI + `Intl.DateTimeFormat` 로케일 자동 감지
