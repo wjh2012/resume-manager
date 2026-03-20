@@ -80,5 +80,9 @@ export default async function ResumePreviewPage({
     })),
   }
 
-  return <PreviewClient resume={serialized} />
+  return (
+    <div className="h-full">
+      <PreviewClient resume={serialized} />
+    </div>
+  )
 }

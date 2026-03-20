@@ -81,7 +81,7 @@ export default async function ResumeEditPage({
   }
 
   return (
-    <div className="h-[calc(100vh-4rem)]">
+    <div className="h-full">
       <ResumeEditor resume={serialized} />
     </div>
   )
