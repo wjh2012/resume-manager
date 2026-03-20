@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from "react"
 import Link from "next/link"
-import { Eye, EyeOff, Save, Loader2, ExternalLink } from "lucide-react"
+import { ArrowLeft, Eye, EyeOff, Save, Loader2, ExternalLink } from "lucide-react"
 import { toast } from "sonner"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -419,6 +419,12 @@ export function ResumeEditor({ resume }: ResumeEditorProps) {
     <div className="flex h-full flex-col gap-4">
       {/* Top bar */}
       <div className="flex flex-wrap items-center gap-3">
+        <Button variant="ghost" size="icon" asChild className="shrink-0">
+          <Link href="/resumes">
+            <ArrowLeft className="h-4 w-4" />
+            <span className="sr-only">목록으로</span>
+          </Link>
+        </Button>
         <Input
           value={title}
           onChange={(e) => handleTitleChange(e.target.value)}

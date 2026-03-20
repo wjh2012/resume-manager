@@ -40,10 +40,16 @@ export const experienceSchema = z.object({
   description: z.string().optional(),
 })
 
+// 빈 문자열 → undefined 변환 (Select 미선택 시 "" 전송됨)
+const optionalEnum = <T extends string>(values: readonly [T, ...T[]]) =>
+  z.union([z.enum(values), z.literal("")]).transform((v) =>
+    v === "" ? undefined : v,
+  )
+
 export const skillSchema = z.object({
   name: z.string().min(1, "기술명을 입력해주세요."),
-  level: z.enum(["beginner", "intermediate", "advanced", "expert"]).optional(),
-  category: z.enum(["language", "framework", "tool", "other"]).optional(),
+  level: optionalEnum(["beginner", "intermediate", "advanced", "expert"]).optional(),
+  category: optionalEnum(["language", "framework", "tool", "other"]).optional(),
 })
 
 export const projectSchema = z.object({
