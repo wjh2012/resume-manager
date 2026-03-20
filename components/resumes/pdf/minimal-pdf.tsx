@@ -1,0 +1,243 @@
+import { Document, Page, View, Text, StyleSheet } from "@react-pdf/renderer"
+import type { ResumeData } from "@/components/resumes/types"
+
+function formatDate(date?: string | null): string {
+  if (!date) return ""
+  const match = date.match(/^(\d{4})-(\d{2})/)
+  if (match) return `${match[1]}.${match[2]}`
+  return date
+}
+
+function dateRange(start?: string | null, end?: string | null, isCurrent?: boolean): string {
+  const s = formatDate(start)
+  const e = isCurrent ? "현재" : formatDate(end)
+  if (!s && !e) return ""
+  if (s && e) return `${s} - ${e}`
+  return s || e
+}
+
+const styles = StyleSheet.create({
+  page: {
+    fontFamily: "Pretendard",
+    fontSize: 10,
+    padding: 36,
+    color: "#111827",
+  },
+  header: {
+    marginBottom: 24,
+  },
+  name: {
+    fontSize: 20,
+    fontWeight: 400,
+    color: "#1f2937",
+    letterSpacing: 1,
+  },
+  contact: {
+    fontSize: 8,
+    color: "#9ca3af",
+    marginTop: 6,
+  },
+  bio: {
+    fontSize: 9,
+    color: "#6b7280",
+    marginTop: 8,
+    lineHeight: 1.6,
+  },
+  section: {
+    marginBottom: 20,
+  },
+  sectionTitle: {
+    fontSize: 8,
+    fontWeight: 700,
+    color: "#9ca3af",
+    textTransform: "uppercase",
+    letterSpacing: 2,
+    marginBottom: 10,
+  },
+  itemBlock: {
+    marginBottom: 10,
+    borderBottomWidth: 0.5,
+    borderBottomColor: "#f3f4f6",
+    paddingBottom: 10,
+  },
+  row: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+  },
+  itemTitle: {
+    fontSize: 10,
+    fontWeight: 700,
+    color: "#1f2937",
+  },
+  dateText: {
+    fontSize: 8,
+    color: "#9ca3af",
+  },
+  subtitle: {
+    fontSize: 8,
+    color: "#9ca3af",
+    marginTop: 2,
+  },
+  description: {
+    fontSize: 8,
+    color: "#4b5563",
+    marginTop: 5,
+    lineHeight: 1.5,
+  },
+  skillsWrap: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 6,
+  },
+  skillText: {
+    fontSize: 8,
+    color: "#4b5563",
+  },
+  skillDivider: {
+    fontSize: 8,
+    color: "#d1d5db",
+    marginLeft: 6,
+  },
+  certRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: 5,
+  },
+  certName: {
+    fontSize: 10,
+    color: "#374151",
+  },
+  certIssuer: {
+    fontSize: 8,
+    color: "#9ca3af",
+    marginLeft: 6,
+  },
+  urlText: {
+    fontSize: 7,
+    color: "#9ca3af",
+    marginTop: 3,
+  },
+})
+
+export function MinimalPdfTemplate({ data }: { data: ResumeData }) {
+  const { personalInfo, experiences, educations, skills, projects, certifications } = data
+
+  const contactParts: string[] = []
+  if (personalInfo?.email) contactParts.push(personalInfo.email)
+  if (personalInfo?.phone) contactParts.push(personalInfo.phone)
+  if (personalInfo?.address) contactParts.push(personalInfo.address)
+
+  return (
+    <Document>
+      <Page size="A4" style={styles.page}>
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.name}>{personalInfo?.name ?? "이름"}</Text>
+          {contactParts.length > 0 && (
+            <Text style={styles.contact}>{contactParts.join(" · ")}</Text>
+          )}
+          {personalInfo?.bio && <Text style={styles.bio}>{personalInfo.bio}</Text>}
+        </View>
+
+        {/* 경력 */}
+        {experiences.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>경력</Text>
+            {experiences.map((exp) => (
+              <View key={exp.id} style={styles.itemBlock}>
+                <View style={styles.row}>
+                  <Text style={styles.itemTitle}>{exp.position}</Text>
+                  <Text style={styles.dateText}>
+                    {dateRange(exp.startDate, exp.endDate, exp.isCurrent)}
+                  </Text>
+                </View>
+                <Text style={styles.subtitle}>{exp.company}</Text>
+                {exp.description && <Text style={styles.description}>{exp.description}</Text>}
+              </View>
+            ))}
+          </View>
+        )}
+
+        {/* 학력 */}
+        {educations.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>학력</Text>
+            {educations.map((edu) => {
+              const title = [edu.degree, edu.field].filter(Boolean).join(" ") || edu.school
+              const showSchool = !!(edu.degree || edu.field)
+              return (
+                <View key={edu.id} style={styles.itemBlock}>
+                  <View style={styles.row}>
+                    <Text style={styles.itemTitle}>{title}</Text>
+                    <Text style={styles.dateText}>
+                      {dateRange(edu.startDate, edu.endDate)}
+                    </Text>
+                  </View>
+                  {showSchool && <Text style={styles.subtitle}>{edu.school}</Text>}
+                  {edu.description && <Text style={styles.description}>{edu.description}</Text>}
+                </View>
+              )
+            })}
+          </View>
+        )}
+
+        {/* 기술 */}
+        {skills.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>기술</Text>
+            <View style={styles.skillsWrap}>
+              {skills.map((skill, index) => (
+                <Text key={skill.id} style={styles.skillText}>
+                  {skill.name}
+                  {index < skills.length - 1 && (
+                    <Text style={styles.skillDivider}> |</Text>
+                  )}
+                </Text>
+              ))}
+            </View>
+          </View>
+        )}
+
+        {/* 프로젝트 */}
+        {projects.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>프로젝트</Text>
+            {projects.map((proj) => (
+              <View key={proj.id} style={styles.itemBlock}>
+                <View style={styles.row}>
+                  <Text style={styles.itemTitle}>{proj.name}</Text>
+                  <Text style={styles.dateText}>
+                    {dateRange(proj.startDate, proj.endDate)}
+                  </Text>
+                </View>
+                {proj.role && <Text style={styles.subtitle}>{proj.role}</Text>}
+                {proj.description && <Text style={styles.description}>{proj.description}</Text>}
+                {proj.url && <Text style={styles.urlText}>{proj.url}</Text>}
+              </View>
+            ))}
+          </View>
+        )}
+
+        {/* 자격증 */}
+        {certifications.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>자격증</Text>
+            {certifications.map((cert) => (
+              <View key={cert.id} style={styles.certRow}>
+                <Text style={styles.certName}>
+                  {cert.name}
+                  {cert.issuer && <Text style={styles.certIssuer}>{cert.issuer}</Text>}
+                </Text>
+                {cert.issueDate && (
+                  <Text style={styles.dateText}>{formatDate(cert.issueDate)}</Text>
+                )}
+              </View>
+            ))}
+          </View>
+        )}
+      </Page>
+    </Document>
+  )
+}
