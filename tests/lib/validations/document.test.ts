@@ -8,7 +8,7 @@ import {
 } from "@/lib/validations/document"
 
 // File 헬퍼: 브라우저 File 객체를 최소한으로 모사
-function makeFile(name: string, type: string, size = 0): File {
+function makeFile(name: string, type: string): File {
   return new File([""], name, { type })
 }
 

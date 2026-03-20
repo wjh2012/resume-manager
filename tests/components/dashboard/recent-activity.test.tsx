@@ -14,7 +14,7 @@ vi.mock("@/lib/utils", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/utils")>()
   return {
     ...actual,
-    formatShortDate: (_date: Date | string) => "3월 20일",
+    formatShortDate: () => "3월 20일",
   }
 })
 

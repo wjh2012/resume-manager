@@ -436,19 +436,19 @@ describe("coverLetterChatSchema", () => {
 
   describe("필수 필드 누락", () => {
     it("conversationId가 없으면 실패해야 한다", () => {
-      const { conversationId: _conversationId, ...rest } = validBase
+      const { conversationId: _, ...rest } = validBase
       const result = coverLetterChatSchema.safeParse(rest)
       expect(result.success).toBe(false)
     })
 
     it("coverLetterId가 없으면 실패해야 한다", () => {
-      const { coverLetterId: _coverLetterId, ...rest } = validBase
+      const { coverLetterId: _, ...rest } = validBase
       const result = coverLetterChatSchema.safeParse(rest)
       expect(result.success).toBe(false)
     })
 
     it("messages가 없으면 실패해야 한다", () => {
-      const { messages: _messages, ...rest } = validBase
+      const { messages: _, ...rest } = validBase
       const result = coverLetterChatSchema.safeParse(rest)
       expect(result.success).toBe(false)
     })
