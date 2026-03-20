@@ -39,13 +39,13 @@ export default function DashboardLoading() {
       <section>
         <Skeleton className="mb-4 h-6 w-24" />
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 3 }, (_, i) => (
+          {[3, 3, 5].map((rows, i) => (
             <Card key={i}>
               <CardHeader className="pb-3">
                 <Skeleton className="h-5 w-28" />
               </CardHeader>
               <CardContent className="space-y-3">
-                {Array.from({ length: 3 }, (_, j) => (
+                {Array.from({ length: rows }, (_, j) => (
                   <div key={j} className="flex items-center justify-between px-2 py-1.5">
                     <Skeleton className="h-4 w-32" />
                     <Skeleton className="h-3 w-12" />
