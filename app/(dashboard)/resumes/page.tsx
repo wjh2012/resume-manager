@@ -25,7 +25,7 @@ export default async function ResumesPage() {
   if (!user) redirect("/login")
 
   return (
-    <div className="space-y-6">
+    <div className="h-full space-y-6 overflow-y-auto">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-balance">이력서</h1>

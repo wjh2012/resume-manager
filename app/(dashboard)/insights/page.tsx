@@ -47,7 +47,7 @@ export default async function InsightsPage({ searchParams }: PageProps) {
   const { category, sort = "time" } = await searchParams
 
   return (
-    <div className="space-y-6">
+    <div className="h-full space-y-6 overflow-y-auto">
       <div className="flex items-center gap-3">
         <Lightbulb className="h-6 w-6" />
         <h1 className="text-2xl font-bold">인사이트</h1>
