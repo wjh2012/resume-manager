@@ -7,6 +7,8 @@
 - **`feature/`**: 새 기능 개발 시 `develop`에서 분기.
   - 명명 규칙: `feature/{기능명}` (예: `feature/resume-editor`)
 - **`bugfix/`**: `develop` 브랜치의 버그 수정.
+- **`release/`**: 배포 준비 시 `develop`에서 분기. 테스트/수정 후 `master`로 PR.
+  - 명명 규칙: `release/{버전}` (예: `release/1.0.0`)
 - **`hotfix/`**: 프로덕션(`master`)의 긴급 수정.
 
 ## 2. 커밋 단위 규칙
@@ -20,5 +22,7 @@
 - 셀프 리뷰 완료 후 PR을 생성한다.
 - **PR base 브랜치 규칙**:
   - `feature/`, `bugfix/` → 반드시 `develop`을 base로 지정
-  - `hotfix/` → `master`를 base로 지정
+  - `release/` → `master`를 base로 지정, 머지 후 `develop`에도 병합
+  - `hotfix/` → `master`를 base로 지정, 머지 후 `develop`에도 병합
   - `master`에 직접 feature/bugfix PR을 생성하지 않는다
+  - `master` 머지 후 버전 태그를 생성한다 (예: `v1.0.0`)

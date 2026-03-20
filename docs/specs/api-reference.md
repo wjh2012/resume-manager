@@ -3,7 +3,7 @@
 ## 인증
 
 모든 `(dashboard)` 하위 라우트 및 `/api/*` 라우트는 Supabase Auth 세션이 필요하다.
-`middleware.ts`에서 세션 검증 후, 미인증 시 `/login`으로 리다이렉트한다.
+`proxy.ts`에서 세션 검증 후, 미인증 시 `/login`으로 리다이렉트한다.
 
 ## 목록 조회 전략
 
@@ -16,19 +16,16 @@
 
 ```json
 {
-  "error": {
-    "code": "VALIDATION_ERROR",
-    "message": "구체적인 에러 메시지"
-  }
+  "error": "구체적인 에러 메시지"
 }
 ```
 
-주요 에러 코드:
-- `VALIDATION_ERROR` (400): 입력 검증 실패
-- `UNAUTHORIZED` (401): 인증 실패
-- `FORBIDDEN` (403): 권한 없음 (소유자가 아닌 경우)
-- `NOT_FOUND` (404): 리소스 없음
-- `PAYLOAD_TOO_LARGE` (413): 파일 크기 초과
+주요 HTTP 상태 코드:
+- `400`: 입력 검증 실패
+- `401`: 인증 실패
+- `403`: 권한 없음 (소유자가 아닌 경우)
+- `404`: 리소스 없음
+- `413`: 파일 크기 초과
 
 ---
 
@@ -42,7 +39,7 @@
 - **Body**: `file` (File), `title` (string, optional)
 - **처리 흐름**:
   1. Supabase Storage에 파일 업로드 (`documents/{userId}/{id}.ext`)
-  2. 파일 타입별 텍스트 추출 (pdf-parse / mammoth / 직접 읽기)
+  2. 파일 타입별 텍스트 추출 (unpdf / mammoth / 직접 읽기)
   3. 텍스트 청크 분할
   4. 각 청크에 대해 임베딩 생성
   5. `Document` + `DocumentChunk[]` DB 저장
@@ -173,13 +170,6 @@
   })
   ```
 
-### `GET /api/insights`
-
-사용자의 인사이트 목록 조회.
-
-- **Query**: `category` (optional, 필터)
-- **Response**: `200 OK` — 인사이트 배열
-
 ### `PUT /api/insights/[id]`
 
 인사이트 수정 (제목, 내용, 카테고리).
@@ -215,7 +205,7 @@
     "template": "classic"
   }
   ```
-- **Response**: `201 Created` — 생성된 이력서 (빈 섹션 포함)
+- **Response**: `201 Created` — `{ "id": "uuid" }`
 
 ### `GET /api/resumes/[id]`
 
@@ -238,26 +228,67 @@
 
 ### `PUT /api/resumes/[id]`
 
-이력서 전체 업데이트 (제목, 템플릿 + 모든 섹션).
+이력서 메타 정보 수정 (제목, 템플릿).
 
-- **Body**: 이력서 전체 데이터 (GET 응답과 동일 구조)
-- **처리**: 트랜잭션으로 하위 섹션 upsert/delete
+- **Body**: `{ "title": "...", "template": "modern" }` (모두 optional)
 - **Response**: `200 OK`
 
 ### `DELETE /api/resumes/[id]`
 
 이력서 삭제 (모든 하위 섹션 Cascade).
 
-- **Response**: `204 No Content`
+- **Response**: `200 OK` — `{ "success": true }`
+
+### 섹션별 API
+
+각 섹션은 독립 API로 개별 저장한다 (자동 저장 시 변경된 섹션만 전송).
+
+#### `PUT /api/resumes/[id]/personal-info`
+
+개인정보 upsert.
+
+- **Body**: `{ "name": "...", "email": "...", "phone": "...", "address": "...", "bio": "..." }`
+- **Response**: `200 OK` — 갱신된 개인정보
+
+#### `PUT /api/resumes/[id]/educations`
+
+학력 전체 교체 (deleteMany + createMany).
+
+- **Body**: `{ "items": [{ "school": "...", "degree": "...", ... }] }`
+- **Response**: `200 OK` — 갱신된 학력 배열
+
+#### `PUT /api/resumes/[id]/experiences`
+
+경력 전체 교체.
+
+- **Body**: `{ "items": [{ "company": "...", "position": "...", ... }] }`
+
+#### `PUT /api/resumes/[id]/skills`
+
+기술 전체 교체.
+
+- **Body**: `{ "items": [{ "name": "...", "level": "...", "category": "..." }] }`
+
+#### `PUT /api/resumes/[id]/projects`
+
+프로젝트 전체 교체.
+
+- **Body**: `{ "items": [{ "name": "...", "role": "...", ... }] }`
+
+#### `PUT /api/resumes/[id]/certifications`
+
+자격증 전체 교체.
+
+- **Body**: `{ "items": [{ "name": "...", "issuer": "...", ... }] }`
 
 ### `GET /api/resumes/[id]/pdf`
 
 이력서 PDF 생성 및 다운로드.
 
-- **Query**: `template` (optional, 오버라이드)
-- **처리**: `@react-pdf/renderer`로 서버사이드 PDF 생성
+- **Query**: `template` (optional, classic/modern/minimal)
+- **처리**: `@react-pdf/renderer`로 서버사이드 PDF 생성 (Node.js runtime)
 - **Response**: `application/pdf` 스트림
-- **주의**: Noto Sans KR 폰트 등록 필요 (한국어 렌더링)
+- **폰트**: Pretendard Regular/Bold (한국어 렌더링)
 
 ---
 
@@ -289,6 +320,18 @@
 ### `DELETE /api/cover-letters/[id]`
 
 자기소개서 삭제.
+
+### `PATCH /api/cover-letters/[id]/documents`
+
+자기소개서에 연결된 참고 문서 목록 업데이트.
+
+- **Body**:
+  ```json
+  {
+    "documentIds": ["uuid", "uuid"]
+  }
+  ```
+- **Response**: `200 OK`
 
 ---
 

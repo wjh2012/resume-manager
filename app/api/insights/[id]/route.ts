@@ -2,15 +2,13 @@ import { NextResponse } from "next/server"
 
 import { createClient } from "@/lib/supabase/server"
 import { updateInsightSchema } from "@/lib/validations/insight"
+import { UUID_RE } from "@/lib/utils"
 import {
   updateInsight,
   deleteInsight,
   InsightNotFoundError,
   InsightForbiddenError,
 } from "@/lib/insights/service"
-
-const UUID_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 export async function PUT(
   request: Request,

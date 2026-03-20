@@ -2,11 +2,11 @@
 "use client"
 
 import { useEffect, useRef, useMemo, useState } from "react"
-import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useChat } from "@ai-sdk/react"
 import { DefaultChatTransport, type UIMessage } from "ai"
-import { ChevronLeft, Lightbulb, Loader2, Square } from "lucide-react"
+import { Lightbulb, Loader2, Square } from "lucide-react"
+import { BackToListLink } from "@/components/shared/back-to-list-link"
 import { toast } from "sonner"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -143,13 +143,7 @@ export function InterviewChat({
       {/* 헤더 */}
       <div className="flex items-center justify-between border-b px-6 py-4">
         <div className="flex items-center gap-4 min-w-0">
-          <Link
-            href="/interviews"
-            className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-xs transition-colors"
-          >
-            <ChevronLeft className="h-3.5 w-3.5" />
-            목록
-          </Link>
+          <BackToListLink href="/interviews" />
           <div className="min-w-0">
           <div className="flex items-center gap-2">
             <h1 className="truncate text-lg font-semibold">{title}</h1>

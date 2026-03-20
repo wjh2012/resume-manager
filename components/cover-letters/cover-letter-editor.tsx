@@ -1,8 +1,7 @@
 "use client"
 
 import { useRef, useEffect, useState, useCallback } from "react"
-import Link from "next/link"
-import { ChevronLeft } from "lucide-react"
+import { BackToListLink } from "@/components/shared/back-to-list-link"
 import { toast } from "sonner"
 import { CoverLetterStatus } from "@prisma/client"
 import { Textarea } from "@/components/ui/textarea"
@@ -138,13 +137,7 @@ export function CoverLetterEditor({
     <div className="flex h-full flex-col">
       <div className="flex items-center justify-between border-b px-4 py-2">
         <div className="flex items-center gap-3">
-          <Link
-            href="/cover-letters"
-            className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-xs transition-colors"
-          >
-            <ChevronLeft className="h-3.5 w-3.5" />
-            목록
-          </Link>
+          <BackToListLink href="/cover-letters" />
           <h2 className="text-sm font-medium">에디터</h2>
         </div>
         <div className="flex items-center gap-3 text-xs">
@@ -163,12 +156,12 @@ export function CoverLetterEditor({
           </Button>
         </div>
       </div>
-      <div className="flex-1 p-4">
+      <div className="min-h-0 flex-1">
         <Textarea
           value={content}
           onChange={(e) => onContentChange(e.target.value)}
           placeholder="자기소개서 내용을 작성하세요. AI 채팅에서 '에디터에 반영' 버튼을 눌러 내용을 추가할 수도 있습니다."
-          className="h-full min-h-0 resize-none border-0 p-4 shadow-none focus-visible:ring-offset-0 focus-visible:ring-1"
+          className="h-full min-h-0 resize-none rounded-none border-0 bg-transparent p-4 shadow-none focus-visible:ring-0 field-sizing-fixed dark:bg-transparent"
         />
       </div>
     </div>

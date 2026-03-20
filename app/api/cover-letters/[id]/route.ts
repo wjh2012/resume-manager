@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { updateCoverLetterSchema } from "@/lib/validations/cover-letter"
+import { UUID_RE } from "@/lib/utils"
 import {
   getCoverLetter,
   updateCoverLetter,
@@ -8,8 +9,6 @@ import {
   CoverLetterNotFoundError,
   CoverLetterForbiddenError,
 } from "@/lib/cover-letters/service"
-
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 export async function GET(
   _request: Request,
