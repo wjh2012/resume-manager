@@ -11,6 +11,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { CoverLetterEditor } from "./cover-letter-editor"
 import { CoverLetterChat } from "./cover-letter-chat"
 
+const mobileMql =
+  typeof window !== "undefined"
+    ? window.matchMedia("(max-width: 767px)")
+    : null
+
+function subscribeMobile(cb: () => void) {
+  mobileMql?.addEventListener("change", cb)
+  return () => mobileMql?.removeEventListener("change", cb)
+}
+
 interface DocumentItem {
   id: string
   title: string
@@ -36,11 +46,7 @@ export function CoverLetterWorkspace({
 }: CoverLetterWorkspaceProps) {
   const [content, setContent] = useState(initialContent)
   const isMobile = useSyncExternalStore(
-    (cb) => {
-      const mql = window.matchMedia("(max-width: 767px)")
-      mql.addEventListener("change", cb)
-      return () => mql.removeEventListener("change", cb)
-    },
+    subscribeMobile,
     () => window.innerWidth < 768,
     () => false,
   )
