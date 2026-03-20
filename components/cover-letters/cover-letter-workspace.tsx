@@ -7,6 +7,8 @@ import {
   ResizablePanel,
   ResizableHandle,
 } from "@/components/ui/resizable"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useIsMobile } from "@/hooks/use-mobile"
 import { CoverLetterEditor } from "./cover-letter-editor"
 import { CoverLetterChat } from "./cover-letter-chat"
 
@@ -34,30 +36,56 @@ export function CoverLetterWorkspace({
   selectedDocumentIds,
 }: CoverLetterWorkspaceProps) {
   const [content, setContent] = useState(initialContent)
+  const isMobile = useIsMobile()
 
   const handleAppendToEditor = useCallback((text: string) => {
     setContent((prev) => (prev ? prev + "\n\n" + text : text))
   }, [])
 
+  const editor = (
+    <CoverLetterEditor
+      coverLetterId={coverLetterId}
+      content={content}
+      onContentChange={setContent}
+    />
+  )
+
+  const chat = (
+    <CoverLetterChat
+      coverLetterId={coverLetterId}
+      conversationId={conversationId}
+      initialMessages={initialMessages}
+      documents={documents}
+      initialSelectedDocIds={selectedDocumentIds}
+      onAppendToEditor={handleAppendToEditor}
+    />
+  )
+
+  if (isMobile) {
+    return (
+      <Tabs defaultValue="editor" className="flex h-full flex-col">
+        <TabsList className="w-full shrink-0">
+          <TabsTrigger value="editor" className="flex-1">에디터</TabsTrigger>
+          <TabsTrigger value="chat" className="flex-1">AI 채팅</TabsTrigger>
+        </TabsList>
+        <TabsContent value="editor" className="mt-0 min-h-0 flex-1 overflow-hidden">
+          {editor}
+        </TabsContent>
+        <TabsContent value="chat" className="mt-0 min-h-0 flex-1 overflow-hidden">
+          {chat}
+        </TabsContent>
+      </Tabs>
+    )
+  }
+
   return (
     <ResizablePanelGroup orientation="horizontal" className="h-full">
       <ResizablePanel defaultSize={50} minSize={30} className="overflow-hidden">
-        <CoverLetterEditor
-          coverLetterId={coverLetterId}
-          content={content}
-          onContentChange={setContent}
-        />
+        {editor}
       </ResizablePanel>
       <ResizableHandle withHandle />
       <ResizablePanel defaultSize={50} minSize={30} className="overflow-hidden">
-        <CoverLetterChat
-          coverLetterId={coverLetterId}
-          conversationId={conversationId}
-          initialMessages={initialMessages}
-          documents={documents}
-          initialSelectedDocIds={selectedDocumentIds}
-          onAppendToEditor={handleAppendToEditor}
-        />
+        {chat}
       </ResizablePanel>
     </ResizablePanelGroup>
   )
