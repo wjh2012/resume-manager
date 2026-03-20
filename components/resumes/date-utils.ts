@@ -12,10 +12,10 @@ export function dateToMonthString(date: Date): string {
   return `${y}-${m}`
 }
 
-/** Format for display: "2024년 3월" */
+/** Format for display using browser locale (ko: "2024년 3월", en: "Mar 2024") */
 export function formatMonthDisplay(str: string): string {
   if (!str) return ""
   const d = monthStringToDate(str)
   if (!d) return ""
-  return `${d.getFullYear()}년 ${d.getMonth() + 1}월`
+  return new Intl.DateTimeFormat(undefined, { year: "numeric", month: "short" }).format(d)
 }
