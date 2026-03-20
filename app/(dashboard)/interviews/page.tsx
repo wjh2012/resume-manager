@@ -26,7 +26,7 @@ export default async function InterviewsPage() {
   if (!user) redirect("/login")
 
   return (
-    <div className="h-full space-y-6 overflow-y-auto">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-balance">모의면접</h1>

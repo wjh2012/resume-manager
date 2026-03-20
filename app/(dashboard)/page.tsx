@@ -22,7 +22,7 @@ export default async function DashboardPage() {
   ])
 
   return (
-    <div className="h-full space-y-8 overflow-y-auto">
+    <div className="space-y-8">
       {/* 통계 카드 */}
       <section>
         <h2 className="mb-4 text-lg font-semibold">전체 현황</h2>
