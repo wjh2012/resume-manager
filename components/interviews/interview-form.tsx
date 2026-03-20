@@ -3,6 +3,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -165,9 +166,14 @@ export function InterviewForm({ documents }: InterviewFormProps) {
         )}
       </div>
 
-      <Button type="submit" disabled={isSubmitting} className="w-full">
-        {isSubmitting ? "생성 중..." : "면접 시작하기"}
-      </Button>
+      <div className="flex justify-end gap-3">
+        <Button type="button" variant="outline" disabled={isSubmitting} asChild>
+          <Link href="/interviews">취소</Link>
+        </Button>
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? "생성 중..." : "면접 시작하기"}
+        </Button>
+      </div>
     </form>
   )
 }

@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { Loader2 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -121,13 +122,8 @@ export function ResumeCreateForm() {
       </div>
 
       <div className="flex justify-end gap-3">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => router.back()}
-          disabled={isSubmitting}
-        >
-          취소
+        <Button type="button" variant="outline" disabled={isSubmitting} asChild>
+          <Link href="/resumes">취소</Link>
         </Button>
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting && <Loader2 aria-hidden="true" className="mr-2 h-4 w-4 animate-spin" />}
