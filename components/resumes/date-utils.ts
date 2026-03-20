@@ -12,6 +12,11 @@ export function dateToMonthString(date: Date): string {
   return `${y}-${m}`
 }
 
+/** Convert Date | null to ISO string | null (for server → client serialization) */
+export function dateToString(d: Date | null): string | null {
+  return d ? d.toISOString() : null
+}
+
 /** Format for display using browser locale (ko: "2024년 3월", en: "Mar 2024") */
 export function formatMonthDisplay(str: string): string {
   if (!str) return ""

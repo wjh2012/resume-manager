@@ -12,16 +12,12 @@ import { ClassicPdfTemplate } from "@/components/resumes/pdf/classic-pdf"
 import { ModernPdfTemplate } from "@/components/resumes/pdf/modern-pdf"
 import { MinimalPdfTemplate } from "@/components/resumes/pdf/minimal-pdf"
 import type { ResumeData } from "@/components/resumes/types"
+import { dateToString } from "@/components/resumes/date-utils"
 
 const TEMPLATES: Record<string, React.FC<{ data: ResumeData }>> = {
   classic: ClassicPdfTemplate,
   modern: ModernPdfTemplate,
   minimal: MinimalPdfTemplate,
-}
-
-// Convert Date | null to string | null
-function dateToString(d: Date | null): string | null {
-  return d ? d.toISOString() : null
 }
 
 export async function GET(

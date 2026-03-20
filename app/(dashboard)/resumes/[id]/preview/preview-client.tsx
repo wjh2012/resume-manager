@@ -73,9 +73,9 @@ export function PreviewClient({ resume }: PreviewClientProps) {
 
         <div className="ml-auto flex items-center gap-3">
           <div className="flex items-center gap-2">
-            <label className="text-sm font-medium">템플릿</label>
+            <label htmlFor="preview-template" className="text-sm font-medium">템플릿</label>
             <Select value={template} onValueChange={setTemplate}>
-              <SelectTrigger className="w-[140px]">
+              <SelectTrigger id="preview-template" className="w-[140px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

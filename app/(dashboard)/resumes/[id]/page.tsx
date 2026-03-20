@@ -3,11 +3,7 @@ import { getAuthUser } from "@/lib/supabase/user"
 import { getResume } from "@/lib/resumes/service"
 import { UUID_RE } from "@/lib/utils"
 import { ResumeEditor } from "@/components/resumes/resume-editor"
-
-// Convert Date | null to string | null
-function dateToString(d: Date | null): string | null {
-  return d ? d.toISOString() : null
-}
+import { dateToString } from "@/components/resumes/date-utils"
 
 export default async function ResumeEditPage({
   params,
