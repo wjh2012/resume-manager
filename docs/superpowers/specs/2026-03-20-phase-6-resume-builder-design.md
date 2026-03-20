@@ -13,6 +13,8 @@
 | 미리보기 | 별도 페이지만 | 사이드 패널 토글 + 별도 페이지 | 편집 중 실시간 확인 |
 | 정렬 | sortOrder 기반 (구현 미지정) | @dnd-kit 드래그 앤 드롭 | 직관적 UX |
 | 한국어 폰트 | Noto Sans KR | Pretendard | 사용자 선호 |
+| 컴포넌트 이름 | `resume-form.tsx` | `resume-editor.tsx` | 폼 입력보다 편집기 역할에 가까움 |
+| 목록 API | `GET /api/resumes` route 포함 | SC 직접 호출 (route 미생성) | 기존 패턴 (cover-letters, interviews, insights 동일) |
 
 ## 설치 패키지
 
@@ -77,24 +79,35 @@ async function replaceEducations(resumeId: string, userId: string, data: Educati
   await verifyOwnership(resumeId, userId)
   return prisma.$transaction(async (tx) => {
     await tx.education.deleteMany({ where: { resumeId } })
-    await tx.education.createMany({
-      data: data.map((item, index) => ({
-        ...item,
-        resumeId,
-        sortOrder: index,
-      })),
-    })
+    if (data.length > 0) {
+      await tx.education.createMany({
+        data: data.map((item, index) => ({
+          ...item,
+          resumeId,
+          sortOrder: index,
+        })),
+      })
+    }
+    return tx.education.findMany({ where: { resumeId }, orderBy: { sortOrder: "asc" } })
   })
 }
+```
+
+**섹션 API 응답:** 갱신된 섹션 데이터를 반환한다 (자동 저장 확인 및 클라이언트 상태 동기화용).
 ```
 
 ## 3. 유효성 검증
 
 ### `lib/validations/resume.ts`
 
-원본 스펙의 Zod 스키마를 그대로 사용하되, `updateResumeSchema`는 메타(title, template)만 포함:
+원본 스펙의 Zod 스키마를 기반으로 하되, 다음 조정 적용:
 
-- `personalInfoSchema` — name(필수), email, phone, address, bio
+- `id`, `sortOrder` 필드는 클라이언트 입력에서 **제외** (서버에서 관리: 배열 교체 전략 + 인덱스 기반 순서)
+- 날짜 필드(`startDate`, `endDate` 등)는 `z.string().transform(v => new Date(v))` 또는 빈 문자열 시 `null` 변환 적용 (Prisma `DateTime?` 타입과 매칭)
+- `personalInfoSchema`의 `email`은 `z.string().email()` **필수** (Prisma 스키마 `String` 타입과 일치)
+
+**스키마 목록:**
+- `personalInfoSchema` — name(필수), email(필수, email 형식), phone, address, bio
 - `educationSchema` — school(필수), degree, field, startDate, endDate, description
 - `experienceSchema` — company(필수), position(필수), startDate, endDate, isCurrent, description
 - `skillSchema` — name(필수), level(enum), category(enum)
@@ -232,14 +245,18 @@ async function replaceEducations(resumeId: string, userId: string, data: Educati
 
 `GET /api/resumes/[id]/pdf?template=classic`
 
+- `export const runtime = "nodejs"` (react-pdf는 Edge runtime 미지원)
+- Pretendard 폰트 파일: [GitHub Releases](https://github.com/orioncactus/pretendard/releases)에서 ttf 다운로드 → `public/fonts/` 배치 (OFL 라이선스)
+
 ```typescript
 import { renderToBuffer } from "@react-pdf/renderer"
 
 const buffer = await renderToBuffer(<TemplatePdf resume={resume} />)
+const encodedFilename = encodeURIComponent(resume.title)
 return new Response(buffer, {
   headers: {
     "Content-Type": "application/pdf",
-    "Content-Disposition": `attachment; filename="${resume.title}.pdf"`,
+    "Content-Disposition": `attachment; filename="resume.pdf"; filename*=UTF-8''${encodedFilename}.pdf`,
   },
 })
 ```
