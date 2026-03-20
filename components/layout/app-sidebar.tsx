@@ -15,6 +15,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 import { UserMenu } from "@/components/layout/user-menu"
+import { ThemeToggle } from "@/components/layout/theme-toggle"
 import { navItems } from "@/lib/config/navigation"
 import type { UserInfo } from "@/lib/supabase/user"
 
@@ -58,6 +59,11 @@ export function AppSidebar({ user }: AppSidebarProps) {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <ThemeToggle />
+          </SidebarMenuItem>
+        </SidebarMenu>
         <UserMenu user={user} />
       </SidebarFooter>
     </Sidebar>
