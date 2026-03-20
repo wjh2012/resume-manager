@@ -1,77 +1,70 @@
 import { redirect } from "next/navigation"
-import Link from "next/link"
-import { FileText, Upload, Sparkles } from "lucide-react"
-
-import { createClient } from "@/lib/supabase/server"
-import { countDocuments } from "@/lib/documents/service"
-import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import {
+  FileText,
+  PenTool,
+  MessageSquare,
+  Lightbulb,
+  FileCheck,
+} from "lucide-react"
+import { getAuthUser } from "@/lib/supabase/user"
+import { getDashboardStats, getRecentActivity } from "@/lib/dashboard/service"
+import { StatCard } from "@/components/dashboard/stat-card"
+import { QuickActionCard } from "@/components/dashboard/quick-action-card"
+import { RecentActivitySection } from "@/components/dashboard/recent-activity"
 
 export default async function DashboardPage() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
+  const user = await getAuthUser()
   if (!user) redirect("/login")
 
-  const documentCount = await countDocuments(user.id)
+  const [stats, activity] = await Promise.all([
+    getDashboardStats(user.id),
+    getRecentActivity(user.id),
+  ])
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold text-balance">
-          Resume Manager에 오신 것을 환영합니다
-        </h1>
-        <p className="text-muted-foreground mt-2">
-          이력서와 경력 문서를 관리하고 AI의 도움을 받아보세요.
-        </p>
-      </div>
+      {/* 통계 카드 */}
+      <section>
+        <h2 className="mb-4 text-lg font-semibold">전체 현황</h2>
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
+          <StatCard icon={FileText} value={stats.documents} label="업로드한 문서" href="/documents" />
+          <StatCard icon={PenTool} value={stats.coverLetters} label="자기소개서" href="/cover-letters" />
+          <StatCard icon={MessageSquare} value={stats.interviews} label="모의면접" href="/interviews" />
+          <StatCard icon={Lightbulb} value={stats.insights} label="인사이트" href="/insights" />
+          <StatCard icon={FileCheck} value={stats.resumes} label="이력서" href="/resumes" />
+        </div>
+      </section>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <Card className="animate-fade-in-up">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="bg-primary/10 text-primary rounded-lg p-2">
-                <FileText className="h-5 w-5" />
-              </div>
-              <div>
-                <CardDescription>업로드된 문서</CardDescription>
-                <CardTitle className="text-2xl">{documentCount}</CardTitle>
-              </div>
-            </div>
-          </CardHeader>
-        </Card>
+      {/* 빠른 접근 */}
+      <section>
+        <h2 className="mb-4 text-lg font-semibold">빠른 시작</h2>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <QuickActionCard
+            icon={PenTool}
+            title="새 자기소개서 작성"
+            description="AI와 함께 자기소개서를 작성합니다"
+            href="/cover-letters/new"
+          />
+          <QuickActionCard
+            icon={MessageSquare}
+            title="모의면접 시작"
+            description="AI 면접관과 실전 연습을 합니다"
+            href="/interviews/new"
+          />
+          <QuickActionCard
+            icon={FileCheck}
+            title="이력서 작성"
+            description="이력서를 작성하고 PDF로 내보냅니다"
+            href="/resumes/new"
+          />
+        </div>
+      </section>
 
-        <Link href="/documents" className="animate-fade-in-up" style={{ animationDelay: "50ms" }}>
-          <Card className="h-full transition-shadow hover:shadow-md">
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="bg-primary/10 text-primary rounded-lg p-2">
-                  <Upload className="h-5 w-5" />
-                </div>
-                <div>
-                  <CardTitle className="text-base">문서 업로드</CardTitle>
-                  <CardDescription>PDF, DOCX, TXT 파일 업로드</CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-          </Card>
-        </Link>
-
-        <Card className="animate-fade-in-up" style={{ animationDelay: "100ms" }}>
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="bg-muted text-muted-foreground rounded-lg p-2">
-                <Sparkles className="h-5 w-5" />
-              </div>
-              <div>
-                <CardTitle className="text-base">AI 어시스턴트</CardTitle>
-                <CardDescription>곧 출시 예정</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-        </Card>
-      </div>
+      {/* 최근 활동 */}
+      <section>
+        <h2 className="mb-4 text-lg font-semibold">최근 활동</h2>
+        <RecentActivitySection activity={activity} />
+      </section>
     </div>
   )
 }
