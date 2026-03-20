@@ -1,7 +1,21 @@
 "use client"
 
 import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import { MonthPicker } from "@/components/ui/monthpicker"
+import { CalendarIcon } from "lucide-react"
+import { cn } from "@/lib/utils"
 import { SortableSection } from "@/components/resumes/sortable-section"
+import {
+  monthStringToDate,
+  dateToMonthString,
+  formatMonthDisplay,
+} from "@/components/resumes/date-utils"
 
 export interface CertificationItem {
   _tempId: string
@@ -63,19 +77,57 @@ export function CertificationEditor({
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-sm font-medium">취득일</label>
-              <Input
-                type="month"
-                value={item.issueDate}
-                onChange={(e) => onFieldChange("issueDate", e.target.value)}
-              />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !item.issueDate && "text-muted-foreground",
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {item.issueDate
+                      ? formatMonthDisplay(item.issueDate)
+                      : "선택"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <MonthPicker
+                    selectedMonth={monthStringToDate(item.issueDate)}
+                    onMonthSelect={(date) =>
+                      onFieldChange("issueDate", dateToMonthString(date))
+                    }
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
             <div>
               <label className="text-sm font-medium">만료일</label>
-              <Input
-                type="month"
-                value={item.expiryDate}
-                onChange={(e) => onFieldChange("expiryDate", e.target.value)}
-              />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !item.expiryDate && "text-muted-foreground",
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {item.expiryDate
+                      ? formatMonthDisplay(item.expiryDate)
+                      : "선택"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <MonthPicker
+                    selectedMonth={monthStringToDate(item.expiryDate)}
+                    onMonthSelect={(date) =>
+                      onFieldChange("expiryDate", dateToMonthString(date))
+                    }
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
         </div>

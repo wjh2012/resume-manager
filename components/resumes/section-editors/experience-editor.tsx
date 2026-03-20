@@ -3,7 +3,21 @@
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Button } from "@/components/ui/button"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import { MonthPicker } from "@/components/ui/monthpicker"
+import { CalendarIcon } from "lucide-react"
+import { cn } from "@/lib/utils"
 import { SortableSection } from "@/components/resumes/sortable-section"
+import {
+  monthStringToDate,
+  dateToMonthString,
+  formatMonthDisplay,
+} from "@/components/resumes/date-utils"
 
 export interface ExperienceItem {
   _tempId: string
@@ -70,20 +84,57 @@ export function ExperienceEditor({ items, onChange }: ExperienceEditorProps) {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-sm font-medium">시작일</label>
-              <Input
-                type="month"
-                value={item.startDate}
-                onChange={(e) => onFieldChange("startDate", e.target.value)}
-              />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !item.startDate && "text-muted-foreground",
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {item.startDate
+                      ? formatMonthDisplay(item.startDate)
+                      : "선택"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <MonthPicker
+                    selectedMonth={monthStringToDate(item.startDate)}
+                    onMonthSelect={(date) =>
+                      onFieldChange("startDate", dateToMonthString(date))
+                    }
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
             <div>
               <label className="text-sm font-medium">종료일</label>
-              <Input
-                type="month"
-                value={item.endDate}
-                onChange={(e) => onFieldChange("endDate", e.target.value)}
-                disabled={item.isCurrent}
-              />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !item.endDate && "text-muted-foreground",
+                      item.isCurrent && "opacity-50 pointer-events-none",
+                    )}
+                    disabled={item.isCurrent}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {item.endDate ? formatMonthDisplay(item.endDate) : "선택"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <MonthPicker
+                    selectedMonth={monthStringToDate(item.endDate)}
+                    onMonthSelect={(date) =>
+                      onFieldChange("endDate", dateToMonthString(date))
+                    }
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
           <div className="flex items-center gap-2">
