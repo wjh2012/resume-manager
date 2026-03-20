@@ -26,8 +26,8 @@ async function DocumentContent({
   if (!document) notFound()
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-4">
+    <div className="flex h-full flex-col gap-6">
+      <div className="flex shrink-0 items-center gap-4">
         <Button variant="ghost" size="icon" asChild aria-label="문서 목록으로 돌아가기">
           <Link href="/documents">
             <ArrowLeft className="h-4 w-4" />
@@ -56,11 +56,11 @@ async function DocumentContent({
         />
       </div>
 
-      <div className="rounded-lg border">
-        <div className="border-b px-4 py-3">
+      <div className="flex min-h-0 flex-1 flex-col rounded-lg border">
+        <div className="shrink-0 border-b px-4 py-3">
           <h2 className="font-medium">추출된 텍스트</h2>
         </div>
-        <ScrollArea className="h-[calc(100vh-16rem)]">
+        <ScrollArea className="min-h-0 flex-1">
           <div className="p-4">
             <pre className="whitespace-pre-wrap text-sm leading-relaxed">
               {document.extractedText ?? "텍스트가 추출되지 않았습니다."}

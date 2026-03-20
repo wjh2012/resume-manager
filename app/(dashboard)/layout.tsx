@@ -21,7 +21,7 @@ export default async function DashboardLayout({
       <AppSidebar user={extractUserInfo(user)} />
       <SidebarInset>
         <Topbar />
-        <div id="main-content" tabIndex={-1} className="min-h-0 flex-1 overflow-hidden p-6">{children}</div>
+        <main id="main-content" tabIndex={-1} className="min-h-0 flex-1 overflow-y-auto p-6">{children}</main>
       </SidebarInset>
     </SidebarProvider>
   )

@@ -163,12 +163,12 @@ export function CoverLetterEditor({
           </Button>
         </div>
       </div>
-      <div className="flex-1 p-4">
+      <div className="min-h-0 flex-1">
         <Textarea
           value={content}
           onChange={(e) => onContentChange(e.target.value)}
           placeholder="자기소개서 내용을 작성하세요. AI 채팅에서 '에디터에 반영' 버튼을 눌러 내용을 추가할 수도 있습니다."
-          className="h-full min-h-0 resize-none border-0 p-4 shadow-none focus-visible:ring-offset-0 focus-visible:ring-1"
+          className="h-full min-h-0 resize-none rounded-none border-0 bg-transparent p-4 shadow-none focus-visible:ring-0 field-sizing-fixed dark:bg-transparent"
         />
       </div>
     </div>

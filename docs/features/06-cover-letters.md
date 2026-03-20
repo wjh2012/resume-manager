@@ -41,6 +41,8 @@
 
 ```
 CoverLetterWorkspace (상태 소유: content)
+├── [데스크톱] ResizablePanelGroup (좌우 2분할, 리사이즈 가능)
+├── [모바일 < 768px] Tabs ("에디터" / "AI 채팅" 상단 탭 전환)
 ├── CoverLetterEditor
 │   ├── content + onContentChange
 │   ├── debounce 자동 저장 (1.5s)
