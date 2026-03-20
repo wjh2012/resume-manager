@@ -22,7 +22,7 @@ export async function getDashboardStats(userId: string): Promise<DashboardStats>
 export interface RecentActivity {
   coverLetters: { id: string; title: string; updatedAt: Date }[]
   interviews: { id: string; title: string; status: string; updatedAt: Date }[]
-  insights: { id: string; category: string; content: string; updatedAt: Date }[]
+  insights: { id: string; category: string; title: string; updatedAt: Date }[]
 }
 
 export async function getRecentActivity(userId: string): Promise<RecentActivity> {
@@ -41,7 +41,7 @@ export async function getRecentActivity(userId: string): Promise<RecentActivity>
     }),
     prisma.insight.findMany({
       where: { userId },
-      select: { id: true, category: true, content: true, updatedAt: true },
+      select: { id: true, category: true, title: true, updatedAt: true },
       orderBy: { updatedAt: "desc" },
       take: 5,
     }),

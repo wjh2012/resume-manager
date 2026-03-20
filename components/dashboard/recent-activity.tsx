@@ -1,14 +1,8 @@
 import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { formatShortDate } from "@/lib/utils"
 import type { RecentActivity } from "@/lib/dashboard/service"
-
-function formatDate(date: Date | string): string {
-  return new Date(date).toLocaleDateString("ko-KR", {
-    month: "short",
-    day: "numeric",
-  })
-}
 
 function interviewStatusLabel(status: string): string {
   return status === "COMPLETED" ? "완료" : "진행 중"
@@ -51,7 +45,7 @@ export function RecentActivitySection({ activity }: RecentActivitySectionProps) 
               >
                 <span className="truncate text-sm font-medium">{cl.title}</span>
                 <span className="text-muted-foreground shrink-0 text-xs">
-                  {formatDate(cl.updatedAt)}
+                  {formatShortDate(cl.updatedAt)}
                 </span>
               </Link>
             ))
@@ -81,7 +75,7 @@ export function RecentActivitySection({ activity }: RecentActivitySectionProps) 
                   </Badge>
                 </div>
                 <span className="text-muted-foreground shrink-0 text-xs">
-                  {formatDate(iv.updatedAt)}
+                  {formatShortDate(iv.updatedAt)}
                 </span>
               </Link>
             ))
@@ -105,11 +99,11 @@ export function RecentActivitySection({ activity }: RecentActivitySectionProps) 
                     {ins.category}
                   </Badge>
                   <span className="text-muted-foreground text-xs">
-                    {formatDate(ins.updatedAt)}
+                    {formatShortDate(ins.updatedAt)}
                   </span>
                 </div>
                 <p className="text-muted-foreground line-clamp-1 text-sm">
-                  {ins.content}
+                  {ins.title}
                 </p>
               </div>
             ))

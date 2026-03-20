@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useSyncExternalStore } from "react"
 import type { UIMessage } from "ai"
 import {
   ResizablePanelGroup,
@@ -8,7 +8,6 @@ import {
   ResizableHandle,
 } from "@/components/ui/resizable"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { useIsMobile } from "@/hooks/use-mobile"
 import { CoverLetterEditor } from "./cover-letter-editor"
 import { CoverLetterChat } from "./cover-letter-chat"
 
@@ -36,7 +35,15 @@ export function CoverLetterWorkspace({
   selectedDocumentIds,
 }: CoverLetterWorkspaceProps) {
   const [content, setContent] = useState(initialContent)
-  const isMobile = useIsMobile()
+  const isMobile = useSyncExternalStore(
+    (cb) => {
+      const mql = window.matchMedia("(max-width: 767px)")
+      mql.addEventListener("change", cb)
+      return () => mql.removeEventListener("change", cb)
+    },
+    () => window.innerWidth < 768,
+    () => false,
+  )
 
   const handleAppendToEditor = useCallback((text: string) => {
     setContent((prev) => (prev ? prev + "\n\n" + text : text))

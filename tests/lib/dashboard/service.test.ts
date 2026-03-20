@@ -137,7 +137,7 @@ describe("getRecentActivity()", () => {
     // Assert
     expect(mockPrisma.insight.findMany).toHaveBeenCalledWith({
       where: { userId },
-      select: { id: true, category: true, content: true, updatedAt: true },
+      select: { id: true, category: true, title: true, updatedAt: true },
       orderBy: { updatedAt: "desc" },
       take: 5,
     })
@@ -150,8 +150,8 @@ describe("getRecentActivity()", () => {
     const mockCoverLetters = [{ id: "cl-1", title: "자소서 1", updatedAt: now }]
     const mockInterviews = [{ id: "iv-1", title: "인터뷰 1", status: "COMPLETED", updatedAt: now }]
     const mockInsights = [
-      { id: "ins-1", category: "STRENGTH", content: "강점 내용", updatedAt: now },
-      { id: "ins-2", category: "WEAKNESS", content: "약점 내용", updatedAt: now },
+      { id: "ins-1", category: "STRENGTH", title: "강점 인사이트", updatedAt: now },
+      { id: "ins-2", category: "WEAKNESS", title: "약점 인사이트", updatedAt: now },
     ]
     mockPrisma.coverLetter.findMany.mockResolvedValue(mockCoverLetters as never)
     mockPrisma.interviewSession.findMany.mockResolvedValue(mockInterviews as never)
