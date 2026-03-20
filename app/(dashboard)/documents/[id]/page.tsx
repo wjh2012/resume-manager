@@ -1,14 +1,12 @@
 import { Suspense } from "react"
 import { notFound, redirect } from "next/navigation"
-import Link from "next/link"
-import { ArrowLeft } from "lucide-react"
+import { BackToListLink } from "@/components/shared/back-to-list-link"
 
 import { getAuthUser } from "@/lib/supabase/user"
 import { getDocument } from "@/lib/documents/service"
 import { DOCUMENT_TYPE_LABELS } from "@/lib/validations/document"
 import { formatFileSize } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Skeleton } from "@/components/ui/skeleton"
 import { DeleteButton } from "@/components/documents/delete-button"
@@ -28,11 +26,7 @@ async function DocumentContent({
   return (
     <div className="flex h-full flex-col gap-6">
       <div className="flex shrink-0 items-center gap-4">
-        <Button variant="ghost" size="icon" asChild aria-label="문서 목록으로 돌아가기">
-          <Link href="/documents">
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
-        </Button>
+        <BackToListLink href="/documents" />
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <h1 className="truncate text-2xl font-bold">{document.title}</h1>

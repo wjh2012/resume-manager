@@ -4,6 +4,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import { Loader2 } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -77,7 +78,7 @@ export function InterviewForm({ documents }: InterviewFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="mx-auto max-w-2xl space-y-6">
       <div className="space-y-2">
         <label htmlFor="title" className="text-sm font-medium leading-none">
           제목 <span className="text-destructive">*</span>
@@ -171,7 +172,8 @@ export function InterviewForm({ documents }: InterviewFormProps) {
           <Link href="/interviews">취소</Link>
         </Button>
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "생성 중..." : "면접 시작하기"}
+          {isSubmitting && <Loader2 aria-hidden="true" className="mr-2 h-4 w-4 animate-spin" />}
+          면접 시작하기
         </Button>
       </div>
     </form>

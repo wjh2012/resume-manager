@@ -1,8 +1,7 @@
 "use client"
 
 import { useRef, useEffect, useState, useCallback } from "react"
-import Link from "next/link"
-import { ChevronLeft } from "lucide-react"
+import { BackToListLink } from "@/components/shared/back-to-list-link"
 import { toast } from "sonner"
 import { CoverLetterStatus } from "@prisma/client"
 import { Textarea } from "@/components/ui/textarea"
@@ -138,13 +137,7 @@ export function CoverLetterEditor({
     <div className="flex h-full flex-col">
       <div className="flex items-center justify-between border-b px-4 py-2">
         <div className="flex items-center gap-3">
-          <Link
-            href="/cover-letters"
-            className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-xs transition-colors"
-          >
-            <ChevronLeft className="h-3.5 w-3.5" />
-            목록
-          </Link>
+          <BackToListLink href="/cover-letters" />
           <h2 className="text-sm font-medium">에디터</h2>
         </div>
         <div className="flex items-center gap-3 text-xs">

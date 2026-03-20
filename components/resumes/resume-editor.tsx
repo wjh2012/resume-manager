@@ -2,7 +2,8 @@
 
 import { useState, useRef, useCallback, useEffect } from "react"
 import Link from "next/link"
-import { ChevronLeft, Eye, EyeOff, Save, Loader2, ExternalLink } from "lucide-react"
+import { Eye, EyeOff, Save, Loader2, ExternalLink } from "lucide-react"
+import { BackToListLink } from "@/components/shared/back-to-list-link"
 import { toast } from "sonner"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -419,13 +420,7 @@ export function ResumeEditor({ resume }: ResumeEditorProps) {
     <div className="flex h-full flex-col gap-4">
       {/* Top bar */}
       <div className="flex flex-wrap items-center gap-3">
-        <Link
-          href="/resumes"
-          className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-xs transition-colors"
-        >
-          <ChevronLeft className="h-3.5 w-3.5" />
-          목록
-        </Link>
+        <BackToListLink href="/resumes" />
         <Input
           value={title}
           onChange={(e) => handleTitleChange(e.target.value)}
