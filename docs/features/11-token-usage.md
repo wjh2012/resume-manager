@@ -55,3 +55,46 @@ AI 호출 요청
 | 임베딩 | 서버 환경변수 (`OPENAI_API_KEY`) | `true` |
 
 `getLanguageModel()`이 `isServerKey` 값을 반환하며, 임베딩은 항상 서버 키로 하드코딩된다.
+
+## 관리자 시스템
+
+`User.role === "ADMIN"` 사용자만 접근 가능한 관리 기능.
+
+### 인증/인가
+
+`requireAdmin()` 유틸리티가 Supabase 인증 + DB role 체크를 수행. 모든 관리자 API에 적용. 실패 시 403.
+
+### 관리자 페이지
+
+| 페이지 | 경로 | 기능 |
+|--------|------|------|
+| 사용량 모니터링 | `/admin/usage` | 시스템 전체 사용량 요약, 사용자별 랭킹, 모델/기능별 분포 차트 |
+| 모델 단가 관리 | `/admin/model-pricing` | ModelPricing 목록 + 새 단가 등록 (append-only) |
+| Quota 관리 | `/admin/quotas` | Quota 목록 + 생성/삭제 |
+
+### 관리자 API
+
+| 메서드 | 경로 | 설명 |
+|--------|------|------|
+| GET | `/api/admin/token-usage` | 전체 시스템 사용량 |
+| GET | `/api/admin/token-usage/users` | 사용자별 랭킹 |
+| GET | `/api/admin/model-pricing` | 단가 목록 |
+| POST | `/api/admin/model-pricing` | 새 단가 등록 |
+| GET | `/api/admin/quotas` | Quota 목록 |
+| POST | `/api/admin/quotas` | Quota 생성 |
+| PUT | `/api/admin/quotas/[id]` | Quota 수정 |
+| DELETE | `/api/admin/quotas/[id]` | Quota 삭제 |
+
+### 주요 컴포넌트
+
+| 파일 | 역할 |
+|------|------|
+| `lib/auth/require-admin.ts` | 관리자 인증/인가 유틸리티 |
+| `lib/admin/usage-service.ts` | 시스템 사용량 + 사용자 랭킹 서비스 |
+| `lib/admin/pricing-service.ts` | 모델 단가 CRUD |
+| `lib/admin/quota-service.ts` | Quota CRUD |
+| `components/admin/*.tsx` | 관리자 UI 컴포넌트 |
+
+### 사이드바
+
+`adminNavItems`는 `User.role === "ADMIN"`일 때만 사이드바에 "관리자" 그룹으로 표시된다. `app/(dashboard)/layout.tsx`에서 DB role을 조회하여 `AppSidebar`에 전달한다.

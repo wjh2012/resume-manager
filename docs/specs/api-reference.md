@@ -421,3 +421,62 @@ AI 설정 업데이트.
     "quotas": [{ "id": "uuid", "limitType": "TOKENS", "limitValue": 100000, "period": "MONTHLY", "currentUsage": 50000 }]
   }
   ```
+
+---
+
+## 관리자 API (Admin)
+
+모든 관리자 API는 `requireAdmin()` (Supabase 인증 + `User.role === "ADMIN"`)이 필요하다. 비인가 시 `403`.
+
+### `GET /api/admin/token-usage`
+
+전체 시스템 사용량 요약.
+
+- **Query**: `period` (7d|30d|90d, default 30d)
+- **Response**: `200 OK` — totalTokens, totalCost, requestCount, activeUsers, byFeature, byModel, daily
+
+### `GET /api/admin/token-usage/users`
+
+사용자별 사용량 랭킹.
+
+- **Query**: `period` (7d|30d|90d), `limit` (1-100, default 50)
+- **Response**: `200 OK` — `{ data: [{ userId, email, name, totalTokens, totalCost, requestCount }] }`
+
+### `GET /api/admin/model-pricing`
+
+모델 단가 목록.
+
+- **Response**: `200 OK` — `{ data: [{ id, provider, model, inputPricePerM, outputPricePerM, effectiveFrom }] }`
+
+### `POST /api/admin/model-pricing`
+
+새 단가 등록 (append-only).
+
+- **Body**: `{ provider, model, inputPricePerM, outputPricePerM, effectiveFrom }`
+- **Response**: `201 Created`
+
+### `GET /api/admin/quotas`
+
+Quota 목록 (사용자 정보 포함).
+
+- **Response**: `200 OK` — `{ data: [{ id, userId, limitType, limitValue, period, isActive, user: { email, name } }] }`
+
+### `POST /api/admin/quotas`
+
+Quota 생성.
+
+- **Body**: `{ userId, limitType, limitValue, period, isActive? }`
+- **Response**: `201 Created`
+
+### `PUT /api/admin/quotas/[id]`
+
+Quota 수정.
+
+- **Body**: `{ limitValue?, isActive? }`
+- **Response**: `200 OK`
+
+### `DELETE /api/admin/quotas/[id]`
+
+Quota 삭제.
+
+- **Response**: `200 OK` — `{ success: true }`
