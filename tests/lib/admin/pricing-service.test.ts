@@ -28,7 +28,7 @@ describe("createModelPricing", () => {
       outputPricePerM: 10.0,
       effectiveFrom: new Date("2026-01-01"),
     }
-    mockCreate.mockResolvedValue({ id: "p1", ...input, createdAt: new Date() } as any)
+    mockCreate.mockResolvedValue({ id: "p1", ...input, createdAt: new Date() } as unknown as Awaited<ReturnType<typeof mockCreate>>)
 
     const result = await createModelPricing(input)
     expect(mockCreate).toHaveBeenCalledWith({ data: input })

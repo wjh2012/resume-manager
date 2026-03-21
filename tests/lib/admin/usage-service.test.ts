@@ -26,15 +26,15 @@ describe("getSystemUsageSummary", () => {
     mockAggregate.mockResolvedValue({
       _sum: { totalTokens: 10000, estimatedCost: { toNumber: () => 0.5 } },
       _count: { _all: 20 },
-    } as any)
+    } as unknown as Awaited<ReturnType<typeof mockAggregate>>)
     mockGroupBy
       .mockResolvedValueOnce([
         { feature: "COVER_LETTER", _sum: { totalTokens: 6000 }, _count: { _all: 12 } },
-      ] as any)
+      ] as unknown as Awaited<ReturnType<typeof mockGroupBy>>)
       .mockResolvedValueOnce([
         { model: "gpt-4o", _sum: { totalTokens: 8000, estimatedCost: { toNumber: () => 0.4 } } },
-      ] as any)
-      .mockResolvedValueOnce([{ userId: "u1" }] as any) // activeUsers
+      ] as unknown as Awaited<ReturnType<typeof mockGroupBy>>)
+      .mockResolvedValueOnce([{ userId: "u1" }] as unknown as Awaited<ReturnType<typeof mockGroupBy>>) // activeUsers
     mockQueryRaw.mockResolvedValue([]) // daily
 
     const start = new Date("2026-01-01")

@@ -23,7 +23,7 @@ describe("requireAdmin", () => {
   it("인증되지 않으면 null을 반환한다", async () => {
     mockCreateClient.mockResolvedValue({
       auth: { getUser: () => Promise.resolve({ data: { user: null }, error: null }) },
-    } as any)
+    } as unknown as Awaited<ReturnType<typeof mockCreateClient>>)
     const result = await requireAdmin()
     expect(result).toBeNull()
   })
@@ -31,8 +31,8 @@ describe("requireAdmin", () => {
   it("ADMIN 역할이면 user를 반환한다", async () => {
     mockCreateClient.mockResolvedValue({
       auth: { getUser: () => Promise.resolve({ data: { user: { id: "u1" } }, error: null }) },
-    } as any)
-    mockFindUnique.mockResolvedValue({ id: "u1", role: "ADMIN" } as any)
+    } as unknown as Awaited<ReturnType<typeof mockCreateClient>>)
+    mockFindUnique.mockResolvedValue({ id: "u1", role: "ADMIN" } as unknown as Awaited<ReturnType<typeof mockFindUnique>>)
     const result = await requireAdmin()
     expect(result).toEqual({ id: "u1", role: "ADMIN" })
   })
@@ -40,8 +40,8 @@ describe("requireAdmin", () => {
   it("USER 역할이면 null을 반환한다", async () => {
     mockCreateClient.mockResolvedValue({
       auth: { getUser: () => Promise.resolve({ data: { user: { id: "u1" } }, error: null }) },
-    } as any)
-    mockFindUnique.mockResolvedValue({ id: "u1", role: "USER" } as any)
+    } as unknown as Awaited<ReturnType<typeof mockCreateClient>>)
+    mockFindUnique.mockResolvedValue({ id: "u1", role: "USER" } as unknown as Awaited<ReturnType<typeof mockFindUnique>>)
     const result = await requireAdmin()
     expect(result).toBeNull()
   })
