@@ -33,8 +33,6 @@ type FetchState =
 
 export default function AdminUsagePage() {
   const [period, setPeriod] = useState("30d")
-  const [startDate, setStartDate] = useState<Date>()
-  const [endDate, setEndDate] = useState<Date>()
   const [fetchState, setFetchState] = useReducer(
     (_prev: FetchState, next: FetchState) => next,
     { status: "loading" },
@@ -42,42 +40,34 @@ export default function AdminUsagePage() {
 
   useEffect(() => {
     const params = new URLSearchParams()
-    if (period !== "custom") {
-      params.set("period", period)
-    }
+    params.set("period", period)
 
     setFetchState({ status: "loading" })
 
     Promise.all([
       fetch(`/api/admin/token-usage?${params}`).then((r) => {
         if (!r.ok) throw new Error("시스템 사용량을 불러올 수 없습니다.")
-        return r.json() as Promise<SystemUsage>
+        return r.json() as Promise<{ data: SystemUsage }>
       }),
       fetch(`/api/admin/token-usage/users?${params}`).then((r) => {
         if (!r.ok) throw new Error("사용자 랭킹을 불러올 수 없습니다.")
         return r.json() as Promise<{ data: UserRanking[] }>
       }),
     ])
-      .then(([usage, rankingsRes]) =>
+      .then(([usageRes, rankingsRes]) =>
         setFetchState({
           status: "success",
-          usage,
+          usage: usageRes.data,
           rankings: rankingsRes.data,
         }),
       )
       .catch((e: Error) =>
         setFetchState({ status: "error", message: e.message }),
       )
-  }, [period, startDate, endDate])
+  }, [period])
 
-  function handlePeriodChange(
-    newPeriod: string,
-    newStart?: Date,
-    newEnd?: Date,
-  ) {
+  function handlePeriodChange(newPeriod: string) {
     setPeriod(newPeriod)
-    setStartDate(newStart)
-    setEndDate(newEnd)
   }
 
   if (fetchState.status === "loading") {
@@ -96,8 +86,6 @@ export default function AdminUsagePage() {
         <h1 className="text-2xl font-bold">사용량 모니터링</h1>
         <PeriodFilter
           value={period}
-          startDate={startDate}
-          endDate={endDate}
           onChange={handlePeriodChange}
         />
       </div>
