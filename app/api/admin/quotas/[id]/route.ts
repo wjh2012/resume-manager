@@ -1,8 +1,13 @@
 import { z } from "zod"
 import { NextRequest, NextResponse } from "next/server"
+import { Prisma } from "@prisma/client"
 import { requireAdmin } from "@/lib/auth/require-admin"
 import { updateQuota, deleteQuota } from "@/lib/admin/quota-service"
 import { updateQuotaSchema } from "@/lib/validations/admin"
+
+function isPrismaNotFound(error: unknown): boolean {
+  return error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025"
+}
 
 const uuidSchema = z.string().uuid()
 
@@ -33,8 +38,11 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
   }
   try {
     const quota = await updateQuota(id, parsed.data)
-    return NextResponse.json(quota)
+    return NextResponse.json({ data: quota })
   } catch (error) {
+    if (isPrismaNotFound(error)) {
+      return NextResponse.json({ error: "Quota를 찾을 수 없습니다." }, { status: 404 })
+    }
     console.error("[PUT /api/admin/quotas]", error)
     return NextResponse.json({ error: "Quota 수정에 실패했습니다." }, { status: 500 })
   }
@@ -57,6 +65,9 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
     await deleteQuota(id)
     return NextResponse.json({ success: true })
   } catch (error) {
+    if (isPrismaNotFound(error)) {
+      return NextResponse.json({ error: "Quota를 찾을 수 없습니다." }, { status: 404 })
+    }
     console.error("[DELETE /api/admin/quotas]", error)
     return NextResponse.json({ error: "Quota 삭제에 실패했습니다." }, { status: 500 })
   }
