@@ -26,17 +26,36 @@ interface UsageSummary {
 
 export default function UsagePage() {
   const [period, setPeriod] = useState("30d")
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined)
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined)
   const [data, setData] = useState<UsageSummary | null>(null)
   const [isPending, startTransition] = useTransition()
 
   useEffect(() => {
     startTransition(() => {
-      fetch(`/api/token-usage/summary?period=${period}`)
+      let url: string
+      if (period === "custom" && startDate && endDate) {
+        const start = startDate.toISOString().split("T")[0]
+        const end = endDate.toISOString().split("T")[0]
+        url = `/api/token-usage/summary?startDate=${start}&endDate=${end}`
+      } else if (period !== "custom") {
+        url = `/api/token-usage/summary?period=${period}`
+      } else {
+        return
+      }
+
+      fetch(url)
         .then((r) => r.json())
         .then((json: UsageSummary) => setData(json))
         .catch(() => setData(null))
     })
-  }, [period])
+  }, [period, startDate, endDate])
+
+  function handlePeriodChange(p: string, start?: Date, end?: Date) {
+    setPeriod(p)
+    setStartDate(start)
+    setEndDate(end)
+  }
 
   if (isPending || !data) {
     return <div className="p-6">로딩 중...</div>
@@ -46,7 +65,12 @@ export default function UsagePage() {
     <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">사용량</h1>
-        <PeriodFilter value={period} onChange={setPeriod} />
+        <PeriodFilter
+          value={period}
+          startDate={startDate}
+          endDate={endDate}
+          onChange={handlePeriodChange}
+        />
       </div>
 
       <SummaryCards
