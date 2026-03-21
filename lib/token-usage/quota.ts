@@ -23,6 +23,13 @@ function getPeriodStart(period: string): Date {
   return new Date(now.getFullYear(), now.getMonth(), 1)
 }
 
+/**
+ * Quota 초과 여부를 확인한다.
+ *
+ * NOTE: Soft limit — 동시 요청 시 체크와 기록 사이에 소폭 초과가 발생할 수 있다.
+ * 이는 설계상 허용된 동작이며, 엄격한 제한이 필요하면 DB 레벨 잠금이 필요하다.
+ * @see docs/superpowers/specs/2026-03-21-token-usage-tracking-design.md
+ */
 export async function checkQuotaExceeded(
   userId: string,
 ): Promise<QuotaCheckResult> {
@@ -34,6 +41,7 @@ export async function checkQuotaExceeded(
     return { exceeded: false }
   }
 
+  // NOTE: N+1 쿼리 — 일반적으로 사용자당 quota는 1~3개이므로 허용 가능한 수준이다.
   for (const quota of quotas) {
     const periodStart = getPeriodStart(quota.period)
 

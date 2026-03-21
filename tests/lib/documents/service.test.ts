@@ -25,6 +25,9 @@ vi.mock("@/lib/prisma", () => ({
       findMany: vi.fn(),
       createMany: vi.fn(),
     },
+    quota: {
+      findMany: vi.fn(),
+    },
     $transaction: vi.fn(),
     $executeRaw: vi.fn(),
   },
@@ -104,6 +107,8 @@ describe("uploadDocument()", () => {
     mockUploadFile.mockResolvedValue("storage/user-id/resume.pdf")
     mockSplitIntoChunks.mockReturnValue(["청크1", "청크2"])
     mockGenerateEmbeddings.mockResolvedValue([[0.1, 0.2], [0.3, 0.4]])
+    // quota: 기본적으로 초과 없음
+    mockPrisma.quota.findMany.mockResolvedValue([] as never)
     mockDeleteFile.mockResolvedValue(undefined as never)
     mockPrisma.$transaction.mockImplementation(async (fn) => {
       if (typeof fn === "function") {

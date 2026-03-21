@@ -3,6 +3,7 @@ import { parseFile } from "@/lib/files/parser"
 import { uploadFile, deleteFile } from "@/lib/storage"
 import { splitIntoChunks, generateEmbeddings } from "@/lib/ai/embedding"
 import { recordUsage } from "@/lib/token-usage/service"
+import { checkQuotaExceeded } from "@/lib/token-usage/quota"
 import {
   resolveDocumentType,
   verifyMagicBytes,
@@ -118,6 +119,11 @@ export async function uploadDocument(
 
   // 임베딩 생성 (트랜잭션 외부 — 실패해도 문서는 유지)
   if (chunks.length > 0) {
+    const quotaResult = await checkQuotaExceeded(userId)
+    if (quotaResult.exceeded) {
+      console.warn("Quota 초과로 임베딩 생성 스킵:", document.id)
+      return { id: document.id, title, type, fileSize: file.size, chunkCount: chunks.length }
+    }
     try {
       const { embeddings, totalTokens } = await generateEmbeddings(chunks)
 

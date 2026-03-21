@@ -97,6 +97,14 @@ export async function POST(request: Request) {
       lastMessage.content ||
       ""
 
+    const quotaResult = await checkQuotaExceeded(user.id)
+    if (quotaResult.exceeded) {
+      return NextResponse.json(
+        { error: "사용 한도를 초과했습니다." },
+        { status: 403 },
+      )
+    }
+
     // RAG 컨텍스트 + 모델 병렬 로드 (limitToDocumentIds로 격리)
     const [context, { model, isServerKey, provider: aiProvider, modelId }] = await Promise.all([
       buildContext(user.id, {
@@ -106,14 +114,6 @@ export async function POST(request: Request) {
       }),
       getLanguageModel(user.id),
     ])
-
-    const quotaResult = await checkQuotaExceeded(user.id)
-    if (quotaResult.exceeded) {
-      return NextResponse.json(
-        { error: "사용 한도를 초과했습니다." },
-        { status: 403 },
-      )
-    }
 
     const system = buildInterviewSystemPrompt({
       companyName: session.companyName ?? undefined,
