@@ -83,6 +83,7 @@ export async function getUserUsageSummary(
   userId: string,
   startDate: Date,
   endDate: Date,
+  tz: string = "UTC",
 ): Promise<UsageSummary> {
   const [totals, byFeature, byModel, logs] = await Promise.all([
     prisma.tokenUsageLog.aggregate({
@@ -103,7 +104,7 @@ export async function getUserUsageSummary(
     }),
     prisma.$queryRaw<{ date: string; total_tokens: bigint; total_cost: string; count: bigint }[]>`
       SELECT
-        DATE(created_at) as date,
+        DATE(created_at AT TIME ZONE ${tz}) as date,
         SUM(total_tokens) as total_tokens,
         SUM(estimated_cost) as total_cost,
         COUNT(*) as count
@@ -111,7 +112,7 @@ export async function getUserUsageSummary(
       WHERE user_id = ${userId}::uuid
         AND created_at >= ${startDate}
         AND created_at <= ${endDate}
-      GROUP BY DATE(created_at)
+      GROUP BY DATE(created_at AT TIME ZONE ${tz})
       ORDER BY date ASC
     `,
   ])

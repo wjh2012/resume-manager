@@ -40,6 +40,8 @@ export default function UsagePage() {
     } else if (period !== "custom") {
       params.set("period", period)
     }
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone
+    params.set("tz", tz)
 
     setFetchState({ status: "loading" })
 

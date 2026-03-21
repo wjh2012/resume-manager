@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
       : getDateRange(parsed.data.period)
 
     const [summary, quotas] = await Promise.all([
-      getUserUsageSummary(user.id, start, end),
+      getUserUsageSummary(user.id, start, end, parsed.data.tz),
       getUserQuotasWithUsage(user.id),
     ])
 
