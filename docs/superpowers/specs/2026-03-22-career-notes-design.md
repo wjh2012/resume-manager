@@ -26,15 +26,24 @@ AI 대화(자소서 작성, 모의면접)에서 사용자의 경험, 역량, 성
 | userId    | UUID     | FK → User                                         |
 | title     | String   | 노트 제목 (예: "A프로젝트에서 팀 리드로 성과 개선")     |
 | content   | Text     | 자유 서술 텍스트 (최대 5000자)                        |
-| metadata  | JSON     | 선택적 반정형 필드 (who, what, where, result)         |
+| metadata  | JSON     | 선택적 반정형 필드 (where, role, what, result, feeling, lesson) |
 | status    | CareerNoteStatus | Prisma enum: CONFIRMED \| PENDING              |
 | createdAt | DateTime | 생성 시각                                           |
 | updatedAt | DateTime | 수정 시각                                           |
 
-- `metadata` JSON 필드의 허용 키: `who`(역할), `what`(행동), `where`(프로젝트/회사), `result`(성과/결과) — 이 4개만 허용, 추가 키는 Zod `.strip()`으로 제거
+- `metadata` JSON 필드의 허용 키 (모두 선택적):
+  - `where`: 프로젝트/회사/환경
+  - `role`: 역할
+  - `what`: 행동/상황
+  - `result`: 성과/결과 (객관적 지표)
+  - `feeling`: 느낀 점, 감정, 내면의 반응
+  - `lesson`: 배운 점, 깨달음
+- 이 6개만 허용, 추가 키는 Zod `.strip()`으로 제거
 - 모든 키는 선택적이며, 비어 있어도 유효
 - `status`: CONFIRMED는 사용자가 확인한 노트, PENDING은 병합 제안 대기 중인 노트
 - `content` 최대 5000자 제한 — AI 추출 프롬프트에도 이 제한 명시
+
+**커리어노트의 핵심 차별점**: 일반적인 이력서의 성과 나열이 아니라, 커리어코치의 상담 노트처럼 사용자의 주관적 경험(감정, 태도, 가치관, 깨달음)까지 포착한다. 객관적으로 큰 성과를 냈지만 별 감흥이 없었던 경험과, 작은 일이지만 큰 의미를 느낀 경험을 구분할 수 있어야 한다.
 
 ### CareerNoteSource (다대다)
 
@@ -120,7 +129,7 @@ AI 대화(자소서 작성, 모의면접)에서 사용자의 경험, 역량, 성
   ```
   [커리어노트: {title}]
   {content}
-  역할: {metadata.who} | 성과: {metadata.result}
+  역할: {metadata.role} | 성과: {metadata.result} | 느낀 점: {metadata.feeling}
   ```
 
 ### 모의면접
@@ -205,10 +214,12 @@ AI 대화(자소서 작성, 모의면접)에서 사용자의 경험, 역량, 성
   title: z.string().min(1).max(200).optional(),
   content: z.string().min(1).max(5000).optional(),
   metadata: z.object({
-    who: z.string().optional(),
-    what: z.string().optional(),
     where: z.string().optional(),
+    role: z.string().optional(),
+    what: z.string().optional(),
     result: z.string().optional(),
+    feeling: z.string().optional(),
+    lesson: z.string().optional(),
   }).strip().optional(),
 }
 ```
@@ -221,10 +232,12 @@ AI 대화(자소서 작성, 모의면접)에서 사용자의 경험, 역량, 성
   editedTitle: z.string().min(1).max(200).optional(),
   editedContent: z.string().min(1).max(5000).optional(),
   editedMetadata: z.object({
-    who: z.string().optional(),
-    what: z.string().optional(),
     where: z.string().optional(),
+    role: z.string().optional(),
+    what: z.string().optional(),
     result: z.string().optional(),
+    feeling: z.string().optional(),
+    lesson: z.string().optional(),
   }).strip().optional(),
 }
 ```
