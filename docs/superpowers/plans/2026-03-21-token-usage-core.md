@@ -842,6 +842,47 @@ export async function getUserQuotas(userId: string) {
     orderBy: { createdAt: "desc" },
   })
 }
+
+// Quota + 현재 사용량을 함께 반환 (대시보드 프로그레스 바용)
+export async function getUserQuotasWithUsage(userId: string) {
+  const quotas = await prisma.quota.findMany({
+    where: { userId, isActive: true },
+    orderBy: { createdAt: "desc" },
+  })
+
+  return Promise.all(
+    quotas.map(async (quota) => {
+      const periodStart = getPeriodStart(quota.period)
+      let currentUsage = 0
+
+      if (quota.limitType === "TOKENS") {
+        const agg = await prisma.tokenUsageLog.aggregate({
+          where: { userId, createdAt: { gte: periodStart } },
+          _sum: { totalTokens: true },
+        })
+        currentUsage = agg._sum.totalTokens ?? 0
+      } else if (quota.limitType === "COST") {
+        const agg = await prisma.tokenUsageLog.aggregate({
+          where: { userId, createdAt: { gte: periodStart } },
+          _sum: { estimatedCost: true },
+        })
+        currentUsage = agg._sum.estimatedCost?.toNumber() ?? 0
+      } else if (quota.limitType === "REQUESTS") {
+        currentUsage = await prisma.tokenUsageLog.count({
+          where: { userId, createdAt: { gte: periodStart } },
+        })
+      }
+
+      return {
+        id: quota.id,
+        limitType: quota.limitType,
+        limitValue: quota.limitValue.toNumber(),
+        period: quota.period,
+        currentUsage,
+      }
+    }),
+  )
+}
 ```
 
 - [ ] **Step 4: 테스트 통과 확인**
@@ -961,7 +1002,7 @@ Expected: FAIL
 `lib/token-usage/service.ts`:
 
 ```typescript
-import { type UsageFeature } from "@prisma/client"
+import { Prisma, type UsageFeature } from "@prisma/client"
 import { prisma } from "@/lib/prisma"
 import { calculateCost } from "./pricing"
 
@@ -1001,8 +1042,6 @@ export async function recordUsage(params: RecordUsageParams) {
     },
   })
 }
-
-import { Prisma } from "@prisma/client"
 
 interface GetUsageParams {
   userId: string
@@ -1194,7 +1233,7 @@ export async function GET(request: NextRequest) {
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { getUserUsageSummary } from "@/lib/token-usage/service"
-import { getUserQuotas } from "@/lib/token-usage/quota"
+import { getUserQuotasWithUsage } from "@/lib/token-usage/quota"
 import { usageSummaryQuerySchema } from "@/lib/validations/token-usage"
 
 function getDateRange(period: string) {
@@ -1229,7 +1268,7 @@ export async function GET(request: NextRequest) {
 
     const [summary, quotas] = await Promise.all([
       getUserUsageSummary(user.id, start, end),
-      getUserQuotas(user.id),
+      getUserQuotasWithUsage(user.id),
     ])
 
     return NextResponse.json({ ...summary, quotas })
