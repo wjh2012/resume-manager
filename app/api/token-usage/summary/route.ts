@@ -3,14 +3,7 @@ import { createClient } from "@/lib/supabase/server"
 import { getUserUsageSummary } from "@/lib/token-usage/service"
 import { getUserQuotasWithUsage } from "@/lib/token-usage/quota"
 import { usageSummaryQuerySchema } from "@/lib/validations/token-usage"
-
-function getDateRange(period: string) {
-  const end = new Date()
-  const start = new Date()
-  const days = period === "7d" ? 7 : period === "90d" ? 90 : 30
-  start.setDate(start.getDate() - days)
-  return { start, end }
-}
+import { getDateRange } from "@/lib/utils/date-range"
 
 export async function GET(request: NextRequest) {
   const supabase = await createClient()
