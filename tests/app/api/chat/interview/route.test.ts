@@ -31,6 +31,14 @@ vi.mock("@/lib/ai/prompts/interview", () => ({
   buildInterviewSystemPrompt: vi.fn(),
 }))
 
+vi.mock("@/lib/token-usage/service", () => ({
+  recordUsage: vi.fn(),
+}))
+
+vi.mock("@/lib/token-usage/quota", () => ({
+  checkQuotaExceeded: vi.fn(),
+}))
+
 vi.mock("ai", () => ({
   streamText: vi.fn(),
   convertToModelMessages: vi.fn(),
@@ -47,6 +55,8 @@ import { prisma } from "@/lib/prisma"
 import { getLanguageModel, AiSettingsNotFoundError } from "@/lib/ai/provider"
 import { buildContext } from "@/lib/ai/context"
 import { streamText, convertToModelMessages } from "ai"
+import { recordUsage } from "@/lib/token-usage/service"
+import { checkQuotaExceeded } from "@/lib/token-usage/quota"
 
 const mockCreateClient = vi.mocked(createClient)
 const mockPrisma = vi.mocked(prisma)
@@ -54,6 +64,10 @@ const mockGetLanguageModel = vi.mocked(getLanguageModel)
 const mockBuildContext = vi.mocked(buildContext)
 const mockStreamText = vi.mocked(streamText)
 const mockConvertToModelMessages = vi.mocked(convertToModelMessages)
+const mockRecordUsage = vi.mocked(recordUsage)
+const mockCheckQuotaExceeded = vi.mocked(checkQuotaExceeded)
+
+const mockModel = { modelId: "gpt-4o" }
 
 const VALID_USER_ID = "a0000000-0000-4000-8000-000000000001"
 const VALID_SESSION_ID = "b0000000-0000-4000-8000-000000000001"
@@ -98,7 +112,9 @@ beforeEach(() => {
     interviewSessionId: VALID_SESSION_ID,
   } as never)
   mockBuildContext.mockResolvedValue("context text")
-  mockGetLanguageModel.mockResolvedValue({} as never)
+  mockGetLanguageModel.mockResolvedValue({ model: mockModel, isServerKey: false, provider: "openai", modelId: "gpt-4o" } as never)
+  mockCheckQuotaExceeded.mockResolvedValue({ exceeded: false } as never)
+  mockRecordUsage.mockResolvedValue(undefined as never)
   mockConvertToModelMessages.mockResolvedValue([])
   mockStreamText.mockReturnValue(mockStreamResponse as never)
 })
