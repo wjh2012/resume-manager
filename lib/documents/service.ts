@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma"
 import { parseFile } from "@/lib/files/parser"
 import { uploadFile, deleteFile } from "@/lib/storage"
 import { splitIntoChunks, generateEmbeddings } from "@/lib/ai/embedding"
+import { recordUsage } from "@/lib/token-usage/service"
 import {
   resolveDocumentType,
   verifyMagicBytes,
@@ -118,7 +119,7 @@ export async function uploadDocument(
   // 임베딩 생성 (트랜잭션 외부 — 실패해도 문서는 유지)
   if (chunks.length > 0) {
     try {
-      const embeddings = await generateEmbeddings(chunks)
+      const { embeddings, totalTokens } = await generateEmbeddings(chunks)
 
       // NaN/Infinity 검증
       for (const embedding of embeddings) {
@@ -150,6 +151,20 @@ export async function uploadDocument(
           `
         }),
       )
+
+      // 토큰 사용량 기록
+      if (totalTokens > 0) {
+        await recordUsage({
+          userId,
+          provider: "openai",
+          model: "text-embedding-3-small",
+          feature: "EMBEDDING",
+          promptTokens: totalTokens,
+          completionTokens: 0,
+          totalTokens,
+          isServerKey: true,
+        }).catch((e) => console.error("토큰 사용량 기록 실패:", e))
+      }
     } catch {
       console.error("임베딩 생성 실패 (문서는 정상 저장됨):", document.id)
     }

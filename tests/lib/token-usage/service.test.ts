@@ -25,7 +25,7 @@ describe("recordUsage", () => {
 
   it("비용 계산 후 로그를 저장한다", async () => {
     mockCalculateCost.mockResolvedValue(new Prisma.Decimal(0.0075))
-    mockCreate.mockResolvedValue({} as any)
+    mockCreate.mockResolvedValue({} as unknown as Awaited<ReturnType<typeof mockCreate>>)
 
     await recordUsage({
       userId: "user-1",
@@ -58,7 +58,7 @@ describe("recordUsage", () => {
 
   it("단가가 없으면 estimatedCost=null로 저장한다", async () => {
     mockCalculateCost.mockResolvedValue(null)
-    mockCreate.mockResolvedValue({} as any)
+    mockCreate.mockResolvedValue({} as unknown as Awaited<ReturnType<typeof mockCreate>>)
 
     await recordUsage({
       userId: "user-1",

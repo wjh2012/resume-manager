@@ -11,7 +11,7 @@ interface RecordUsageParams {
   completionTokens: number
   totalTokens: number
   isServerKey: boolean
-  metadata?: Record<string, unknown>
+  metadata?: Prisma.InputJsonValue
 }
 
 export async function recordUsage(params: RecordUsageParams) {

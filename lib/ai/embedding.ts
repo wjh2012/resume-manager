@@ -50,11 +50,11 @@ export function splitIntoChunks(text: string): string[] {
 // 텍스트 청크 배열에 대한 임베딩 벡터 생성 (최대 3회 재시도)
 export async function generateEmbeddings(
   chunks: string[],
-): Promise<number[][]> {
-  const { embeddings } = await embedMany({
+): Promise<{ embeddings: number[][]; totalTokens: number }> {
+  const { embeddings, usage } = await embedMany({
     model: getEmbeddingModel(),
     values: chunks,
     maxRetries: 3,
   })
-  return embeddings
+  return { embeddings, totalTokens: usage?.tokens ?? 0 }
 }

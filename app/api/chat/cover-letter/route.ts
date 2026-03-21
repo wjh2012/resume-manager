@@ -7,6 +7,8 @@ import { getLanguageModel, AiSettingsNotFoundError } from "@/lib/ai/provider"
 import { buildContext } from "@/lib/ai/context"
 import { buildCoverLetterSystemPrompt } from "@/lib/ai/prompts/cover-letter"
 import { coverLetterChatSchema } from "@/lib/validations/cover-letter"
+import { recordUsage } from "@/lib/token-usage/service"
+import { checkQuotaExceeded } from "@/lib/token-usage/quota"
 
 export const maxDuration = 60
 
@@ -81,7 +83,7 @@ export async function POST(request: Request) {
       .join("") || lastMessage.content || ""
 
     // RAG 컨텍스트, 모델을 병렬 로드
-    const [context, model] = await Promise.all([
+    const [context, { model, isServerKey, provider: aiProvider, modelId }] = await Promise.all([
       buildContext(user.id, {
         query: lastMessageContent,
         selectedDocumentIds,
@@ -89,6 +91,14 @@ export async function POST(request: Request) {
       }),
       getLanguageModel(user.id),
     ])
+
+    const quotaResult = await checkQuotaExceeded(user.id)
+    if (quotaResult.exceeded) {
+      return NextResponse.json(
+        { error: "사용 한도를 초과했습니다." },
+        { status: 403 },
+      )
+    }
 
     // 시스템 프롬프트 생성
     const system = buildCoverLetterSystemPrompt({
@@ -106,7 +116,7 @@ export async function POST(request: Request) {
       model,
       system,
       messages: modelMessages,
-      onFinish: async ({ text }) => {
+      onFinish: async ({ text, usage }) => {
         // USER + ASSISTANT 메시지를 트랜잭션으로 원자적 저장
         const ops = [
           ...(lastMessage.role === "user" && lastMessageContent
@@ -126,6 +136,21 @@ export async function POST(request: Request) {
         ]
         if (ops.length > 0) {
           await prisma.$transaction(ops)
+        }
+
+        // 토큰 사용량 기록
+        if (usage) {
+          await recordUsage({
+            userId: user.id,
+            provider: aiProvider,
+            model: modelId,
+            feature: "COVER_LETTER",
+            promptTokens: usage.inputTokens ?? 0,
+            completionTokens: usage.outputTokens ?? 0,
+            totalTokens: (usage.inputTokens ?? 0) + (usage.outputTokens ?? 0),
+            isServerKey,
+            metadata: { conversationId },
+          }).catch((e) => console.error("토큰 사용량 기록 실패:", e))
         }
       },
     })

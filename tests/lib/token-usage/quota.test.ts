@@ -37,10 +37,10 @@ describe("checkQuotaExceeded", () => {
         createdAt: new Date(),
         updatedAt: new Date(),
       },
-    ] as any)
+    ] as unknown as Awaited<ReturnType<typeof mockFindMany>>)
     mockAggregate.mockResolvedValue({
       _sum: { totalTokens: 1500 },
-    } as any)
+    } as unknown as Awaited<ReturnType<typeof mockAggregate>>)
 
     const result = await checkQuotaExceeded("user-1")
     expect(result.exceeded).toBe(true)

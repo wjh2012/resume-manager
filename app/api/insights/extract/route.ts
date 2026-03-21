@@ -7,6 +7,7 @@ import {
   ConversationNotFoundError,
 } from "@/lib/insights/service"
 import { AiSettingsNotFoundError } from "@/lib/ai/provider"
+import { QuotaExceededError } from "@/lib/token-usage/quota"
 
 export async function POST(request: Request) {
   const supabase = await createClient()
@@ -48,6 +49,9 @@ export async function POST(request: Request) {
   } catch (error) {
     if (error instanceof ConversationNotFoundError) {
       return NextResponse.json({ error: error.message }, { status: 404 })
+    }
+    if (error instanceof QuotaExceededError) {
+      return NextResponse.json({ error: error.message }, { status: 403 })
     }
     if (error instanceof AiSettingsNotFoundError) {
       return NextResponse.json({ error: error.message }, { status: 400 })
