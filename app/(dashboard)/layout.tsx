@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation"
 import { getAuthUser, extractUserInfo } from "@/lib/supabase/user"
+import { prisma } from "@/lib/prisma"
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/layout/app-sidebar"
 import { Topbar } from "@/components/layout/topbar"
@@ -15,10 +16,16 @@ export default async function DashboardLayout({
     redirect("/login")
   }
 
+  const dbUser = await prisma.user.findUnique({
+    where: { id: user.id },
+    select: { role: true },
+  })
+  const userInfo = { ...extractUserInfo(user), role: dbUser?.role ?? "USER" }
+
   // !min-h-0: SidebarProvider 기본 min-h-svh를 해제하여 자식이 뷰포트를 넘지 않도록 제약
   return (
     <SidebarProvider className="h-svh !min-h-0">
-      <AppSidebar user={extractUserInfo(user)} />
+      <AppSidebar user={userInfo} />
       <SidebarInset>
         <Topbar />
         <main id="main-content" tabIndex={-1} className="min-h-0 flex-1 overflow-y-auto p-6">{children}</main>
