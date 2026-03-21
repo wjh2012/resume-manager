@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
   }
   try {
     const quota = await createQuota(parsed.data)
-    return NextResponse.json(quota, { status: 201 })
+    return NextResponse.json({ data: quota }, { status: 201 })
   } catch (error) {
     console.error("[POST /api/admin/quotas]", error)
     return NextResponse.json({ error: "Quota 생성에 실패했습니다." }, { status: 500 })

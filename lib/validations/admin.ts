@@ -19,7 +19,10 @@ export const createQuotaSchema = z.object({
 export const updateQuotaSchema = z.object({
   limitValue: z.coerce.number().positive("양수여야 합니다.").optional(),
   isActive: z.boolean().optional(),
-})
+}).refine(
+  (data) => data.limitValue !== undefined || data.isActive !== undefined,
+  { message: "변경할 필드를 입력해주세요." }
+)
 
 export const adminUsageQuerySchema = z.object({
   period: z.enum(["7d", "30d", "90d"]).optional().default("30d"),

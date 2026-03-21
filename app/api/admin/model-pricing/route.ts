@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
   }
   try {
     const pricing = await createModelPricing(parsed.data)
-    return NextResponse.json(pricing, { status: 201 })
+    return NextResponse.json({ data: pricing }, { status: 201 })
   } catch (error) {
     console.error("[POST /api/admin/model-pricing]", error)
     return NextResponse.json({ error: "단가 등록에 실패했습니다." }, { status: 500 })

@@ -1,7 +1,10 @@
+import { z } from "zod"
 import { NextRequest, NextResponse } from "next/server"
 import { requireAdmin } from "@/lib/auth/require-admin"
 import { updateQuota, deleteQuota } from "@/lib/admin/quota-service"
 import { updateQuotaSchema } from "@/lib/validations/admin"
+
+const uuidSchema = z.string().uuid()
 
 interface RouteParams {
   params: Promise<{ id: string }>
@@ -16,6 +19,10 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     )
   }
   const { id } = await params
+  const idParsed = uuidSchema.safeParse(id)
+  if (!idParsed.success) {
+    return NextResponse.json({ error: "유효하지 않은 ID입니다." }, { status: 400 })
+  }
   let body: unknown
   try { body = await request.json() } catch {
     return NextResponse.json({ error: "유효하지 않은 요청입니다." }, { status: 400 })
@@ -42,6 +49,10 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
     )
   }
   const { id } = await params
+  const idParsedDelete = uuidSchema.safeParse(id)
+  if (!idParsedDelete.success) {
+    return NextResponse.json({ error: "유효하지 않은 ID입니다." }, { status: 400 })
+  }
   try {
     await deleteQuota(id)
     return NextResponse.json({ success: true })
