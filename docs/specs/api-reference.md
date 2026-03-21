@@ -386,3 +386,38 @@ AI 설정 업데이트.
   }
   ```
 - **주의**: API 키는 서버사이드에서만 접근. 클라이언트에는 마스킹된 값만 반환.
+
+---
+
+## 토큰 사용량 (Token Usage)
+
+### `GET /api/token-usage`
+
+사용자 토큰 사용량 로그 조회 (커서 페이지네이션).
+
+- **Query**: `cursor` (uuid, optional), `limit` (1-100, default 50), `feature` (COVER_LETTER|INTERVIEW|INSIGHT|EMBEDDING, optional), `startDate` (date, optional), `endDate` (date, optional)
+- **Response**: `200 OK`
+  ```json
+  {
+    "data": [{ "id": "uuid", "provider": "openai", "model": "gpt-4o", "feature": "COVER_LETTER", "promptTokens": 1000, "completionTokens": 500, "totalTokens": 1500, "estimatedCost": "0.0075", "isServerKey": false, "createdAt": "..." }],
+    "nextCursor": "uuid"
+  }
+  ```
+
+### `GET /api/token-usage/summary`
+
+사용자 사용량 요약 통계 + Quota 현황.
+
+- **Query**: `period` (7d|30d|90d, default 30d), `startDate` (date, optional), `endDate` (date, optional)
+- **Response**: `200 OK`
+  ```json
+  {
+    "totalTokens": 50000,
+    "totalCost": 0.25,
+    "requestCount": 30,
+    "byFeature": [{ "feature": "COVER_LETTER", "totalTokens": 30000, "count": 20 }],
+    "byModel": [{ "model": "gpt-4o", "totalTokens": 40000, "totalCost": 0.2 }],
+    "daily": [{ "date": "2026-03-21", "totalTokens": 5000, "totalCost": 0.025, "count": 3 }],
+    "quotas": [{ "id": "uuid", "limitType": "TOKENS", "limitValue": 100000, "period": "MONTHLY", "currentUsage": 50000 }]
+  }
+  ```

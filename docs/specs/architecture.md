@@ -27,7 +27,7 @@ app/
   (auth)/login/page.tsx, callback/route.ts
   (dashboard)/layout.tsx               # 사이드바 + 탑바
   (dashboard)/documents/, cover-letters/, interviews/, insights/, resumes/, settings/
-  api/documents/, chat/, insights/, resumes/, cover-letters/, interviews/
+  api/documents/, chat/, insights/, resumes/, cover-letters/, interviews/, token-usage/
 
 components/
   layout/    app-sidebar.tsx, topbar.tsx, user-menu.tsx
@@ -45,7 +45,8 @@ lib/
             prompts/{cover-letter,interview,insight-extraction}.ts
   files/    parser.ts, parse-pdf.ts, parse-docx.ts, parse-txt.ts
   storage.ts                           # Supabase Storage 헬퍼
-  validations/ document.ts, resume.ts, cover-letter.ts, interview.ts
+  token-usage/ service.ts, pricing.ts, quota.ts
+  validations/ document.ts, resume.ts, cover-letter.ts, interview.ts, token-usage.ts
 
 hooks/  use-chat-scroll.ts, use-file-upload.ts
 types/  ai.ts
@@ -71,6 +72,7 @@ types/  ai.ts
 /(dashboard)/resumes/new ...... 새 이력서 (템플릿 선택)
 /(dashboard)/resumes/[id] ..... 이력서 편집기 (탭 기반)
 /(dashboard)/resumes/[id]/preview 미리보기 + PDF 다운로드
+/(dashboard)/usage ............ 토큰 사용량 대시보드
 /(dashboard)/settings ......... AI 설정, 프로필
 ```
 

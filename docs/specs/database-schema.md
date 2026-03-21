@@ -16,7 +16,11 @@ User ─┬─ AiSettings (1:1)
       ├─ CoverLetter (1:N)
       ├─ InterviewSession (1:N)
       ├─ Conversation (1:N) ── Message (1:N)
-      └─ Insight (1:N)
+      ├─ Insight (1:N)
+      ├─ TokenUsageLog (1:N)
+      └─ Quota (1:N)
+
+ModelPricing (독립 — User와 무관)
 ```
 
 ## Enum 정의
@@ -43,6 +47,29 @@ enum MessageRole {
   ASSISTANT
   SYSTEM
 }
+
+enum UsageFeature {
+  COVER_LETTER
+  INTERVIEW
+  INSIGHT
+  EMBEDDING
+}
+
+enum LimitType {
+  TOKENS
+  COST
+  REQUESTS
+}
+
+enum LimitPeriod {
+  DAILY
+  MONTHLY
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
 ```
 
 ## Prisma 스키마
@@ -60,6 +87,8 @@ model User {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  role      UserRole @default(USER)
+
   aiSettings       AiSettings?
   documents        Document[]
   resumes          Resume[]
@@ -67,6 +96,8 @@ model User {
   interviewSessions InterviewSession[]
   conversations    Conversation[]
   insights         Insight[]
+  tokenUsageLogs   TokenUsageLog[]
+  quotas           Quota[]
 
   @@map("users")
 }
@@ -372,6 +403,73 @@ model Insight {
   conversation Conversation? @relation(fields: [conversationId], references: [id])
 
   @@map("insights")
+}
+```
+
+### TokenUsageLog
+
+AI API 호출별 토큰 사용 기록.
+
+```prisma
+model TokenUsageLog {
+  id               String       @id @default(uuid()) @db.Uuid
+  userId           String       @map("user_id") @db.Uuid
+  provider         String
+  model            String
+  feature          UsageFeature
+  promptTokens     Int          @map("prompt_tokens")
+  completionTokens Int          @map("completion_tokens")
+  totalTokens      Int          @map("total_tokens")
+  estimatedCost    Decimal?     @map("estimated_cost") @db.Decimal(10, 6)
+  isServerKey      Boolean      @map("is_server_key")
+  metadata         Json?
+  createdAt        DateTime     @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([createdAt])
+  @@map("token_usage_logs")
+}
+```
+
+### ModelPricing
+
+모델별 토큰 단가. Append-only — 새 가격 등록 시 기존 레코드 유지.
+
+```prisma
+model ModelPricing {
+  id              String   @id @default(uuid()) @db.Uuid
+  provider        String
+  model           String
+  inputPricePerM  Decimal  @map("input_price_per_m") @db.Decimal(10, 6)
+  outputPricePerM Decimal  @map("output_price_per_m") @db.Decimal(10, 6)
+  effectiveFrom   DateTime @map("effective_from")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  @@unique([provider, model, effectiveFrom])
+  @@map("model_pricing")
+}
+```
+
+### Quota
+
+사용자별 사용 한도. 한 사용자에 여러 Quota 설정 가능.
+
+```prisma
+model Quota {
+  id         String      @id @default(uuid()) @db.Uuid
+  userId     String      @map("user_id") @db.Uuid
+  limitType  LimitType   @map("limit_type")
+  limitValue Decimal     @map("limit_value") @db.Decimal(12, 2)
+  period     LimitPeriod
+  isActive   Boolean     @default(true) @map("is_active")
+  createdAt  DateTime    @default(now()) @map("created_at")
+  updatedAt  DateTime    @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("quotas")
 }
 ```
 
