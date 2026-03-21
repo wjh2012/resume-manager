@@ -9,6 +9,7 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
@@ -16,7 +17,7 @@ import {
 } from "@/components/ui/sidebar"
 import { UserMenu } from "@/components/layout/user-menu"
 import { ThemeToggle } from "@/components/layout/theme-toggle"
-import { navItems } from "@/lib/config/navigation"
+import { navItems, adminNavItems } from "@/lib/config/navigation"
 import type { UserInfo } from "@/lib/supabase/user"
 
 interface AppSidebarProps {
@@ -57,6 +58,28 @@ export function AppSidebar({ user }: AppSidebarProps) {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+        {user.role === "ADMIN" && (
+          <SidebarGroup>
+            <SidebarGroupLabel>관리자</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {adminNavItems.map((item) => (
+                  <SidebarMenuItem key={item.href}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={pathname.startsWith(item.href)}
+                    >
+                      <Link href={item.href}>
+                        <item.icon />
+                        <span>{item.label}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu>
