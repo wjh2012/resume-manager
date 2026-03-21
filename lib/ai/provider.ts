@@ -11,6 +11,13 @@ export class AiSettingsNotFoundError extends Error {
   }
 }
 
+export interface LanguageModelResult {
+  model: LanguageModel
+  isServerKey: boolean
+  provider: string
+  modelId: string
+}
+
 // 순수 함수: SDK별 LanguageModel 생성
 export function createLanguageModel(
   provider: AIProvider,
@@ -31,8 +38,8 @@ export function createLanguageModel(
   }
 }
 
-// DB에서 사용자 AI 설정 조회 후 LanguageModel 반환
-export async function getLanguageModel(userId: string): Promise<LanguageModel> {
+// DB에서 사용자 AI 설정 조회 후 LanguageModel + 메타데이터 반환
+export async function getLanguageModel(userId: string): Promise<LanguageModelResult> {
   const settings = await prisma.aiSettings.findUnique({
     where: { userId },
     select: { provider: true, model: true, apiKey: true },
@@ -54,5 +61,10 @@ export async function getLanguageModel(userId: string): Promise<LanguageModel> {
     )
   }
 
-  return createLanguageModel(provider, settings.model, settings.apiKey)
+  return {
+    model: createLanguageModel(provider, settings.model, settings.apiKey),
+    isServerKey: false,
+    provider: settings.provider,
+    modelId: settings.model,
+  }
 }

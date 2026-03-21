@@ -130,7 +130,7 @@ describe("getLanguageModel()", () => {
 
       const result = await getLanguageModel("user-123")
 
-      expect(result).toBe(mockModel)
+      expect(result).toEqual({ model: mockModel, isServerKey: false, provider: "openai", modelId: "gpt-4o" })
     })
 
     it("anthropic 설정으로도 LanguageModel을 반환해야 한다", async () => {
@@ -142,7 +142,7 @@ describe("getLanguageModel()", () => {
 
       const result = await getLanguageModel("user-456")
 
-      expect(result).toBe(mockModel)
+      expect(result).toEqual({ model: mockModel, isServerKey: false, provider: "anthropic", modelId: "claude-sonnet-4-20250514" })
       expect(createAnthropic).toHaveBeenCalledWith({ apiKey: "sk-ant-valid" })
     })
 
@@ -234,7 +234,7 @@ describe("getLanguageModel()", () => {
 
       const result = await getLanguageModel("user-valid-model")
 
-      expect(result).toBe(mockModel)
+      expect(result).toEqual({ model: mockModel, isServerKey: false, provider: "openai", modelId: "gpt-4o" })
     })
 
     it("openai의 유효한 모델(gpt-4o-mini)이면 LanguageModel을 반환해야 한다", async () => {
@@ -246,7 +246,7 @@ describe("getLanguageModel()", () => {
 
       const result = await getLanguageModel("user-valid-model-mini")
 
-      expect(result).toBe(mockModel)
+      expect(result).toEqual({ model: mockModel, isServerKey: false, provider: "openai", modelId: "gpt-4o-mini" })
     })
 
     it("anthropic의 유효한 모델이면 LanguageModel을 반환해야 한다", async () => {
@@ -258,7 +258,7 @@ describe("getLanguageModel()", () => {
 
       const result = await getLanguageModel("user-valid-anthropic")
 
-      expect(result).toBe(mockModel)
+      expect(result).toEqual({ model: mockModel, isServerKey: false, provider: "anthropic", modelId: "claude-haiku-4-5-20251001" })
     })
 
     it("google의 유효한 모델이면 LanguageModel을 반환해야 한다", async () => {
@@ -270,7 +270,7 @@ describe("getLanguageModel()", () => {
 
       const result = await getLanguageModel("user-valid-google")
 
-      expect(result).toBe(mockModel)
+      expect(result).toEqual({ model: mockModel, isServerKey: false, provider: "google", modelId: "gemini-2.5-pro" })
     })
 
     it("openai 제공자에 존재하지 않는 모델이면 Error를 던져야 한다", async () => {

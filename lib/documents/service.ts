@@ -2,6 +2,8 @@ import { prisma } from "@/lib/prisma"
 import { parseFile } from "@/lib/files/parser"
 import { uploadFile, deleteFile } from "@/lib/storage"
 import { splitIntoChunks, generateEmbeddings } from "@/lib/ai/embedding"
+import { recordUsage } from "@/lib/token-usage/service"
+import { checkQuotaExceeded } from "@/lib/token-usage/quota"
 import {
   resolveDocumentType,
   verifyMagicBytes,
@@ -29,6 +31,7 @@ interface UploadResult {
   type: DocumentType
   fileSize: number
   chunkCount: number
+  embeddingSkipped?: boolean
 }
 
 // 문서 업로드: 파싱 → 청크 분할 → DB 저장 → 임베딩
@@ -117,8 +120,13 @@ export async function uploadDocument(
 
   // 임베딩 생성 (트랜잭션 외부 — 실패해도 문서는 유지)
   if (chunks.length > 0) {
+    const quotaResult = await checkQuotaExceeded(userId)
+    if (quotaResult.exceeded) {
+      console.warn("Quota 초과로 임베딩 생성 스킵:", document.id)
+      return { id: document.id, title, type, fileSize: file.size, chunkCount: chunks.length, embeddingSkipped: true }
+    }
     try {
-      const embeddings = await generateEmbeddings(chunks)
+      const { embeddings, totalTokens } = await generateEmbeddings(chunks)
 
       // NaN/Infinity 검증
       for (const embedding of embeddings) {
@@ -150,6 +158,20 @@ export async function uploadDocument(
           `
         }),
       )
+
+      // 토큰 사용량 기록
+      if (totalTokens > 0) {
+        await recordUsage({
+          userId,
+          provider: "openai",
+          model: "text-embedding-3-small",
+          feature: "EMBEDDING",
+          promptTokens: totalTokens,
+          completionTokens: 0,
+          totalTokens,
+          isServerKey: true,
+        }).catch((e) => console.error("토큰 사용량 기록 실패:", e))
+      }
     } catch {
       console.error("임베딩 생성 실패 (문서는 정상 저장됨):", document.id)
     }

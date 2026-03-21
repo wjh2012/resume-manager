@@ -1,4 +1,5 @@
 import {
+  BarChart3,
   FileCheck,
   FileText,
   Home,
@@ -22,6 +23,7 @@ export const navItems: NavItem[] = [
   { icon: MessageSquare, label: "모의면접", href: "/interviews" },
   { icon: Lightbulb, label: "인사이트", href: "/insights" },
   { icon: FileCheck, label: "이력서", href: "/resumes" },
+  { icon: BarChart3, label: "사용량", href: "/usage" },
   { icon: Settings, label: "설정", href: "/settings" },
 ]
 

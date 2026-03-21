@@ -7,6 +7,8 @@ import {
   insightExtractionPrompt,
   INSIGHT_CATEGORIES,
 } from "@/lib/ai/prompts/insight-extraction"
+import { recordUsage } from "@/lib/token-usage/service"
+import { checkQuotaExceeded, QuotaExceededError } from "@/lib/token-usage/quota"
 
 export class InsightNotFoundError extends Error {
   constructor() {
@@ -53,14 +55,35 @@ export async function extractInsights(userId: string, conversationId: string) {
     return []
   }
 
+  // 할당량 확인
+  const quotaResult = await checkQuotaExceeded(userId)
+  if (quotaResult.exceeded) {
+    throw new QuotaExceededError()
+  }
+
   // AI 호출을 먼저 수행 — 실패해도 기존 인사이트 보존
-  const model = await getLanguageModel(userId)
-  const { object } = await generateObject({
+  const { model, isServerKey, provider: aiProvider, modelId } = await getLanguageModel(userId)
+  const { object, usage } = await generateObject({
     model,
     schema: insightObjectSchema,
     system: insightExtractionPrompt,
     prompt: messages.map((m) => `${m.role}: ${m.content}`).join("\n"),
   })
+
+  // 토큰 사용량 기록
+  if (usage) {
+    await recordUsage({
+      userId,
+      provider: aiProvider,
+      model: modelId,
+      feature: "INSIGHT",
+      promptTokens: usage.inputTokens ?? 0,
+      completionTokens: usage.outputTokens ?? 0,
+      totalTokens: (usage.inputTokens ?? 0) + (usage.outputTokens ?? 0),
+      isServerKey,
+      metadata: { conversationId },
+    }).catch((e) => console.error("토큰 사용량 기록 실패:", e))
+  }
 
   // 삭제 + 생성을 트랜잭션으로 원자적 처리
   const created = await prisma.$transaction([

@@ -30,21 +30,47 @@ enum MessageRole {
   SYSTEM
 }
 
+enum UsageFeature {
+  COVER_LETTER
+  INTERVIEW
+  INSIGHT
+  EMBEDDING
+}
+
+enum LimitType {
+  TOKENS
+  COST
+  REQUESTS
+}
+
+enum LimitPeriod {
+  DAILY
+  MONTHLY
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
 model User {
   id        String   @id @default(uuid()) @db.Uuid
   email     String   @unique
   name      String?
   avatarUrl String?  @map("avatar_url")
+  role      UserRole @default(USER)
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  aiSettings       AiSettings?
-  documents        Document[]
-  resumes          Resume[]
-  coverLetters     CoverLetter[]
+  aiSettings        AiSettings?
+  documents         Document[]
+  resumes           Resume[]
+  coverLetters      CoverLetter[]
   interviewSessions InterviewSession[]
-  conversations    Conversation[]
-  insights         Insight[]
+  conversations     Conversation[]
+  insights          Insight[]
+  tokenUsageLogs    TokenUsageLog[]
+  quotas            Quota[]
 
   @@map("users")
 }
@@ -308,4 +334,53 @@ model Insight {
   conversation Conversation? @relation(fields: [conversationId], references: [id])
 
   @@map("insights")
+}
+
+model TokenUsageLog {
+  id               String       @id @default(uuid()) @db.Uuid
+  userId           String       @map("user_id") @db.Uuid
+  provider         String
+  model            String
+  feature          UsageFeature
+  promptTokens     Int          @map("prompt_tokens")
+  completionTokens Int          @map("completion_tokens")
+  totalTokens      Int          @map("total_tokens")
+  estimatedCost    Decimal?     @map("estimated_cost") @db.Decimal(10, 6)
+  isServerKey      Boolean      @map("is_server_key")
+  metadata         Json?
+  createdAt        DateTime     @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([createdAt])
+  @@map("token_usage_logs")
+}
+
+model ModelPricing {
+  id              String   @id @default(uuid()) @db.Uuid
+  provider        String
+  model           String
+  inputPricePerM  Decimal  @map("input_price_per_m") @db.Decimal(10, 6)
+  outputPricePerM Decimal  @map("output_price_per_m") @db.Decimal(10, 6)
+  effectiveFrom   DateTime @map("effective_from")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  @@unique([provider, model, effectiveFrom])
+  @@map("model_pricing")
+}
+
+model Quota {
+  id         String      @id @default(uuid()) @db.Uuid
+  userId     String      @map("user_id") @db.Uuid
+  limitType  LimitType   @map("limit_type")
+  limitValue Decimal     @map("limit_value") @db.Decimal(12, 2)
+  period     LimitPeriod
+  isActive   Boolean     @default(true) @map("is_active")
+  createdAt  DateTime    @default(now()) @map("created_at")
+  updatedAt  DateTime    @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("quotas")
 }
