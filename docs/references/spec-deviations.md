@@ -215,3 +215,9 @@
 - **스펙**: `usage.promptTokens` / `usage.completionTokens`
 - **실제**: `usage.inputTokens` / `usage.outputTokens`
 - **이유**: Vercel AI SDK v6의 `LanguageModelUsage` 타입이 `inputTokens`/`outputTokens` 사용
+
+### 관리자 사용자 랭킹: Prisma → Raw SQL
+
+- **스펙**: Prisma 쿼리
+- **실제**: `$queryRaw`로 JOIN + GROUP BY SQL
+- **이유**: Prisma `groupBy`가 다중 테이블 JOIN 기반 집계를 지원하지 않음
