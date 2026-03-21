@@ -32,7 +32,7 @@ export function QuotaProgress({ quotas }: QuotaProgressProps) {
       </CardHeader>
       <CardContent className="space-y-4">
         {quotas.map((q) => {
-          const pct = Math.min((q.currentUsage / q.limitValue) * 100, 100)
+          const pct = q.limitValue > 0 ? Math.min((q.currentUsage / q.limitValue) * 100, 100) : 0
           return (
             <div key={q.id}>
               <div className="mb-1 flex justify-between text-sm">

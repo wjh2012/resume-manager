@@ -31,6 +31,7 @@ interface UploadResult {
   type: DocumentType
   fileSize: number
   chunkCount: number
+  embeddingSkipped?: boolean
 }
 
 // 문서 업로드: 파싱 → 청크 분할 → DB 저장 → 임베딩
@@ -122,7 +123,7 @@ export async function uploadDocument(
     const quotaResult = await checkQuotaExceeded(userId)
     if (quotaResult.exceeded) {
       console.warn("Quota 초과로 임베딩 생성 스킵:", document.id)
-      return { id: document.id, title, type, fileSize: file.size, chunkCount: chunks.length }
+      return { id: document.id, title, type, fileSize: file.size, chunkCount: chunks.length, embeddingSkipped: true }
     }
     try {
       const { embeddings, totalTokens } = await generateEmbeddings(chunks)
