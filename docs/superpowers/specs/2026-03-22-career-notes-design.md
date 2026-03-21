@@ -26,7 +26,7 @@ AI 대화(자소서 작성, 모의면접)에서 사용자의 경험, 역량, 성
 | userId    | UUID     | FK → User                                         |
 | title     | String   | 노트 제목 (예: "A프로젝트에서 팀 리드로 성과 개선")     |
 | content   | Text     | 자유 서술 텍스트 (최대 5000자)                        |
-| metadata  | JSON     | 선택적 반정형 필드 (where, role, what, result, feeling, lesson) |
+| metadata  | JSON     | 선택적 반정형 필드 (where, role, what, result, challenge, motivation, feeling, lesson) |
 | status    | CareerNoteStatus | Prisma enum: CONFIRMED \| PENDING              |
 | createdAt | DateTime | 생성 시각                                           |
 | updatedAt | DateTime | 수정 시각                                           |
@@ -36,9 +36,11 @@ AI 대화(자소서 작성, 모의면접)에서 사용자의 경험, 역량, 성
   - `role`: 역할
   - `what`: 행동/상황
   - `result`: 성과/결과 (객관적 지표)
+  - `challenge`: 어려웠던 점, 장애물
+  - `motivation`: 동기, 왜 그 행동을 했는지
   - `feeling`: 느낀 점, 감정, 내면의 반응
   - `lesson`: 배운 점, 깨달음
-- 이 6개만 허용, 추가 키는 Zod `.strip()`으로 제거
+- 이 8개만 허용, 추가 키는 Zod `.strip()`으로 제거
 - 모든 키는 선택적이며, 비어 있어도 유효
 - `status`: CONFIRMED는 사용자가 확인한 노트, PENDING은 병합 제안 대기 중인 노트
 - `content` 최대 5000자 제한 — AI 추출 프롬프트에도 이 제한 명시
@@ -218,6 +220,8 @@ AI 대화(자소서 작성, 모의면접)에서 사용자의 경험, 역량, 성
     role: z.string().optional(),
     what: z.string().optional(),
     result: z.string().optional(),
+    challenge: z.string().optional(),
+    motivation: z.string().optional(),
     feeling: z.string().optional(),
     lesson: z.string().optional(),
   }).strip().optional(),
@@ -236,6 +240,8 @@ AI 대화(자소서 작성, 모의면접)에서 사용자의 경험, 역량, 성
     role: z.string().optional(),
     what: z.string().optional(),
     result: z.string().optional(),
+    challenge: z.string().optional(),
+    motivation: z.string().optional(),
     feeling: z.string().optional(),
     lesson: z.string().optional(),
   }).strip().optional(),
