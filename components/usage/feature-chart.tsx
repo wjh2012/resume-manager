@@ -48,7 +48,7 @@ export function FeatureChart({ data }: FeatureChartProps) {
           <PieChart>
             <ChartTooltip content={<ChartTooltipContent hideLabel />} />
             <Pie data={chartData} dataKey="value" label nameKey="feature" />
-            <ChartLegend content={({ payload }) => <ChartLegendContent payload={payload} nameKey="feature" />} />
+            <ChartLegend content={<ChartLegendContent nameKey="feature" />} />
           </PieChart>
         </ChartContainer>
       </CardContent>
