@@ -98,11 +98,11 @@
 - **실제**: 네이티브 `<label>` 요소 직접 사용
 - **이유**: 프로젝트에 `components/ui/label.tsx`가 존재하지 않음
 
-### `date-fns` 미사용
+### `date-fns` 사용 범위
 
 - **스펙**: 날짜 포매팅에 date-fns 사용 암시
-- **실제**: `toLocaleDateString("ko-KR", ...)` 네이티브 API 사용
-- **이유**: date-fns 패키지가 프로젝트에 설치되지 않음
+- **실제**: 이력서 섹션은 `toLocaleDateString("ko-KR", ...)` 네이티브 API 사용, 토큰 사용량 대시보드는 `date-fns` 사용
+- **이유**: shadcn Calendar (react-day-picker) 추가 시 date-fns가 의존성으로 설치되어, 커스텀 날짜 범위 선택기에서 활용
 
 ### 파일명 변경: `interview-setup.tsx` → `interview-form.tsx`
 
@@ -193,3 +193,31 @@
 - **스펙**: 모든 사용자 액션에 토스트 알림
 - **실제**: 자동 저장 성공 시 토스트 미표시 (실패 시에만 표시)
 - **이유**: 빈번한 자동 저장마다 토스트는 UX 방해
+
+---
+
+## 토큰 사용량 추적
+
+### provider 필드: enum → String
+
+- **스펙**: `enum(openai, anthropic, google)`
+- **실제**: Prisma `String` + Zod enum 검증
+- **이유**: `types/ai.ts`의 `AIProvider` 타입과 Prisma enum 동기화 부담을 줄이기 위해
+
+### 일별 집계: Prisma groupBy → Raw SQL
+
+- **스펙**: Prisma 쿼리로 집계
+- **실제**: `$queryRaw`로 `DATE(created_at)` 기반 SQL 집계
+- **이유**: Prisma `groupBy`가 `DATE()` 함수 집계를 지원하지 않음
+
+### AI SDK usage 필드명: promptTokens → inputTokens
+
+- **스펙**: `usage.promptTokens` / `usage.completionTokens`
+- **실제**: `usage.inputTokens` / `usage.outputTokens`
+- **이유**: Vercel AI SDK v6의 `LanguageModelUsage` 타입이 `inputTokens`/`outputTokens` 사용
+
+### 관리자 사용자 랭킹: Prisma → Raw SQL
+
+- **스펙**: Prisma 쿼리
+- **실제**: `$queryRaw`로 JOIN + GROUP BY SQL
+- **이유**: Prisma `groupBy`가 다중 테이블 JOIN 기반 집계를 지원하지 않음

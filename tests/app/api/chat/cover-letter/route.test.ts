@@ -38,6 +38,14 @@ vi.mock("@/lib/ai/prompts/cover-letter", () => ({
   buildCoverLetterSystemPrompt: vi.fn(),
 }))
 
+vi.mock("@/lib/token-usage/service", () => ({
+  recordUsage: vi.fn(),
+}))
+
+vi.mock("@/lib/token-usage/quota", () => ({
+  checkQuotaExceeded: vi.fn(),
+}))
+
 vi.mock("ai", () => ({
   streamText: vi.fn(),
   convertToModelMessages: vi.fn(),
@@ -58,6 +66,8 @@ import { getLanguageModel, AiSettingsNotFoundError } from "@/lib/ai/provider"
 import { buildContext } from "@/lib/ai/context"
 import { buildCoverLetterSystemPrompt } from "@/lib/ai/prompts/cover-letter"
 import { streamText, convertToModelMessages } from "ai"
+import { recordUsage } from "@/lib/token-usage/service"
+import { checkQuotaExceeded } from "@/lib/token-usage/quota"
 
 // ─── mock 타입 캐스팅 헬퍼 ───────────────────────────────────────────────────
 
@@ -68,8 +78,12 @@ const mockBuildContext = vi.mocked(buildContext)
 const mockBuildCoverLetterSystemPrompt = vi.mocked(buildCoverLetterSystemPrompt)
 const mockStreamText = vi.mocked(streamText)
 const mockConvertToModelMessages = vi.mocked(convertToModelMessages)
+const mockRecordUsage = vi.mocked(recordUsage)
+const mockCheckQuotaExceeded = vi.mocked(checkQuotaExceeded)
 
 // ─── 상수 픽스처 ──────────────────────────────────────────────────────────────
+
+const mockModel = { modelId: "gpt-4o" }
 
 const VALID_USER_ID = "a0000000-0000-4000-8000-000000000001"
 const VALID_COVER_LETTER_ID = "b0000000-0000-4000-8000-000000000001"
@@ -129,10 +143,10 @@ function makeValidBody(overrides?: Partial<{
 }
 
 // streamText mock에서 onFinish 콜백을 캡처하고 나중에 직접 호출하는 헬퍼
-function captureOnFinish(): { getOnFinish: () => ((args: { text: string }) => Promise<void>) | undefined } {
-  let capturedOnFinish: ((args: { text: string }) => Promise<void>) | undefined
+function captureOnFinish(): { getOnFinish: () => ((args: { text: string; usage?: unknown }) => Promise<void>) | undefined } {
+  let capturedOnFinish: ((args: { text: string; usage?: unknown }) => Promise<void>) | undefined
   mockStreamText.mockImplementation((opts: Parameters<typeof streamText>[0]) => {
-    capturedOnFinish = opts.onFinish as (args: { text: string }) => Promise<void>
+    capturedOnFinish = opts.onFinish as (args: { text: string; usage?: unknown }) => Promise<void>
     return {
       toUIMessageStreamResponse: vi.fn().mockReturnValue(new Response("stream", { status: 200 })),
     } as never
@@ -154,7 +168,9 @@ beforeEach(() => {
   mockPrisma.$transaction.mockResolvedValue([])
   mockPrisma.message.create.mockResolvedValue({ id: "msg-created" } as never)
 
-  mockGetLanguageModel.mockResolvedValue({ modelId: "gpt-4o" } as never)
+  mockGetLanguageModel.mockResolvedValue({ model: mockModel, isServerKey: false, provider: "openai", modelId: "gpt-4o" } as never)
+  mockCheckQuotaExceeded.mockResolvedValue({ exceeded: false } as never)
+  mockRecordUsage.mockResolvedValue(undefined as never)
   mockBuildContext.mockResolvedValue("컨텍스트 내용" as never)
   mockBuildCoverLetterSystemPrompt.mockReturnValue("시스템 프롬프트")
   mockConvertToModelMessages.mockResolvedValue([] as never)

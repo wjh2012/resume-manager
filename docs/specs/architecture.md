@@ -27,7 +27,8 @@ app/
   (auth)/login/page.tsx, callback/route.ts
   (dashboard)/layout.tsx               # 사이드바 + 탑바
   (dashboard)/documents/, cover-letters/, interviews/, insights/, resumes/, settings/
-  api/documents/, chat/, insights/, resumes/, cover-letters/, interviews/
+  api/documents/, chat/, insights/, resumes/, cover-letters/, interviews/, token-usage/
+  api/admin/token-usage/, admin/model-pricing/, admin/quotas/
 
 components/
   layout/    app-sidebar.tsx, topbar.tsx, user-menu.tsx
@@ -45,7 +46,11 @@ lib/
             prompts/{cover-letter,interview,insight-extraction}.ts
   files/    parser.ts, parse-pdf.ts, parse-docx.ts, parse-txt.ts
   storage.ts                           # Supabase Storage 헬퍼
-  validations/ document.ts, resume.ts, cover-letter.ts, interview.ts
+  token-usage/ service.ts, pricing.ts, quota.ts
+  admin/       usage-service.ts, pricing-service.ts, quota-service.ts
+  auth/        require-admin.ts
+  utils/       date-range.ts
+  validations/ document.ts, resume.ts, cover-letter.ts, interview.ts, token-usage.ts, admin.ts
 
 hooks/  use-chat-scroll.ts, use-file-upload.ts
 types/  ai.ts
@@ -71,6 +76,10 @@ types/  ai.ts
 /(dashboard)/resumes/new ...... 새 이력서 (템플릿 선택)
 /(dashboard)/resumes/[id] ..... 이력서 편집기 (탭 기반)
 /(dashboard)/resumes/[id]/preview 미리보기 + PDF 다운로드
+/(dashboard)/usage ............ 토큰 사용량 대시보드
+/(dashboard)/admin/usage ...... 관리자 사용량 모니터링 (ADMIN only)
+/(dashboard)/admin/model-pricing 관리자 모델 단가 관리 (ADMIN only)
+/(dashboard)/admin/quotas ..... 관리자 Quota 관리 (ADMIN only)
 /(dashboard)/settings ......... AI 설정, 프로필
 ```
 

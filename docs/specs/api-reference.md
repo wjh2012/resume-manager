@@ -386,3 +386,97 @@ AI 설정 업데이트.
   }
   ```
 - **주의**: API 키는 서버사이드에서만 접근. 클라이언트에는 마스킹된 값만 반환.
+
+---
+
+## 토큰 사용량 (Token Usage)
+
+### `GET /api/token-usage`
+
+사용자 토큰 사용량 로그 조회 (커서 페이지네이션).
+
+- **Query**: `cursor` (uuid, optional), `limit` (1-100, default 50), `feature` (COVER_LETTER|INTERVIEW|INSIGHT|EMBEDDING, optional), `startDate` (date, optional), `endDate` (date, optional)
+- **Response**: `200 OK`
+  ```json
+  {
+    "data": [{ "id": "uuid", "provider": "openai", "model": "gpt-4o", "feature": "COVER_LETTER", "promptTokens": 1000, "completionTokens": 500, "totalTokens": 1500, "estimatedCost": "0.0075", "isServerKey": false, "createdAt": "..." }],
+    "nextCursor": "uuid"
+  }
+  ```
+
+### `GET /api/token-usage/summary`
+
+사용자 사용량 요약 통계 + Quota 현황.
+
+- **Query**: `period` (7d|30d|90d, default 30d), `startDate` (date, optional), `endDate` (date, optional)
+- **Response**: `200 OK`
+  ```json
+  {
+    "totalTokens": 50000,
+    "totalCost": 0.25,
+    "requestCount": 30,
+    "byFeature": [{ "feature": "COVER_LETTER", "totalTokens": 30000, "count": 20 }],
+    "byModel": [{ "model": "gpt-4o", "totalTokens": 40000, "totalCost": 0.2 }],
+    "daily": [{ "date": "2026-03-21", "totalTokens": 5000, "totalCost": 0.025, "count": 3 }],
+    "quotas": [{ "id": "uuid", "limitType": "TOKENS", "limitValue": 100000, "period": "MONTHLY", "currentUsage": 50000 }]
+  }
+  ```
+
+---
+
+## 관리자 API (Admin)
+
+모든 관리자 API는 `requireAdmin()` (Supabase 인증 + `User.role === "ADMIN"`)이 필요하다. 비인가 시 `403`.
+
+### `GET /api/admin/token-usage`
+
+전체 시스템 사용량 요약.
+
+- **Query**: `period` (7d|30d|90d, default 30d)
+- **Response**: `200 OK` — totalTokens, totalCost, requestCount, activeUsers, byFeature, byModel, daily
+
+### `GET /api/admin/token-usage/users`
+
+사용자별 사용량 랭킹.
+
+- **Query**: `period` (7d|30d|90d), `limit` (1-100, default 50)
+- **Response**: `200 OK` — `{ data: [{ userId, email, name, totalTokens, totalCost, requestCount }] }`
+
+### `GET /api/admin/model-pricing`
+
+모델 단가 목록.
+
+- **Response**: `200 OK` — `{ data: [{ id, provider, model, inputPricePerM, outputPricePerM, effectiveFrom }] }`
+
+### `POST /api/admin/model-pricing`
+
+새 단가 등록 (append-only).
+
+- **Body**: `{ provider, model, inputPricePerM, outputPricePerM, effectiveFrom }`
+- **Response**: `201 Created`
+
+### `GET /api/admin/quotas`
+
+Quota 목록 (사용자 정보 포함).
+
+- **Response**: `200 OK` — `{ data: [{ id, userId, limitType, limitValue, period, isActive, user: { email, name } }] }`
+
+### `POST /api/admin/quotas`
+
+Quota 생성.
+
+- **Body**: `{ userId, limitType, limitValue, period, isActive? }`
+- **Response**: `201 Created`
+
+### `PUT /api/admin/quotas/[id]`
+
+Quota 수정.
+
+- **Body**: `{ limitValue?, isActive? }`
+- **Response**: `200 OK`
+
+### `DELETE /api/admin/quotas/[id]`
+
+Quota 삭제.
+
+- **Response**: `200 OK` — `{ success: true }`

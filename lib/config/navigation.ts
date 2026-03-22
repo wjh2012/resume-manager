@@ -1,4 +1,6 @@
 import {
+  BarChart3,
+  DollarSign,
   FileCheck,
   FileText,
   Home,
@@ -6,6 +8,7 @@ import {
   MessageSquare,
   PenTool,
   Settings,
+  Shield,
   type LucideIcon,
 } from "lucide-react"
 
@@ -22,14 +25,23 @@ export const navItems: NavItem[] = [
   { icon: MessageSquare, label: "모의면접", href: "/interviews" },
   { icon: Lightbulb, label: "인사이트", href: "/insights" },
   { icon: FileCheck, label: "이력서", href: "/resumes" },
+  { icon: BarChart3, label: "사용량", href: "/usage" },
   { icon: Settings, label: "설정", href: "/settings" },
 ]
 
+export const adminNavItems: NavItem[] = [
+  { icon: BarChart3, label: "사용량 모니터링", href: "/admin/usage" },
+  { icon: DollarSign, label: "모델 단가", href: "/admin/model-pricing" },
+  { icon: Shield, label: "Quota 관리", href: "/admin/quotas" },
+]
+
+const allNavItems = [...navItems, ...adminNavItems]
+
 export function getPageTitle(pathname: string): string {
-  const exact = navItems.find((item) => item.href === pathname)
+  const exact = allNavItems.find((item) => item.href === pathname)
   if (exact) return exact.label
 
-  const match = navItems.find(
+  const match = allNavItems.find(
     (item) => item.href !== "/" && pathname.startsWith(item.href),
   )
   return match?.label ?? ""

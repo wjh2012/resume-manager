@@ -7,6 +7,8 @@ import { getLanguageModel, AiSettingsNotFoundError } from "@/lib/ai/provider"
 import { buildContext } from "@/lib/ai/context"
 import { buildInterviewSystemPrompt } from "@/lib/ai/prompts/interview"
 import { interviewChatSchema } from "@/lib/validations/interview"
+import { recordUsage } from "@/lib/token-usage/service"
+import { checkQuotaExceeded } from "@/lib/token-usage/quota"
 
 export const maxDuration = 60
 
@@ -95,8 +97,16 @@ export async function POST(request: Request) {
       lastMessage.content ||
       ""
 
+    const quotaResult = await checkQuotaExceeded(user.id)
+    if (quotaResult.exceeded) {
+      return NextResponse.json(
+        { error: "사용 한도를 초과했습니다." },
+        { status: 403 },
+      )
+    }
+
     // RAG 컨텍스트 + 모델 병렬 로드 (limitToDocumentIds로 격리)
-    const [context, model] = await Promise.all([
+    const [context, { model, isServerKey, provider: aiProvider, modelId }] = await Promise.all([
       buildContext(user.id, {
         query: lastMessageContent,
         limitToDocumentIds: allowedDocIds,
@@ -117,7 +127,7 @@ export async function POST(request: Request) {
       model,
       system,
       messages: modelMessages,
-      onFinish: async ({ text }) => {
+      onFinish: async ({ text, usage }) => {
         const ops = [
           ...(lastMessage.role === "user" && lastMessageContent
             ? [
@@ -144,6 +154,21 @@ export async function POST(request: Request) {
         ]
         if (ops.length > 0) {
           await prisma.$transaction(ops)
+        }
+
+        // 토큰 사용량 기록
+        if (usage) {
+          await recordUsage({
+            userId: user.id,
+            provider: aiProvider,
+            model: modelId,
+            feature: "INTERVIEW",
+            promptTokens: usage.inputTokens ?? 0,
+            completionTokens: usage.outputTokens ?? 0,
+            totalTokens: (usage.inputTokens ?? 0) + (usage.outputTokens ?? 0),
+            isServerKey,
+            metadata: { conversationId },
+          }).catch((e) => console.error("토큰 사용량 기록 실패:", e))
         }
       },
     })
