@@ -3,7 +3,7 @@
 import { useState, useCallback, useRef, useMemo } from "react"
 import { useChat } from "@ai-sdk/react"
 import { DefaultChatTransport, type UIMessage } from "ai"
-import { ArrowDown, ClipboardPaste, FileText, Lightbulb, Loader2 } from "lucide-react"
+import { ArrowDown, BookOpen, ClipboardPaste, FileText, Lightbulb, Loader2 } from "lucide-react"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -61,6 +61,7 @@ export function CoverLetterChat({
   const [isUpdatingDocs, setIsUpdatingDocs] = useState(false)
   const [input, setInput] = useState("")
   const [isExtracting, setIsExtracting] = useState(false)
+  const [isExtractingCareerNotes, setIsExtractingCareerNotes] = useState(false)
 
   // useRef로 최신 selectedDocIds를 body에 반영
   const selectedDocIdsRef = useRef(selectedDocIds)
@@ -119,6 +120,32 @@ export function CoverLetterChat({
       toast.error(message)
     } finally {
       setIsExtracting(false)
+    }
+  }, [conversationId])
+
+  const handleExtractCareerNotes = useCallback(async () => {
+    setIsExtractingCareerNotes(true)
+    try {
+      const res = await fetch("/api/career-notes/extract", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ conversationId }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        throw new Error(data.error || "커리어노트 추출에 실패했습니다.")
+      }
+      const noteCount = data.notes?.length ?? 0
+      const proposalCount = data.proposals?.length ?? 0
+      toast.success(
+        `커리어노트 ${noteCount}개 추출${proposalCount > 0 ? `, 병합 제안 ${proposalCount}개` : ""}`,
+      )
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "커리어노트 추출에 실패했습니다."
+      toast.error(message)
+    } finally {
+      setIsExtractingCareerNotes(false)
     }
   }, [conversationId])
 
@@ -211,6 +238,20 @@ export function CoverLetterChat({
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7"
+          disabled={isExtractingCareerNotes || messages.length === 0}
+          aria-label="커리어노트 추출"
+          onClick={handleExtractCareerNotes}
+        >
+          {isExtractingCareerNotes ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <BookOpen className="h-3.5 w-3.5" />
+          )}
+        </Button>
       </div>
 
       {/* 메시지 영역 */}

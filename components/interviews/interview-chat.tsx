@@ -5,7 +5,7 @@ import { useEffect, useRef, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useChat } from "@ai-sdk/react"
 import { DefaultChatTransport, type UIMessage } from "ai"
-import { Lightbulb, Loader2, Square } from "lucide-react"
+import { BookOpen, Lightbulb, Loader2, Square } from "lucide-react"
 import { BackToListLink } from "@/components/shared/back-to-list-link"
 import { toast } from "sonner"
 import { Badge } from "@/components/ui/badge"
@@ -49,6 +49,8 @@ export function InterviewChat({
   const [completed, setCompleted] = useState(isCompleted)
   const [isExtracting, setIsExtracting] = useState(false)
   const [extractOnComplete, setExtractOnComplete] = useState(true)
+  const [isExtractingCareerNotes, setIsExtractingCareerNotes] = useState(false)
+  const [extractCareerNotesOnComplete, setExtractCareerNotesOnComplete] = useState(true)
   const hasSentInitialRef = useRef(false)
   const [input, setInput] = useState("")
 
@@ -110,6 +112,32 @@ export function InterviewChat({
     }
   }
 
+  const handleExtractCareerNotes = async () => {
+    setIsExtractingCareerNotes(true)
+    try {
+      const res = await fetch("/api/career-notes/extract", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ conversationId }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        throw new Error(data.error || "커리어노트 추출에 실패했습니다.")
+      }
+      const noteCount = data.notes?.length ?? 0
+      const proposalCount = data.proposals?.length ?? 0
+      toast.success(
+        `커리어노트 ${noteCount}개 추출${proposalCount > 0 ? `, 병합 제안 ${proposalCount}개` : ""}`,
+      )
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "커리어노트 추출에 실패했습니다."
+      toast.error(message)
+    } finally {
+      setIsExtractingCareerNotes(false)
+    }
+  }
+
   const handleComplete = async () => {
     setIsCompleting(true)
     try {
@@ -129,6 +157,9 @@ export function InterviewChat({
       router.refresh()
       if (extractOnComplete) {
         await handleExtractInsights()
+      }
+      if (extractCareerNotesOnComplete) {
+        await handleExtractCareerNotes()
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : "종료에 실패했습니다."
@@ -189,6 +220,20 @@ export function InterviewChat({
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            disabled={isExtractingCareerNotes || messages.length === 0}
+            aria-label="커리어노트 추출"
+            onClick={handleExtractCareerNotes}
+          >
+            {isExtractingCareerNotes ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <BookOpen className="h-3.5 w-3.5" />
+            )}
+          </Button>
           {!completed && (
           <AlertDialog>
             <AlertDialogTrigger asChild>
@@ -212,6 +257,18 @@ export function InterviewChat({
                 />
                 <label htmlFor="extract-insights" className="text-sm">
                   면접 종료 후 인사이트 자동 추출
+                </label>
+              </div>
+              <div className="flex items-center space-x-2 mt-2">
+                <Checkbox
+                  id="extract-career-notes"
+                  checked={extractCareerNotesOnComplete}
+                  onCheckedChange={(checked) =>
+                    setExtractCareerNotesOnComplete(checked === true)
+                  }
+                />
+                <label htmlFor="extract-career-notes" className="text-sm">
+                  면접 종료 후 커리어노트 자동 추출
                 </label>
               </div>
               <AlertDialogFooter>
