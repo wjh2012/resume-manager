@@ -35,3 +35,10 @@
 - 빌드/테스트: 명시적으로 요청받을 때만 실행한다.
 - 코드 포맷팅/린트: 명시적으로 요청받을 때만 실행한다.
 - 외부 API 호출: 명시적으로 요청받을 때만 실행한다.
+
+## DB 마이그레이션 규칙
+
+- **`prisma db push` 사용 금지.** 모든 스키마 변경은 `prisma migrate dev`로 migration 파일을 생성하고 커밋한다.
+- 스키마 변경이 있는 feature는 **순차적으로 develop에 merge**한다.
+- merge 후 다음 에이전트는 최신 develop을 rebase한 뒤 `prisma migrate dev`를 재실행한다.
+- 에이전트 병렬 작업 시 **feature별 독립 DB**를 사용한다 (로컬 셋업 가이드 참조).

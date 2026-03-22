@@ -3,46 +3,50 @@
 ## 1. 사전 요구사항
 
 - Node.js 20+
-- Supabase 프로젝트 (https://supabase.com)
+- Docker Desktop (https://www.docker.com/products/docker-desktop/)
+- Supabase 프로젝트 (https://supabase.com) — Auth/Storage용
 
-## 2. 환경 변수 설정
+## 2. 로컬 DB 시작
+
+```bash
+docker compose up -d
+```
+
+PostgreSQL 16 + pgvector가 `localhost:5432`에서 실행된다.
+
+> 포트 충돌 시 `docker-compose.yml`에서 `"5433:5432"`로 변경.
+
+## 3. 환경 변수 설정
 
 ```bash
 cp .env.local.example .env.local
 ```
 
-### 값 찾기
+`.env.local`을 편집하여 Supabase Auth/Storage 값과 OpenAI 키를 입력:
 
 | 변수 | 위치 |
 |------|------|
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase Dashboard → Settings → Data API → API URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase Dashboard → Settings → API Keys → `anon` `public` |
-| `DATABASE_URL` | Supabase Dashboard → Connect → Session Pooler (5432) |
+| `OPENAI_API_KEY` | OpenAI Dashboard → API Keys |
 
-> **주의**: Direct connection은 IPv4를 지원하지 않을 수 있다. **Session Pooler** 방식을 사용할 것.
-
-### 예시
-
-```env
-NEXT_PUBLIC_SUPABASE_URL=https://[project-ref].supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
-DATABASE_URL=postgresql://postgres.[project-ref]:[PASSWORD]@aws-0-[region].pooler.supabase.com:5432/postgres
-```
-
-## 3. pgvector 확장 활성화
-
-Supabase Dashboard → Database → Extensions → `vector` 검색 → **Enable**
+> `DATABASE_URL`은 기본값이 로컬 Docker DB를 가리킨다. 변경 불필요.
 
 ## 4. DB 스키마 반영
 
 ```bash
-npx prisma db push
+npx prisma migrate deploy
 ```
 
-> `prisma migrate dev`는 Supabase 기본 확장(pg_graphql, pgcrypto 등)과 drift가 발생할 수 있다.
-> 개발 단계에서는 `db push`가 간편하다.
+> **`prisma db push` 사용 금지.** 모든 스키마 변경은 `prisma migrate dev`로 migration 파일을 생성하고 커밋한다.
 
-## 5. OAuth 프로바이더 설정
+## 5. 시드 데이터
+
+```bash
+npx prisma db seed
+```
+
+## 6. OAuth 프로바이더 설정
 
 ### GitHub
 
@@ -63,10 +67,36 @@ npx prisma db push
 2. 카카오 로그인 활성화 → Redirect URI: `https://[project-ref].supabase.co/auth/v1/callback`
 3. REST API 키/Secret → Supabase Dashboard → Authentication → Providers → Kakao에 입력
 
-## 6. 개발 서버 실행
+## 7. 개발 서버 실행
 
 ```bash
 npm run dev
 ```
 
 http://localhost:3000 접속 → 로그인 페이지 표시 확인
+
+## 8. 에이전트 병렬 작업 시 DB 격리
+
+스키마 변경이 필요한 feature를 병렬로 작업할 때, feature별 독립 DB를 사용한다:
+
+```bash
+# DB 생성
+docker compose exec db psql -U postgres -c "CREATE DATABASE resume_manager_{feature명};"
+
+# migration + seed 적용
+DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5432/resume_manager_{feature명} \
+  npx prisma migrate deploy && \
+DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5432/resume_manager_{feature명} \
+  npx prisma db seed
+
+# 스키마 변경 작업
+DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5432/resume_manager_{feature명} \
+  npx prisma migrate dev --name {변경_설명}
+```
+
+작업 완료 후:
+```bash
+docker compose exec db psql -U postgres -c "DROP DATABASE resume_manager_{feature명};"
+```
+
+> 모든 명령은 bash 셸에서 실행 (Git Bash 등). Windows cmd/PowerShell에서는 inline `DATABASE_URL=...` 구문이 작동하지 않음.
