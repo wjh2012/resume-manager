@@ -1,7 +1,7 @@
 "use client"
 
-import { useCallback, useOptimistic, useState, useTransition } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useCallback, useMemo, useOptimistic, useState, useTransition } from "react"
+import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { ArrowDownUp, Clock } from "lucide-react"
 
@@ -24,25 +24,27 @@ export function CareerNoteList({
   pendingProposalCount,
 }: CareerNoteListProps) {
   const router = useRouter()
-  const searchParams = useSearchParams()
   const [, startTransition] = useTransition()
   const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set())
   const [editingNote, setEditingNote] = useState<CareerNoteCardData | null>(null)
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [showProposals, setShowProposals] = useState(false)
-
-  const currentSort = searchParams.get("sort") ?? "newest"
+  const [currentSortState, setCurrentSortState] = useState<"newest" | "oldest">("newest")
 
   const [optimisticList, removeOptimistic] = useOptimistic(
     notes,
     (state, deletedId: string) => state.filter((item) => item.id !== deletedId),
   )
 
+  const sortedList = useMemo(() => {
+    return [...optimisticList].sort((a, b) => {
+      const diff = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      return currentSortState === "newest" ? -diff : diff
+    })
+  }, [optimisticList, currentSortState])
+
   const handleSortToggle = () => {
-    const params = new URLSearchParams(searchParams.toString())
-    const newSort = currentSort === "newest" ? "oldest" : "newest"
-    params.set("sort", newSort)
-    router.push(`/career-notes?${params.toString()}`)
+    setCurrentSortState((prev) => (prev === "newest" ? "oldest" : "newest"))
   }
 
   const handleDelete = useCallback(
@@ -89,7 +91,7 @@ export function CareerNoteList({
           전체 {counts.total}개
         </p>
         <Button variant="outline" size="sm" onClick={handleSortToggle}>
-          {currentSort === "newest" ? (
+          {currentSortState === "newest" ? (
             <>
               <Clock className="mr-2 h-4 w-4" />
               오래된순
@@ -103,13 +105,13 @@ export function CareerNoteList({
         </Button>
       </div>
 
-      {optimisticList.length === 0 ? (
+      {sortedList.length === 0 ? (
         <p className="text-muted-foreground py-12 text-center">
           아직 커리어노트가 없습니다. 자기소개서나 면접 대화에서 추출해보세요.
         </p>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {optimisticList.map((note) => (
+          {sortedList.map((note) => (
             <CareerNoteCard
               key={note.id}
               note={note}

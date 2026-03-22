@@ -37,6 +37,7 @@ export interface CareerNoteCardData {
   metadata: any
   status: string
   createdAt: string
+  updatedAt: string
   sources: Array<{
     conversationId: string
     conversation: {

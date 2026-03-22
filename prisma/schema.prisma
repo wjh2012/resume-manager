@@ -435,9 +435,9 @@ model CareerNoteMergeProposal {
   id                String              @id @default(uuid()) @db.Uuid
   sourceNoteId      String?             @map("source_note_id") @db.Uuid
   targetNoteId      String              @map("target_note_id") @db.Uuid
-  suggestedTitle    String              @db.VarChar(200)
-  suggestedContent  String              @db.Text
-  suggestedMetadata Json?
+  suggestedTitle    String              @map("suggested_title") @db.VarChar(200)
+  suggestedContent  String              @map("suggested_content") @db.Text
+  suggestedMetadata Json?               @map("suggested_metadata")
   status            MergeProposalStatus @default(PENDING)
   createdAt         DateTime            @default(now()) @map("created_at")
   updatedAt         DateTime            @updatedAt @map("updated_at")
