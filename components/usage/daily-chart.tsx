@@ -36,7 +36,7 @@ export function DailyChart({ data }: DailyChartProps) {
               axisLine={false}
               tickMargin={8}
               tickFormatter={(d) =>
-                new Date(d).toLocaleDateString("ko-KR", {
+                new Date(d).toLocaleDateString(undefined, {
                   month: "short",
                   day: "numeric",
                 })
@@ -47,7 +47,7 @@ export function DailyChart({ data }: DailyChartProps) {
               content={
                 <ChartTooltipContent
                   labelFormatter={(d) =>
-                    new Date(d).toLocaleDateString("ko-KR")
+                    new Date(d).toLocaleDateString()
                   }
                 />
               }
