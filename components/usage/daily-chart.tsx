@@ -1,7 +1,20 @@
 "use client"
 
+import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
+import {
+  type ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart"
+
+const chartConfig = {
+  totalTokens: {
+    label: "토큰",
+    color: "var(--chart-1)",
+  },
+} satisfies ChartConfig
 
 interface DailyChartProps {
   data: { date: string; totalTokens: number; totalCost: number; count: number }[]
@@ -14,15 +27,40 @@ export function DailyChart({ data }: DailyChartProps) {
         <CardTitle>일별 토큰 사용량</CardTitle>
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="date" tickFormatter={(d) => new Date(d).toLocaleDateString("ko-KR", { month: "short", day: "numeric" })} />
-            <YAxis />
-            <Tooltip labelFormatter={(d) => new Date(d).toLocaleDateString("ko-KR")} />
-            <Line type="monotone" dataKey="totalTokens" stroke="hsl(var(--primary))" name="토큰" />
+        <ChartContainer config={chartConfig} className="h-[300px] w-full">
+          <LineChart accessibilityLayer data={data}>
+            <CartesianGrid vertical={false} />
+            <XAxis
+              dataKey="date"
+              tickLine={false}
+              axisLine={false}
+              tickMargin={8}
+              tickFormatter={(d) =>
+                new Date(d).toLocaleDateString(undefined, {
+                  month: "short",
+                  day: "numeric",
+                })
+              }
+            />
+            <YAxis tickLine={false} axisLine={false} tickMargin={8} />
+            <ChartTooltip
+              content={
+                <ChartTooltipContent
+                  labelFormatter={(d) =>
+                    new Date(d).toLocaleDateString()
+                  }
+                />
+              }
+            />
+            <Line
+              type="monotone"
+              dataKey="totalTokens"
+              stroke="var(--color-totalTokens)"
+              strokeWidth={2}
+              dot={false}
+            />
           </LineChart>
-        </ResponsiveContainer>
+        </ChartContainer>
       </CardContent>
     </Card>
   )
