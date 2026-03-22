@@ -100,3 +100,18 @@ docker compose exec db psql -U postgres -c "DROP DATABASE resume_manager_{featur
 ```
 
 > 모든 명령은 bash 셸에서 실행 (Git Bash 등). Windows cmd/PowerShell에서는 inline `DATABASE_URL=...` 구문이 작동하지 않음.
+
+## 9. prod DB에 migration 적용 (Vercel 배포)
+
+Vercel 빌드 시 `prisma migrate deploy`가 자동 실행되어 prod DB에 migration이 적용된다. 수동 개입은 불필요.
+
+### prod DB에 직접 명령 실행이 필요한 경우
+
+`.env.local`의 `DATABASE_URL`은 로컬 Docker DB를 가리키므로, prod DB에 Prisma CLI 명령을 실행하려면 inline으로 `DATABASE_URL`을 덮어씌운다:
+
+```bash
+DATABASE_URL="prod Session Pooler URL" npx prisma migrate resolve --applied {migration명}
+```
+
+> Supabase Direct Connection은 IPv4 미지원으로 연결 안 될 수 있다. **Session Pooler** (port 5432)를 사용할 것.
+> Supabase Dashboard → Connect → Session Pooler에서 URL 확인.
