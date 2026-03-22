@@ -8,13 +8,27 @@
 
 ## 로컬에서 스키마 변경
 
+`schema.prisma`를 수정하면 Prisma가 diff를 계산하여 migration SQL을 자동 생성한다. 직접 SQL을 작성할 필요 없음.
+
 ```bash
 # 1. schema.prisma 수정 후
 npx prisma migrate dev --name {변경_설명}
+# → prisma/migrations/{timestamp}_{변경_설명}/migration.sql 자동 생성
+# → 로컬 Docker DB에 즉시 적용
 
 # 2. 생성된 migration 파일 커밋
 git add prisma/migrations/
 git commit -m "feat: add {변경_설명} migration"
+```
+
+디렉토리 구조:
+```
+prisma/migrations/
+├── 0_init/                              ← baseline
+│   └── migration.sql
+├── 20260322120000_add_career_notes/     ← 이후 자동 생성
+│   └── migration.sql
+└── ...
 ```
 
 ## prod 배포 (자동)
