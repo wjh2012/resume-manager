@@ -112,8 +112,8 @@ export async function getUserUsageSummary(
       WHERE user_id = ${userId}::uuid
         AND created_at >= ${startDate}
         AND created_at <= ${endDate}
-      GROUP BY DATE(created_at AT TIME ZONE ${tz})
-      ORDER BY date ASC
+      GROUP BY 1
+      ORDER BY 1 ASC
     `,
   ])
 
