@@ -96,6 +96,7 @@ export async function POST(request: Request) {
         query: lastMessageContent,
         selectedDocumentIds,
         includeInsights: true,
+        includeCareerNotes: true,
       }),
       getLanguageModel(user.id),
     ])

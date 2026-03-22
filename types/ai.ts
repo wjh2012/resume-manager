@@ -27,5 +27,6 @@ export interface BuildContextOptions {
   selectedDocumentIds?: string[]
   limitToDocumentIds?: string[]
   includeInsights?: boolean
+  includeCareerNotes?: boolean
   maxChunks?: number
 }

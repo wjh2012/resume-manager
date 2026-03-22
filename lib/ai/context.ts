@@ -141,5 +141,34 @@ export async function buildContext(
     }
   }
 
+  // Career Notes injection (커리어노트 주입, 최근 10개)
+  if (opts.includeCareerNotes) {
+    const careerNotes = await prisma.careerNote.findMany({
+      where: { userId, status: "CONFIRMED" },
+      select: { title: true, content: true, metadata: true },
+      orderBy: { updatedAt: "desc" },
+      take: 10,
+    })
+
+    if (careerNotes.length > 0) {
+      for (const note of careerNotes) {
+        const meta = note.metadata as Record<string, string> | null
+        const metaLine = meta
+          ? [
+              meta.role && `역할: ${meta.role}`,
+              meta.result && `성과: ${meta.result}`,
+              meta.feeling && `느낀 점: ${meta.feeling}`,
+            ]
+              .filter(Boolean)
+              .join(" | ")
+          : ""
+
+        parts.push(
+          `[커리어노트: ${note.title}]\n${note.content}${metaLine ? `\n${metaLine}` : ""}`,
+        )
+      }
+    }
+  }
+
   return parts.join("\n\n---\n\n")
 }

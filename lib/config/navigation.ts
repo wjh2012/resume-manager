@@ -1,5 +1,6 @@
 import {
   BarChart3,
+  BookOpen,
   DollarSign,
   FileCheck,
   FileText,
@@ -24,6 +25,7 @@ export const navItems: NavItem[] = [
   { icon: PenTool, label: "자기소개서", href: "/cover-letters" },
   { icon: MessageSquare, label: "모의면접", href: "/interviews" },
   { icon: Lightbulb, label: "인사이트", href: "/insights" },
+  { icon: BookOpen, label: "커리어노트", href: "/career-notes" },
   { icon: FileCheck, label: "이력서", href: "/resumes" },
   { icon: BarChart3, label: "사용량", href: "/usage" },
   { icon: Settings, label: "설정", href: "/settings" },
