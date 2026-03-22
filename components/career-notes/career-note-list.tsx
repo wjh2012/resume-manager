@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button"
 
 import { CareerNoteCard, type CareerNoteCardData } from "./career-note-card"
 import { CareerNoteEditDialog } from "./career-note-edit-dialog"
+import { MergeProposalBanner } from "./merge-proposal-banner"
+import { MergeProposalDialog } from "./merge-proposal-dialog"
 
 interface CareerNoteListProps {
   notes: CareerNoteCardData[]
@@ -19,7 +21,7 @@ interface CareerNoteListProps {
 export function CareerNoteList({
   notes,
   counts,
-  pendingProposalCount: _pendingProposalCount,
+  pendingProposalCount,
 }: CareerNoteListProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -27,6 +29,7 @@ export function CareerNoteList({
   const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set())
   const [editingNote, setEditingNote] = useState<CareerNoteCardData | null>(null)
   const [editDialogOpen, setEditDialogOpen] = useState(false)
+  const [showProposals, setShowProposals] = useState(false)
 
   const currentSort = searchParams.get("sort") ?? "newest"
 
@@ -79,7 +82,7 @@ export function CareerNoteList({
 
   return (
     <div className="space-y-4">
-      {/* MergeProposalBanner will be added here in Task 8 */}
+      <MergeProposalBanner count={pendingProposalCount} onViewProposals={() => setShowProposals(true)} />
 
       <div className="flex items-center justify-between">
         <p className="text-muted-foreground text-sm">
@@ -125,6 +128,8 @@ export function CareerNoteList({
         onOpenChange={setEditDialogOpen}
         onSuccess={() => router.refresh()}
       />
+
+      <MergeProposalDialog open={showProposals} onOpenChange={setShowProposals} />
     </div>
   )
 }
