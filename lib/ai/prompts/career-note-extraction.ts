@@ -11,18 +11,17 @@ export const CAREER_NOTE_METADATA_KEYS = [
   "lesson",
 ] as const
 
-export const careerNoteMetadataSchema = z
-  .object({
-    where: z.string().optional(),
-    role: z.string().optional(),
-    what: z.string().optional(),
-    result: z.string().optional(),
-    challenge: z.string().optional(),
-    motivation: z.string().optional(),
-    feeling: z.string().optional(),
-    lesson: z.string().optional(),
-  })
-  .strip()
+// AI 추출용 스키마 — OpenAI structured output은 모든 필드가 required여야 하므로 nullable 사용
+export const careerNoteMetadataSchema = z.object({
+  where: z.string().nullable(),
+  role: z.string().nullable(),
+  what: z.string().nullable(),
+  result: z.string().nullable(),
+  challenge: z.string().nullable(),
+  motivation: z.string().nullable(),
+  feeling: z.string().nullable(),
+  lesson: z.string().nullable(),
+})
 
 export const careerNoteExtractionSchema = z.object({
   notes: z.array(

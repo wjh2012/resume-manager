@@ -1,5 +1,18 @@
 import { z } from "zod"
-import { careerNoteMetadataSchema } from "@/lib/ai/prompts/career-note-extraction"
+
+// Validation용 metadata 스키마 — 사용자 입력이므로 optional 사용
+const careerNoteMetadataInputSchema = z
+  .object({
+    where: z.string().optional(),
+    role: z.string().optional(),
+    what: z.string().optional(),
+    result: z.string().optional(),
+    challenge: z.string().optional(),
+    motivation: z.string().optional(),
+    feeling: z.string().optional(),
+    lesson: z.string().optional(),
+  })
+  .strip()
 
 export const extractCareerNotesSchema = z.object({
   conversationId: z.string().uuid("올바른 대화 ID 형식이 아닙니다."),
@@ -12,7 +25,7 @@ export const updateCareerNoteSchema = z.object({
     .min(1)
     .max(5000)
     .optional(),
-  metadata: careerNoteMetadataSchema.optional(),
+  metadata: careerNoteMetadataInputSchema.optional(),
 })
 
 export const resolveMergeProposalSchema = z.object({
@@ -21,7 +34,7 @@ export const resolveMergeProposalSchema = z.object({
   }),
   editedTitle: z.string().min(1).max(200).optional(),
   editedContent: z.string().min(1).max(5000).optional(),
-  editedMetadata: careerNoteMetadataSchema.optional(),
+  editedMetadata: careerNoteMetadataInputSchema.optional(),
 })
 
 export const listCareerNotesSchema = z.object({
