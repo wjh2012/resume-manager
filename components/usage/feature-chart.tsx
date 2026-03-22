@@ -1,23 +1,39 @@
 "use client"
 
+import { Pie, PieChart } from "recharts"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts"
+import {
+  type ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  ChartLegend,
+  ChartLegendContent,
+} from "@/components/ui/chart"
 
-const FEATURE_LABELS: Record<string, string> = {
-  COVER_LETTER: "자기소개서",
-  INTERVIEW: "모의면접",
-  INSIGHT: "인사이트",
-  EMBEDDING: "임베딩",
-}
+const FALLBACK_COLOR = "var(--chart-5)"
 
-const COLORS = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))"]
+// UsageFeature enum과 동기화 필요
+const chartConfig = {
+  value: { label: "토큰" },
+  COVER_LETTER: { label: "자기소개서", color: "var(--chart-1)" },
+  INTERVIEW: { label: "모의면접", color: "var(--chart-2)" },
+  INSIGHT: { label: "인사이트", color: "var(--chart-3)" },
+  EMBEDDING: { label: "문서 분석", color: "var(--chart-4)" },
+} satisfies ChartConfig
 
 interface FeatureChartProps {
   data: { feature: string; totalTokens: number; count: number }[]
 }
 
 export function FeatureChart({ data }: FeatureChartProps) {
-  const chartData = data.map((d) => ({ name: FEATURE_LABELS[d.feature] ?? d.feature, value: d.totalTokens }))
+  const chartData = data.map((d) => ({
+    feature: d.feature,
+    value: d.totalTokens,
+    fill: chartConfig[d.feature as keyof typeof chartConfig]
+      ? `var(--color-${d.feature})`
+      : FALLBACK_COLOR,
+  }))
 
   return (
     <Card>
@@ -25,17 +41,16 @@ export function FeatureChart({ data }: FeatureChartProps) {
         <CardTitle>기능별 사용 비중</CardTitle>
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={300}>
+        <ChartContainer
+          config={chartConfig}
+          className="mx-auto aspect-square max-h-[300px] pb-0 [&_.recharts-pie-label-text]:fill-foreground"
+        >
           <PieChart>
-            <Pie data={chartData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={60} outerRadius={100}>
-              {chartData.map((_, i) => (
-                <Cell key={i} fill={COLORS[i % COLORS.length]} />
-              ))}
-            </Pie>
-            <Tooltip />
-            <Legend />
+            <ChartTooltip content={<ChartTooltipContent hideLabel />} />
+            <Pie data={chartData} dataKey="value" label nameKey="feature" />
+            <ChartLegend content={({ payload }) => <ChartLegendContent payload={payload} nameKey="feature" />} />
           </PieChart>
-        </ResponsiveContainer>
+        </ChartContainer>
       </CardContent>
     </Card>
   )

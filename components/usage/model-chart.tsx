@@ -1,7 +1,20 @@
 "use client"
 
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
+import {
+  type ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart"
+
+const chartConfig = {
+  totalTokens: {
+    label: "토큰",
+    color: "var(--chart-1)",
+  },
+} satisfies ChartConfig
 
 interface ModelChartProps {
   data: { model: string; totalTokens: number; totalCost: number }[]
@@ -14,15 +27,24 @@ export function ModelChart({ data }: ModelChartProps) {
         <CardTitle>모델별 사용량</CardTitle>
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="model" />
-            <YAxis />
-            <Tooltip />
-            <Bar dataKey="totalTokens" fill="hsl(var(--primary))" name="토큰" />
+        <ChartContainer config={chartConfig} className="h-[300px] w-full">
+          <BarChart accessibilityLayer data={data}>
+            <CartesianGrid vertical={false} />
+            <XAxis
+              dataKey="model"
+              tickLine={false}
+              axisLine={false}
+              tickMargin={8}
+            />
+            <YAxis tickLine={false} axisLine={false} tickMargin={8} />
+            <ChartTooltip content={<ChartTooltipContent />} />
+            <Bar
+              dataKey="totalTokens"
+              fill="var(--color-totalTokens)"
+              radius={4}
+            />
           </BarChart>
-        </ResponsiveContainer>
+        </ChartContainer>
       </CardContent>
     </Card>
   )
