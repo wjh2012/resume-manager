@@ -141,9 +141,8 @@ export async function buildContext(
     }
   }
 
-  // Career Notes injection (커리어노트 주입)
-  // 추출 컨텍스트에서는 최대 50개, 자소서 컨텍스트에서는 최대 10개 사용
-  if (opts.includeCareerNotes && userId) {
+  // Career Notes injection (커리어노트 주입, 최근 10개)
+  if (opts.includeCareerNotes) {
     const careerNotes = await prisma.careerNote.findMany({
       where: { userId, status: "CONFIRMED" },
       select: { title: true, content: true, metadata: true },

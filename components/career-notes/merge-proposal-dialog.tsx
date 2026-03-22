@@ -232,7 +232,16 @@ export function MergeProposalDialog({ open, onOpenChange }: MergeProposalDialogP
                 <X className="mr-1 h-4 w-4" />
                 거부 (별도 노트로 유지)
               </Button>
-              {!isEditing && (
+              {isEditing ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsEditing(false)}
+                  disabled={isResolving}
+                >
+                  편집 취소
+                </Button>
+              ) : (
                 <Button
                   variant="outline"
                   size="sm"

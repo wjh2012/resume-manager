@@ -631,6 +631,7 @@ describe("resolveMergeProposal()", () => {
   // 기본 proposal mock 객체
   const baseProposal = {
     id: PROPOSAL_ID,
+    status: "PENDING",
     suggestedTitle: "병합 제목",
     suggestedContent: "병합 내용",
     suggestedMetadata: {},
@@ -760,6 +761,30 @@ describe("resolveMergeProposal()", () => {
       expect(mockNoteDelete).toHaveBeenCalledWith({
         where: { id: NOTE_ID },
       })
+    })
+  })
+
+  describe("이미 처리된 proposal", () => {
+    it("ACCEPTED 상태의 proposal에 대해 MergeProposalNotFoundError를 발생시킨다", async () => {
+      mockPrisma.careerNoteMergeProposal.findUnique.mockResolvedValue({
+        ...baseProposal,
+        status: "ACCEPTED",
+      } as never)
+
+      await expect(
+        resolveMergeProposal(USER_ID, PROPOSAL_ID, { action: "accept" }),
+      ).rejects.toThrow(MergeProposalNotFoundError)
+    })
+
+    it("REJECTED 상태의 proposal에 대해 MergeProposalNotFoundError를 발생시킨다", async () => {
+      mockPrisma.careerNoteMergeProposal.findUnique.mockResolvedValue({
+        ...baseProposal,
+        status: "REJECTED",
+      } as never)
+
+      await expect(
+        resolveMergeProposal(USER_ID, PROPOSAL_ID, { action: "reject" }),
+      ).rejects.toThrow(MergeProposalNotFoundError)
     })
   })
 

@@ -333,7 +333,7 @@ export async function resolveMergeProposal(
     },
   })
 
-  if (!proposal) {
+  if (!proposal || proposal.status !== "PENDING") {
     throw new MergeProposalNotFoundError()
   }
 
