@@ -5,6 +5,7 @@ export {
   coverLetterClassificationSchema,
   interviewClassificationSchema,
 } from "./schema"
+export { buildOnFinish } from "./on-finish"
 
 export function selectPipeline(provider: string): "multi-step" | "classification" {
   if (provider === "openai") {

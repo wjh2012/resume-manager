@@ -60,12 +60,16 @@ vi.mock("ai", () => ({
   convertToModelMessages: vi.fn(),
 }))
 
-vi.mock("@/lib/ai/pipeline", () => ({
-  selectPipeline: vi.fn().mockReturnValue("multi-step"),
-  handleMultiStep: vi.fn(),
-  handleClassification: vi.fn(),
-  coverLetterClassificationSchema: {},
-}))
+vi.mock("@/lib/ai/pipeline", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/ai/pipeline")>()
+  return {
+    ...actual,
+    selectPipeline: vi.fn().mockReturnValue("multi-step"),
+    handleMultiStep: vi.fn(),
+    handleClassification: vi.fn(),
+    coverLetterClassificationSchema: {},
+  }
+})
 
 // prisma.ts가 임베딩 관련 SDK를 import할 수 있으므로 사전 mock 처리
 vi.mock("@ai-sdk/openai", () => ({

@@ -59,12 +59,16 @@ CoverLetterWorkspace (상태 소유: content)
 ## AI 채팅
 
 - **AI SDK v6** `useChat` + `DefaultChatTransport` 사용
-- 서버: `streamText()` + `tools` + `stopWhen` → `toUIMessageStreamResponse()`
 - `convertToModelMessages()`로 UIMessage → ModelMessage 변환
 - **컨텍스트**: 선택 문서 요약 + 커리어노트 요약 (시스템 프롬프트에 포함)
-- **Tool Use**: LLM이 필요시 `readDocument` / `readCareerNote`로 전문 읽기, `saveCareerNote`로 커리어노트 생성/갱신
 - `onFinish` 콜백에서 assistant 메시지 DB 저장
-- 동적 stepCount: `min(문서 수 + 커리어노트 수 + 2, 15)`
+
+### 파이프라인 분기
+
+AI 제공자에 따라 `selectPipeline(provider)`로 처리 방식 분기:
+
+- **multi-step** (OpenAI): `streamText` + `tools` + `stopWhen`. LLM이 `readDocument`, `readCareerNote`, `saveCareerNote` 도구를 자율 호출
+- **classification** (Anthropic, Google 등): 분류→문서/커리어노트 DB 조회→(대화 압축)→시스템 프롬프트에 주입 후 응답. 분류 스키마: `documentsToRead`, `compareCareerNotes`, `needsCompression`
 
 ## 참고 문서 선택
 

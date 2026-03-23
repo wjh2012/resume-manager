@@ -35,7 +35,7 @@ ${params.messages.map((m) => `${m.role}: ${m.content}`).join("\n")}`
   }
 
   return {
-    classification: result.output,
+    classification: result.output as z.infer<T>,
     usage: {
       inputTokens: result.usage?.inputTokens ?? 0,
       outputTokens: result.usage?.outputTokens ?? 0,

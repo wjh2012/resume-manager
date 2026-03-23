@@ -34,17 +34,24 @@ export async function handleClassification(params: ClassificationPipelineParams)
   preStageUsages.push(classifyUsage)
 
   // 서버 실행: 분류 결과에 따라 병렬 데이터 수집
-  const docsToRead = classification.documentsToRead ?? []
-  const compareNotes = "compareCareerNotes" in classification
-    ? classification.compareCareerNotes
-    : false
-  const needsCompress = classification.needsCompression ?? false
+  const result = classification as {
+    documentsToRead?: string[]
+    compareCareerNotes?: boolean
+    needsCompression?: boolean
+  }
+  const docsToRead = result.documentsToRead ?? []
+  const compareNotes = result.compareCareerNotes ?? false
+  const needsCompress = result.needsCompression ?? false
 
-  const [documents, careerNotes] = await Promise.all([
-    docsToRead.length > 0
+  // selectedDocumentIds 범위로 제한 (multi-step의 readDocument 도구와 동일한 접근 범위)
+  const allowedDocsToRead = docsToRead.filter((id: string) => params.selectedDocumentIds.includes(id))
+
+  // 데이터 수집과 대화 압축을 병렬 실행 (압축은 modelMessages만 사용하므로 독립)
+  const [documents, careerNotes, compressed] = await Promise.all([
+    allowedDocsToRead.length > 0
       ? prisma.document.findMany({
           where: {
-            id: { in: docsToRead },
+            id: { in: allowedDocsToRead },
             userId: params.userId,
           },
           select: { id: true, title: true, extractedText: true },
@@ -56,15 +63,16 @@ export async function handleClassification(params: ClassificationPipelineParams)
           select: { id: true, title: true, content: true, metadata: true },
         })
       : [],
+    needsCompress
+      ? compressMessages({
+          model: params.model,
+          messages: params.modelMessages as { role: "user" | "assistant"; content: unknown }[],
+        })
+      : null,
   ])
 
-  // 대화 압축
   let finalMessages = params.modelMessages
-  if (needsCompress) {
-    const compressed = await compressMessages({
-      model: params.model,
-      messages: params.modelMessages as { role: "user" | "assistant"; content: unknown }[],
-    })
+  if (compressed) {
     finalMessages = compressed.messages as typeof params.modelMessages
     if (compressed.usage) {
       preStageUsages.push(compressed.usage)
@@ -88,14 +96,14 @@ export async function handleClassification(params: ClassificationPipelineParams)
   }
 
   // 2단계: 응답 생성 (tools 없음)
-  const result = streamText({
+  const stream = streamText({
     model: params.model,
     system: extendedSystem,
-    messages: finalMessages,
+    messages: finalMessages ?? [],
     onFinish: params.onFinish,
   })
 
-  return { result, preStageUsages }
+  return { result: stream, preStageUsages }
 }
 
 function extractTextFromMessages(messages: unknown): { role: string; content: string }[] {

@@ -15,7 +15,7 @@ export function handleMultiStep(params: MultiStepParams) {
   return streamText({
     model: params.model,
     system: params.system,
-    messages: params.modelMessages,
+    messages: params.modelMessages ?? [],
     tools: params.tools,
     stopWhen: calculateMaxSteps(params.documentCount, params.careerNoteCount),
     onFinish: params.onFinish,

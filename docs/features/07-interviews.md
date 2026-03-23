@@ -30,12 +30,19 @@ InterviewSession (면접 세션)
 
 ### 문서 컨텍스트
 
-면접 채팅 시 `buildContext()`에 `selectedDocumentIds`로 해당 면접에서 선택한 문서의 요약만 포함한다. LLM이 필요시 `readDocument` 도구로 전문을 읽는다. 커리어노트는 포함하지 않는다.
+면접 채팅 시 `buildContext()`에 `selectedDocumentIds`로 해당 면접에서 선택한 문서의 요약만 포함한다. 커리어노트는 포함하지 않는다.
 
 ```typescript
 const allowedDocIds = allowedDocs.map((d) => d.documentId)
 const { context } = await buildContext(userId, { selectedDocumentIds: allowedDocIds })
 ```
+
+### 파이프라인 분기
+
+AI 제공자에 따라 `selectPipeline(provider)`로 처리 방식 분기:
+
+- **multi-step** (OpenAI): `streamText` + `tools` + `stopWhen`. LLM이 `readDocument` 도구로 필요시 전문 읽기
+- **classification** (Anthropic, Google 등): 분류→문서 DB 조회→(대화 압축)→시스템 프롬프트에 주입 후 응답. 분류 스키마: `documentsToRead`, `needsCompression`
 
 ### 서비스 레이어 (`lib/interviews/service.ts`)
 

@@ -47,12 +47,16 @@ vi.mock("ai", () => ({
   convertToModelMessages: vi.fn(),
 }))
 
-vi.mock("@/lib/ai/pipeline", () => ({
-  selectPipeline: vi.fn().mockReturnValue("multi-step"),
-  handleMultiStep: vi.fn(),
-  handleClassification: vi.fn(),
-  interviewClassificationSchema: {},
-}))
+vi.mock("@/lib/ai/pipeline", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/ai/pipeline")>()
+  return {
+    ...actual,
+    selectPipeline: vi.fn().mockReturnValue("multi-step"),
+    handleMultiStep: vi.fn(),
+    handleClassification: vi.fn(),
+    interviewClassificationSchema: {},
+  }
+})
 
 vi.mock("@ai-sdk/openai", () => ({
   openai: { embedding: vi.fn().mockReturnValue({ modelId: "text-embedding-3-small" }) },
