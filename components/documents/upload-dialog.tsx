@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -29,6 +30,7 @@ export function UploadDialog() {
       <DialogContent>
         <DialogHeader>
           <DialogTitle>문서 업로드</DialogTitle>
+          <DialogDescription>PDF, DOCX 등 문서 파일을 업로드합니다.</DialogDescription>
         </DialogHeader>
         <DocumentUpload
           onSuccess={() => {

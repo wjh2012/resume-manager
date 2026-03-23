@@ -23,6 +23,7 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -124,6 +125,7 @@ export function QuotaTable({ data, onChanged }: QuotaTableProps) {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Quota 추가</DialogTitle>
+              <DialogDescription>사용자별 사용량 한도를 설정합니다.</DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">

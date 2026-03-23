@@ -23,6 +23,7 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -95,6 +96,7 @@ export function PricingTable({ data, onCreated }: PricingTableProps) {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>모델 단가 추가</DialogTitle>
+              <DialogDescription>AI 모델의 토큰 단가를 설정합니다.</DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">

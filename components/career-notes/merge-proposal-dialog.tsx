@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
@@ -152,6 +153,7 @@ export function MergeProposalDialog({ open, onOpenChange }: MergeProposalDialogP
           <DialogTitle>
             병합 제안 {proposals.length > 0 ? `(${currentIndex + 1}/${proposals.length})` : ""}
           </DialogTitle>
+          <DialogDescription>유사한 커리어노트를 하나로 병합합니다.</DialogDescription>
         </DialogHeader>
 
         {isLoading ? (

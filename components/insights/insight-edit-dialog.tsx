@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -89,6 +90,7 @@ export function InsightEditDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>인사이트 수정</DialogTitle>
+          <DialogDescription>인사이트의 카테고리와 내용을 수정합니다.</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
