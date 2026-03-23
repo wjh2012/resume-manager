@@ -18,3 +18,10 @@ export const interviewClassificationSchema = z.object({
 
 export type CoverLetterClassification = z.infer<typeof coverLetterClassificationSchema>
 export type InterviewClassification = z.infer<typeof interviewClassificationSchema>
+
+/** 모든 분류 스키마가 공유하는 공통 필드 */
+export interface BaseClassification {
+  documentsToRead: string[]
+  needsCompression: boolean
+  compareCareerNotes?: boolean
+}

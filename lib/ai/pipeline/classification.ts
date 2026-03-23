@@ -3,6 +3,7 @@ import type { z } from "zod"
 import { prisma } from "@/lib/prisma"
 import { classify } from "./classify"
 import { compressMessages } from "./compress"
+import type { BaseClassification } from "./schema"
 
 interface ClassificationPipelineParams {
   model: LanguageModel
@@ -34,13 +35,9 @@ export async function handleClassification(params: ClassificationPipelineParams)
   preStageUsages.push(classifyUsage)
 
   // 서버 실행: 분류 결과에 따라 병렬 데이터 수집
-  const result = classification as {
-    documentsToRead?: string[]
-    compareCareerNotes?: boolean
-    needsCompression?: boolean
-  }
+  const result = classification as BaseClassification
   const docsToRead = result.documentsToRead ?? []
-  const compareNotes = result.compareCareerNotes ?? false
+  const compareNotes = params.includeCareerNotes && (result.compareCareerNotes ?? false)
   const needsCompress = result.needsCompression ?? false
 
   // selectedDocumentIds 범위로 제한 (multi-step의 readDocument 도구와 동일한 접근 범위)

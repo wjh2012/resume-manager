@@ -1,6 +1,7 @@
 import { generateText, type LanguageModel } from "ai"
 
-const RECENT_TURNS = 4
+/** 압축 시 유지할 최근 메시지 수 (user/assistant 각 1건 = 1 메시지) */
+const RECENT_MESSAGES = 4
 
 interface CompressParams {
   model: LanguageModel
@@ -15,12 +16,12 @@ interface CompressResult {
 export async function compressMessages(params: CompressParams): Promise<CompressResult> {
   const { model, messages } = params
 
-  if (messages.length <= RECENT_TURNS) {
+  if (messages.length <= RECENT_MESSAGES) {
     return { messages }
   }
 
-  const oldMessages = messages.slice(0, -RECENT_TURNS)
-  const recentMessages = messages.slice(-RECENT_TURNS)
+  const oldMessages = messages.slice(0, -RECENT_MESSAGES)
+  const recentMessages = messages.slice(-RECENT_MESSAGES)
 
   try {
     const oldText = oldMessages
