@@ -27,5 +27,5 @@ export const updateQuotaSchema = z.object({
 export const adminUsageQuerySchema = z.object({
   period: z.enum(["7d", "30d", "90d"]).optional().default("30d"),
   limit: z.coerce.number().int().min(1).max(100).optional().default(50),
-  tz: z.string().regex(/^[A-Za-z_/]+$/).optional().default("UTC"),
+  tz: z.string().regex(/^[A-Za-z0-9_/+-]+$/).max(64).optional().default("UTC"),
 })
