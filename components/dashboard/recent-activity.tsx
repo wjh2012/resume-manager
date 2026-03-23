@@ -45,7 +45,7 @@ export function RecentActivitySection({ activity }: RecentActivitySectionProps) 
                 className="hover:bg-muted flex items-center justify-between rounded-md px-2 py-1.5 transition-colors"
               >
                 <span className="truncate text-sm font-medium">{cl.title}</span>
-                <span className="text-muted-foreground shrink-0 text-xs">
+                <span className="text-muted-foreground shrink-0 text-xs" suppressHydrationWarning>
                   {formatShortDate(cl.updatedAt)}
                 </span>
               </Link>
@@ -75,7 +75,7 @@ export function RecentActivitySection({ activity }: RecentActivitySectionProps) 
                     {INTERVIEW_STATUS_LABEL[iv.status] ?? "진행 중"}
                   </Badge>
                 </div>
-                <span className="text-muted-foreground shrink-0 text-xs">
+                <span className="text-muted-foreground shrink-0 text-xs" suppressHydrationWarning>
                   {formatShortDate(iv.updatedAt)}
                 </span>
               </Link>
@@ -99,7 +99,7 @@ export function RecentActivitySection({ activity }: RecentActivitySectionProps) 
                   <Badge variant="outline" className="text-xs">
                     {ins.category}
                   </Badge>
-                  <span className="text-muted-foreground text-xs">
+                  <span className="text-muted-foreground text-xs" suppressHydrationWarning>
                     {formatShortDate(ins.updatedAt)}
                   </span>
                 </div>
