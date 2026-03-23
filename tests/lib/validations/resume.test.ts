@@ -547,3 +547,108 @@ describe("배열 래퍼 스키마", () => {
     expect(result.success).toBe(false)
   })
 })
+
+// ────────────────────────────────────────────────────────────
+// 날짜 쌍 검증 (startDate/endDate 크로스 검증)
+// ────────────────────────────────────────────────────────────
+describe("날짜 쌍 검증", () => {
+  describe("educationSchema", () => {
+    it("endDate가 startDate보다 이전이면 실패해야 한다", () => {
+      const result = educationSchema.safeParse({
+        school: "서울대학교",
+        startDate: "2023-06-01",
+        endDate: "2023-01-01",
+      })
+      expect(result.success).toBe(false)
+      if (!result.success) {
+        const paths = result.error.issues.map((i) => i.path.join("."))
+        expect(paths).toContain("endDate")
+      }
+    })
+
+    it("endDate가 startDate와 같거나 이후이면 통과해야 한다", () => {
+      const result = educationSchema.safeParse({
+        school: "서울대학교",
+        startDate: "2023-01-01",
+        endDate: "2023-06-01",
+      })
+      expect(result.success).toBe(true)
+    })
+
+    it("startDate와 endDate 모두 없으면 통과해야 한다", () => {
+      const result = educationSchema.safeParse({ school: "서울대학교" })
+      expect(result.success).toBe(true)
+    })
+  })
+
+  describe("experienceSchema", () => {
+    it("endDate가 startDate보다 이전이면 실패해야 한다", () => {
+      const result = experienceSchema.safeParse({
+        company: "카카오",
+        position: "개발자",
+        startDate: "2023-06-01",
+        endDate: "2023-01-01",
+      })
+      expect(result.success).toBe(false)
+      if (!result.success) {
+        const paths = result.error.issues.map((i) => i.path.join("."))
+        expect(paths).toContain("endDate")
+      }
+    })
+
+    it("isCurrent=true이면서 endDate가 있으면 실패해야 한다", () => {
+      const result = experienceSchema.safeParse({
+        company: "카카오",
+        position: "개발자",
+        startDate: "2023-01-01",
+        endDate: "2024-01-01",
+        isCurrent: true,
+      })
+      expect(result.success).toBe(false)
+      if (!result.success) {
+        const paths = result.error.issues.map((i) => i.path.join("."))
+        expect(paths).toContain("endDate")
+      }
+    })
+
+    it("isCurrent=true이고 endDate가 없으면 통과해야 한다", () => {
+      const result = experienceSchema.safeParse({
+        company: "카카오",
+        position: "개발자",
+        startDate: "2023-01-01",
+        isCurrent: true,
+      })
+      expect(result.success).toBe(true)
+    })
+  })
+
+  describe("projectSchema", () => {
+    it("endDate가 startDate보다 이전이면 실패해야 한다", () => {
+      const result = projectSchema.safeParse({
+        name: "포트폴리오",
+        startDate: "2023-06-01",
+        endDate: "2023-01-01",
+      })
+      expect(result.success).toBe(false)
+      if (!result.success) {
+        const paths = result.error.issues.map((i) => i.path.join("."))
+        expect(paths).toContain("endDate")
+      }
+    })
+  })
+
+  describe("certificationSchema", () => {
+    it("expiryDate가 issueDate보다 이전이면 실패해야 한다", () => {
+      const result = certificationSchema.safeParse({
+        name: "정보처리기사",
+        issueDate: "2023-06-01",
+        expiryDate: "2023-01-01",
+      })
+      expect(result.success).toBe(false)
+      if (!result.success) {
+        const paths = result.error.issues.map((i) => i.path.join("."))
+        expect(paths).toContain("expiryDate")
+      }
+    })
+  })
+})
