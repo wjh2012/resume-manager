@@ -39,3 +39,7 @@ next-env.d.ts
 /.claude/agent-memory/
 /.claude/scheduled_tasks.lock
 .worktrees/
+
+# benchmark results
+benchmarks/**/results/*
+!benchmarks/**/results/.gitkeep
