@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma"
 import { getLanguageModel, AiSettingsNotFoundError } from "@/lib/ai/provider"
 import { buildContext } from "@/lib/ai/context"
 import { buildCoverLetterSystemPrompt } from "@/lib/ai/prompts/cover-letter"
+import { createReadDocumentTool, createReadCareerNoteTool, createSaveCareerNoteTool, calculateMaxSteps } from "@/lib/ai/tools"
 import { coverLetterChatSchema } from "@/lib/validations/cover-letter"
 import { recordUsage } from "@/lib/token-usage/service"
 import { checkQuotaExceeded } from "@/lib/token-usage/quota"
@@ -93,9 +94,7 @@ export async function POST(request: Request) {
     // RAG 컨텍스트, 모델을 병렬 로드
     const [context, { model, isServerKey, provider: aiProvider, modelId }] = await Promise.all([
       buildContext(user.id, {
-        query: lastMessageContent,
         selectedDocumentIds,
-        includeInsights: true,
         includeCareerNotes: true,
       }),
       getLanguageModel(user.id),
@@ -109,6 +108,10 @@ export async function POST(request: Request) {
       context,
     })
 
+    const careerNoteCount = await prisma.careerNote.count({
+      where: { userId: user.id, status: "CONFIRMED" },
+    })
+
     const modelMessages = await convertToModelMessages(
       messages as UIMessage[],
     )
@@ -117,6 +120,12 @@ export async function POST(request: Request) {
       model,
       system,
       messages: modelMessages,
+      tools: {
+        readDocument: createReadDocumentTool(user.id, selectedDocumentIds ?? []),
+        readCareerNote: createReadCareerNoteTool(user.id),
+        saveCareerNote: createSaveCareerNoteTool(user.id, conversationId),
+      },
+      stopWhen: calculateMaxSteps(selectedDocumentIds?.length ?? 0, careerNoteCount),
       onFinish: async ({ text, usage }) => {
         // USER + ASSISTANT 메시지를 트랜잭션으로 원자적 저장
         const ops = [
