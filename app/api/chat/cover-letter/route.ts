@@ -122,7 +122,15 @@ export async function POST(request: Request) {
         saveCareerNote: createSaveCareerNoteTool(user.id, conversationId),
       },
       stopWhen: calculateMaxSteps(selectedDocumentIds?.length ?? 0, careerNoteCount),
-      onFinish: async ({ text, usage }) => {
+      onFinish: async ({ text, usage, steps }) => {
+        // 도구 호출 로깅
+        const toolCalls = steps.flatMap(s => s.toolCalls ?? [])
+        if (toolCalls.length > 0) {
+          console.log(`[cover-letter] 도구 호출 ${toolCalls.length}건:`, toolCalls.map(tc => tc.toolName).join(", "))
+        } else {
+          console.log("[cover-letter] 도구 호출 없음")
+        }
+
         // USER + ASSISTANT 메시지를 트랜잭션으로 원자적 저장
         const ops = [
           ...(lastMessage.role === "user" && lastMessageContent

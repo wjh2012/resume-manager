@@ -130,7 +130,15 @@ export async function POST(request: Request) {
         readDocument: createReadDocumentTool(user.id, allowedDocIds),
       },
       stopWhen: calculateMaxSteps(allowedDocIds.length, 0),
-      onFinish: async ({ text, usage }) => {
+      onFinish: async ({ text, usage, steps }) => {
+        // 도구 호출 로깅
+        const toolCalls = steps.flatMap(s => s.toolCalls ?? [])
+        if (toolCalls.length > 0) {
+          console.log(`[interview] 도구 호출 ${toolCalls.length}건:`, toolCalls.map(tc => tc.toolName).join(", "))
+        } else {
+          console.log("[interview] 도구 호출 없음")
+        }
+
         const ops = [
           ...(lastMessage.role === "user" && lastMessageContent
             ? [

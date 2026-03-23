@@ -17,9 +17,10 @@ export function createReadDocumentTool(
       }
       const doc = await prisma.document.findFirst({
         where: { id: documentId, userId },
-        select: { extractedText: true },
+        select: { title: true, extractedText: true },
       })
-      return doc?.extractedText ?? "문서를 찾을 수 없습니다."
+      if (!doc) return "문서를 찾을 수 없습니다."
+      return `[${doc.title}]\n${doc.extractedText ?? ""}`
     },
   })
 }
