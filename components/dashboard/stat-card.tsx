@@ -1,6 +1,7 @@
 import Link from "next/link"
 import type { LucideIcon } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
+import { cn } from "@/lib/utils"
 
 interface StatCardProps {
   variant?: "stat"
@@ -28,8 +29,8 @@ export function DashboardCard(props: DashboardCardProps) {
     <Link href={href}>
       <Card className="transition-shadow hover:shadow-sm">
         <CardContent className="flex items-center gap-4 p-6">
-          <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${isAction ? "bg-primary/10" : "bg-muted"}`}>
-            <Icon aria-hidden="true" className={`h-5 w-5 ${isAction ? "text-primary" : "text-muted-foreground"}`} />
+          <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-lg", isAction ? "bg-primary/10" : "bg-muted")}>
+            <Icon aria-hidden="true" className={cn("h-5 w-5", isAction ? "text-primary" : "text-muted-foreground")} />
           </div>
           <div>
             {isAction ? (
