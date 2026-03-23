@@ -1,17 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 
-// embedding.ts가 모듈 최상위에서 openai.embedding()을 즉시 호출하므로
-// import 전에 반드시 mock 처리해야 한다 (vi.mock은 정적으로 호이스팅됨)
-vi.mock("@ai-sdk/openai", () => ({
-  openai: {
-    embedding: vi.fn().mockReturnValue({ modelId: "text-embedding-3-small" }),
-  },
-}))
-
-vi.mock("ai", () => ({
-  embedMany: vi.fn().mockResolvedValue({ embeddings: [] }),
-}))
-
 // 외부 의존성 전체 mock
 vi.mock("@/lib/prisma", () => ({
   prisma: {
@@ -21,15 +9,6 @@ vi.mock("@/lib/prisma", () => ({
       create: vi.fn(),
       delete: vi.fn(),
     },
-    documentChunk: {
-      findMany: vi.fn(),
-      createMany: vi.fn(),
-    },
-    quota: {
-      findMany: vi.fn(),
-    },
-    $transaction: vi.fn(),
-    $executeRaw: vi.fn(),
   },
 }))
 
@@ -40,11 +19,6 @@ vi.mock("@/lib/files/parser", () => ({
 vi.mock("@/lib/storage", () => ({
   uploadFile: vi.fn(),
   deleteFile: vi.fn(),
-}))
-
-vi.mock("@/lib/ai/embedding", () => ({
-  splitIntoChunks: vi.fn(),
-  generateEmbeddings: vi.fn(),
 }))
 
 // MAX_FILE_SIZE 상수는 실제 값을 유지하고, resolveDocumentType만 mock으로 교체
@@ -60,7 +34,6 @@ vi.mock("@/lib/validations/document", async (importOriginal) => {
 import { prisma } from "@/lib/prisma"
 import { parseFile } from "@/lib/files/parser"
 import { uploadFile, deleteFile } from "@/lib/storage"
-import { splitIntoChunks, generateEmbeddings } from "@/lib/ai/embedding"
 import { resolveDocumentType, MAX_FILE_SIZE } from "@/lib/validations/document"
 import {
   uploadDocument,
@@ -76,8 +49,6 @@ const mockPrisma = vi.mocked(prisma)
 const mockParseFile = vi.mocked(parseFile)
 const mockUploadFile = vi.mocked(uploadFile)
 const mockDeleteFile = vi.mocked(deleteFile)
-const mockSplitIntoChunks = vi.mocked(splitIntoChunks)
-const mockGenerateEmbeddings = vi.mocked(generateEmbeddings)
 const mockResolveDocumentType = vi.mocked(resolveDocumentType)
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -105,32 +76,8 @@ describe("uploadDocument()", () => {
     mockResolveDocumentType.mockReturnValue("pdf")
     mockParseFile.mockResolvedValue("추출된 텍스트 내용")
     mockUploadFile.mockResolvedValue("storage/user-id/resume.pdf")
-    mockSplitIntoChunks.mockReturnValue(["청크1", "청크2"])
-    mockGenerateEmbeddings.mockResolvedValue({ embeddings: [[0.1, 0.2], [0.3, 0.4]], totalTokens: 10 })
-    // quota: 기본적으로 초과 없음
-    mockPrisma.quota.findMany.mockResolvedValue([] as never)
     mockDeleteFile.mockResolvedValue(undefined as never)
-    mockPrisma.$transaction.mockImplementation(async (fn) => {
-      if (typeof fn === "function") {
-        // 트랜잭션 콜백 실행 — tx는 prisma와 동일한 mock 구조 사용
-        const tx = {
-          document: {
-            create: vi.fn().mockResolvedValue({ id: "doc-123" }),
-          },
-          documentChunk: {
-            createMany: vi.fn().mockResolvedValue({}),
-          },
-        }
-        return fn(tx)
-      }
-      // 배열 형태의 트랜잭션 (임베딩 업데이트)
-      return Promise.all(fn as Promise<unknown>[])
-    })
-    mockPrisma.documentChunk.findMany.mockResolvedValue([
-      { id: "chunk-1" },
-      { id: "chunk-2" },
-    ] as never)
-    mockPrisma.$executeRaw.mockResolvedValue(1 as never)
+    mockPrisma.document.create.mockResolvedValue({ id: "doc-123" } as never)
   })
 
   // ── 파일 크기 검증 ──────────────────────────────────────────────────────────
@@ -217,7 +164,7 @@ describe("uploadDocument()", () => {
 
   // ── 성공 경로 ───────────────────────────────────────────────────────────────
   describe("성공 경로", () => {
-    it("parseFile, uploadFile, splitIntoChunks, prisma.$transaction을 모두 호출해야 한다", async () => {
+    it("parseFile, uploadFile, prisma.document.create를 모두 호출해야 한다", async () => {
       // Arrange
       const userId = "user-1"
       const file = makeFile({ name: "resume.pdf", size: 1024 })
@@ -229,42 +176,26 @@ describe("uploadDocument()", () => {
       // Assert — 각 의존성이 올바른 인자로 호출되었는지 검증
       expect(mockParseFile).toHaveBeenCalledOnce()
       expect(mockUploadFile).toHaveBeenCalledWith(userId, file.name, expect.any(Blob))
-      expect(mockSplitIntoChunks).toHaveBeenCalledWith("추출된 텍스트 내용")
-      expect(mockPrisma.$transaction).toHaveBeenCalled()
+      expect(mockPrisma.document.create).toHaveBeenCalledOnce()
 
       // 반환값 구조 검증
       expect(result).toMatchObject({
         id: "doc-123",
         title,
         type: "pdf",
-        chunkCount: 2,
       })
     })
 
-    it("청크가 없으면 generateEmbeddings를 호출하지 않아야 한다", async () => {
-      // Arrange
-      mockSplitIntoChunks.mockReturnValue([])
-      const file = makeFile({})
-
-      // Act
-      await uploadDocument("user-1", file, "빈 문서")
-
-      // Assert
-      expect(mockGenerateEmbeddings).not.toHaveBeenCalled()
-    })
-
-    it("UploadResult에 올바른 fileSize와 chunkCount가 포함되어야 한다", async () => {
+    it("UploadResult에 올바른 fileSize가 포함되어야 한다", async () => {
       // Arrange
       const fileContent = "a".repeat(500)
       const file = makeFile({ content: fileContent })
-      mockSplitIntoChunks.mockReturnValue(["청크A", "청크B", "청크C"])
 
       // Act
       const result = await uploadDocument("user-1", file, "테스트 문서")
 
       // Assert
       expect(result.fileSize).toBe(file.size)
-      expect(result.chunkCount).toBe(3)
     })
   })
 })
@@ -393,7 +324,7 @@ describe("getDocument()", () => {
       fileSize: 1024,
       createdAt: new Date("2026-01-01"),
       updatedAt: new Date("2026-01-01"),
-      _count: { chunks: 3 },
+      summary: null,
     }
     mockPrisma.document.findUnique.mockResolvedValue(mockDocument as never)
 
@@ -415,8 +346,8 @@ describe("listDocuments()", () => {
     // Arrange
     const userId = "user-1"
     const mockDocuments = [
-      { id: "doc-1", title: "이력서", type: "pdf", fileSize: 1024, createdAt: new Date(), _count: { chunks: 2 } },
-      { id: "doc-2", title: "자기소개서", type: "docx", fileSize: 2048, createdAt: new Date(), _count: { chunks: 5 } },
+      { id: "doc-1", title: "이력서", type: "pdf", fileSize: 1024, createdAt: new Date(), summary: null },
+      { id: "doc-2", title: "자기소개서", type: "docx", fileSize: 2048, createdAt: new Date(), summary: "요약 내용" },
     ]
     mockPrisma.document.findMany.mockResolvedValue(mockDocuments as never)
 
