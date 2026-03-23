@@ -7,6 +7,7 @@ import {
   MAX_FILE_SIZE,
   type DocumentType,
 } from "@/lib/validations/document"
+import { generateDocumentSummary } from "@/lib/documents/summary"
 
 export class DocumentNotFoundError extends Error {
   constructor() {
@@ -88,6 +89,18 @@ export async function uploadDocument(
     )
     throw error
   }
+
+  // 요약 생성 — 트랜잭션 외부에서 실행 (실패해도 업로드 성공)
+  generateDocumentSummary(userId, extractedText)
+    .then(async ({ summary }) => {
+      if (summary) {
+        await prisma.document.update({
+          where: { id: document.id },
+          data: { summary },
+        })
+      }
+    })
+    .catch((e) => console.error("문서 요약 생성 실패:", e))
 
   return {
     id: document.id,
