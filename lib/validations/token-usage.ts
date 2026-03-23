@@ -20,7 +20,7 @@ export const tokenUsageQuerySchema = z
     feature: z.enum(["COVER_LETTER", "INTERVIEW", "INSIGHT", "EMBEDDING"]).optional(),
     startDate: z.coerce.date().optional(),
     endDate: z.coerce.date().optional(),
-    tz: z.string().regex(/^[A-Za-z_/]+$/).optional().default("UTC"),
+    tz: z.string().regex(/^[A-Za-z0-9_/+-]+$/).max(64).optional().default("UTC"),
   })
   .superRefine(refineEndDateAfterStartDate)
 
@@ -29,6 +29,6 @@ export const usageSummaryQuerySchema = z
     period: z.enum(["7d", "30d", "90d"]).optional().default("30d"),
     startDate: z.coerce.date().optional(),
     endDate: z.coerce.date().optional(),
-    tz: z.string().regex(/^[A-Za-z_/]+$/).optional().default("UTC"),
+    tz: z.string().regex(/^[A-Za-z0-9_/+-]+$/).max(64).optional().default("UTC"),
   })
   .superRefine(refineEndDateAfterStartDate)
