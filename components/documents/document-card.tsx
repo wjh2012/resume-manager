@@ -23,7 +23,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { DOCUMENT_TYPE_LABELS } from "@/lib/validations/document"
-import { cn, formatFileSize } from "@/lib/utils"
+import { cn, formatDate, formatFileSize } from "@/lib/utils"
 import type { DocumentType } from "@/lib/validations/document"
 
 interface DocumentCardProps {
@@ -49,14 +49,6 @@ const typeColors: Record<DocumentType, string> = {
   pdf: "text-type-pdf",
   docx: "text-type-docx",
   txt: "text-type-txt",
-}
-
-function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString("ko-KR", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  })
 }
 
 export function DocumentCard({

@@ -16,15 +16,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import Link from "next/link"
-import { cn } from "@/lib/utils"
-
-function formatDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString("ko-KR", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  })
-}
+import { cn, formatDate } from "@/lib/utils"
 
 interface InterviewCardProps {
   id: string
