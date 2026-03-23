@@ -22,6 +22,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { formatDate } from "@/lib/utils"
 
 interface ResumeCardProps {
   resume: {
@@ -33,14 +34,6 @@ interface ResumeCardProps {
   }
   onDelete: (id: string) => void
   isDeleting?: boolean
-}
-
-function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString("ko-KR", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  })
 }
 
 const templateConfig: Record<string, string> = {

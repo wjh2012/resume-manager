@@ -1,5 +1,26 @@
 import { describe, it, expect } from "vitest"
-import { formatFileSize } from "@/lib/utils"
+import { formatDate, formatShortDate, formatFileSize } from "@/lib/utils"
+
+describe("formatDate()", () => {
+  it("Date 객체를 년/월/일 포함 문자열로 반환해야 한다", () => {
+    const result = formatDate(new Date("2024-03-23"))
+    expect(result).toContain("2024")
+    expect(result).toContain("23")
+  })
+
+  it("문자열 날짜를 포맷해야 한다", () => {
+    const result = formatDate("2024-12-01")
+    expect(result).toContain("2024")
+  })
+})
+
+describe("formatShortDate()", () => {
+  it("년도 없이 월/일만 포함해야 한다", () => {
+    const result = formatShortDate(new Date("2024-03-23"))
+    expect(result).not.toContain("2024")
+    expect(result).toContain("23")
+  })
+})
 
 describe("formatFileSize()", () => {
   // 바이트 단위 (1024 미만)

@@ -22,6 +22,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { formatDate } from "@/lib/utils"
 
 interface CoverLetterCardProps {
   coverLetter: {
@@ -35,14 +36,6 @@ interface CoverLetterCardProps {
   }
   onDelete: (id: string) => void
   isDeleting?: boolean
-}
-
-function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString("ko-KR", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  })
 }
 
 const statusConfig: Record<string, { label: string; variant: "secondary" | "default" }> = {

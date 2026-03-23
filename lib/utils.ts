@@ -8,7 +8,15 @@ export function cn(...inputs: ClassValue[]) {
 export const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 export function formatShortDate(date: Date | string): string {
-  return new Date(date).toLocaleDateString("ko-KR", {
+  return new Date(date).toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+  })
+}
+
+export function formatDate(date: Date | string): string {
+  return new Date(date).toLocaleDateString(undefined, {
+    year: "numeric",
     month: "short",
     day: "numeric",
   })
