@@ -52,7 +52,9 @@ export function DashboardCard(props: DashboardCardProps) {
 }
 
 // Backward-compatible exports
-export const StatCard = (props: Omit<StatCardProps, "variant">) =>
-  DashboardCard({ ...props, variant: "stat" })
-export const QuickActionCard = (props: Omit<ActionCardProps, "variant">) =>
-  DashboardCard({ ...props, variant: "action" })
+export function StatCard(props: Omit<StatCardProps, "variant">) {
+  return <DashboardCard {...props} variant="stat" />
+}
+export function QuickActionCard(props: Omit<ActionCardProps, "variant">) {
+  return <DashboardCard {...props} variant="action" />
+}
