@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
   }
   try {
     const { start, end } = getDateRange(parsed.data.period)
-    const summary = await getSystemUsageSummary(start, end)
+    const summary = await getSystemUsageSummary(start, end, parsed.data.tz)
     return NextResponse.json({ data: summary })
   } catch (error) {
     console.error("[GET /api/admin/token-usage]", error)
