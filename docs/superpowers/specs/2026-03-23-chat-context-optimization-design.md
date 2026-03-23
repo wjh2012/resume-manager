@@ -63,7 +63,7 @@ Spring Boot 기반 PG 연동. 일 10만건 처리...
 
 AI SDK의 `streamText` + `tools` + `stopWhen: stepCountIs(5)` 사용.
 
-step 수 5 근거: readDocument 2~3회 + readCareerNote 1회 + saveCareerNote 1회를 감안한 여유값. 이 값은 상수로 추출하여 조정 가능하게 함.
+step 수 동적 계산: `선택 문서 수 + 커리어노트 수 + 2` (saveCareerNote + 여유). 상한선 15로 제한하여 과도한 도구 호출 방지.
 
 **`readDocument` 도구**
 
