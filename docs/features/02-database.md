@@ -4,13 +4,12 @@
 
 ## 개요
 
-Supabase PostgreSQL + Prisma ORM으로 데이터를 관리한다. pgvector 확장으로 임베딩 벡터 검색을 지원한다.
+Supabase PostgreSQL + Prisma ORM으로 데이터를 관리한다.
 
 ## 기술 스택
 
 - **Prisma** v7 — ORM, 마이그레이션, 타입 생성
 - **@prisma/adapter-pg** — PostgreSQL 어댑터
-- **pgvector** — 벡터 임베딩 저장 및 유사도 검색
 
 ## 싱글턴 클라이언트
 

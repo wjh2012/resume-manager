@@ -23,7 +23,7 @@
 
 ```
 CareerNote
-  ├── id, userId, title, content
+  ├── id, userId, title, content, summary (nullable)
   ├── metadata (JSON, 선택적 반정형)
   │   ├── where: 프로젝트/회사/환경
   │   ├── role: 역할
@@ -98,10 +98,21 @@ app/(dashboard)/career-notes/
 
 ## 컨텍스트 주입
 
-`buildContext()`에 `includeCareerNotes: true` 전달 시 최근 10개 confirmed 노트가 AI 컨텍스트에 포함.
+`buildContext()`에 `includeCareerNotes: true` 전달 시 전체 확정(CONFIRMED) 노트의 요약이 AI 컨텍스트에 포함. LLM이 필요시 `readCareerNote` 도구로 전문을 읽는다.
 
-- **자소서 채팅**: 주입 O (작성 도우미)
+- **자소서 채팅**: 주입 O (요약 + readCareerNote/saveCareerNote 도구)
 - **면접 채팅**: 주입 X (면접관은 지원자의 비공개 정보를 모르는 것이 의도된 설계)
+
+### 채팅 중 자동 커리어노트 관리
+
+자소서 채팅 시 LLM이 `saveCareerNote` 도구로 커리어노트를 생성/갱신할 수 있다:
+- **생성**: 대화에서 기록할 만한 경험 발견 시 사용자에게 제안 → 승인 후 저장
+- **갱신**: 기존 노트에 새 내용 보강 또는 잘못된 정보 정정 → 사용자 승인 후 저장
+- `careerNoteId` 유무로 생성/갱신 구분, CareerNoteSource로 대화와 연결
+
+### 수정 시 요약 재생성
+
+커리어노트 content가 수정되면 (`PUT /api/career-notes/[id]`) LLM으로 summary를 자동 재생성한다. 실패해도 수정 자체는 성공으로 처리.
 
 ## 기존 인사이트와의 관계
 
