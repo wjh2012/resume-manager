@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma"
 
-export async function getSystemUsageSummary(startDate: Date, endDate: Date) {
+export async function getSystemUsageSummary(startDate: Date, endDate: Date, tz: string = "UTC") {
   const [totals, byFeature, byModel, activeUsers, daily] = await Promise.all([
     prisma.tokenUsageLog.aggregate({
       where: { createdAt: { gte: startDate, lte: endDate } },
@@ -18,21 +18,20 @@ export async function getSystemUsageSummary(startDate: Date, endDate: Date) {
       where: { createdAt: { gte: startDate, lte: endDate } },
       _sum: { totalTokens: true, estimatedCost: true },
     }),
-    prisma.tokenUsageLog
-      .groupBy({
-        by: ["userId"],
-        where: { createdAt: { gte: startDate, lte: endDate } },
-      })
-      .then((r) => r.length),
+    prisma.$queryRaw<[{ count: bigint }]>`
+      SELECT COUNT(DISTINCT user_id) as count
+      FROM token_usage_logs
+      WHERE created_at >= ${startDate} AND created_at <= ${endDate}
+    `.then((r) => Number(r[0].count)),
     prisma.$queryRaw<{ date: string; total_tokens: bigint; total_cost: string; count: bigint }[]>`
       SELECT
-        DATE(created_at) as date,
+        DATE(created_at AT TIME ZONE ${tz}) as date,
         SUM(total_tokens) as total_tokens,
         SUM(estimated_cost) as total_cost,
         COUNT(*) as count
       FROM token_usage_logs
       WHERE created_at >= ${startDate} AND created_at <= ${endDate}
-      GROUP BY DATE(created_at)
+      GROUP BY 1
       ORDER BY date ASC
     `,
   ])

@@ -1,6 +1,7 @@
 import { Prisma, type UsageFeature } from "@prisma/client"
 import { prisma } from "@/lib/prisma"
 import { calculateCost } from "./pricing"
+import type { UsageSummary } from "@/types/token-usage"
 
 interface RecordUsageParams {
   userId: string
@@ -70,14 +71,6 @@ export async function getUserUsage(params: GetUsageParams) {
   })
 }
 
-interface UsageSummary {
-  totalTokens: number
-  totalCost: number
-  requestCount: number
-  byFeature: { feature: string; totalTokens: number; count: number }[]
-  byModel: { model: string; totalTokens: number; totalCost: number }[]
-  daily: { date: string; totalTokens: number; totalCost: number; count: number }[]
-}
 
 export async function getUserUsageSummary(
   userId: string,

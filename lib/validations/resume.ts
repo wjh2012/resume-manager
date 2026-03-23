@@ -14,6 +14,20 @@ const optionalDate = z
     return d
   })
 
+function endNotBeforeStart(
+  data: Record<string, Date | null | undefined>,
+  ctx: z.RefinementCtx,
+  startField = "startDate",
+  endField = "endDate",
+  message = "종료일은 시작일 이후여야 합니다.",
+) {
+  const start = data[startField]
+  const end = data[endField]
+  if (start && end && end < start) {
+    ctx.addIssue({ code: "custom", message, path: [endField] })
+  }
+}
+
 export const personalInfoSchema = z.object({
   name: z.string().min(1, "이름을 입력해주세요."),
   email: z.string().email("올바른 이메일 형식이 아닙니다."),
@@ -22,23 +36,36 @@ export const personalInfoSchema = z.object({
   bio: z.string().optional(),
 })
 
-export const educationSchema = z.object({
-  school: z.string().min(1, "학교명을 입력해주세요."),
-  degree: z.string().optional(),
-  field: z.string().optional(),
-  startDate: optionalDate,
-  endDate: optionalDate,
-  description: z.string().optional(),
-})
+export const educationSchema = z
+  .object({
+    school: z.string().min(1, "학교명을 입력해주세요."),
+    degree: z.string().optional(),
+    field: z.string().optional(),
+    startDate: optionalDate,
+    endDate: optionalDate,
+    description: z.string().optional(),
+  })
+  .superRefine((data, ctx) => endNotBeforeStart(data, ctx))
 
-export const experienceSchema = z.object({
-  company: z.string().min(1, "회사명을 입력해주세요."),
-  position: z.string().min(1, "직위를 입력해주세요."),
-  startDate: optionalDate,
-  endDate: optionalDate,
-  isCurrent: z.boolean().default(false),
-  description: z.string().optional(),
-})
+export const experienceSchema = z
+  .object({
+    company: z.string().min(1, "회사명을 입력해주세요."),
+    position: z.string().min(1, "직위를 입력해주세요."),
+    startDate: optionalDate,
+    endDate: optionalDate,
+    isCurrent: z.boolean().default(false),
+    description: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.isCurrent && data.endDate) {
+      ctx.addIssue({
+        code: "custom",
+        message: "재직 중인 경우 종료일을 입력할 수 없습니다.",
+        path: ["endDate"],
+      })
+    }
+    endNotBeforeStart(data, ctx)
+  })
 
 // 빈 문자열 → undefined 변환 (Select 미선택 시 "" 전송됨)
 const optionalEnum = <T extends string>(values: readonly [T, ...T[]]) =>
@@ -52,21 +79,27 @@ export const skillSchema = z.object({
   category: optionalEnum(["language", "framework", "tool", "other"]).optional(),
 })
 
-export const projectSchema = z.object({
-  name: z.string().min(1, "프로젝트명을 입력해주세요."),
-  role: z.string().optional(),
-  startDate: optionalDate,
-  endDate: optionalDate,
-  description: z.string().optional(),
-  url: z.string().url("올바른 URL 형식이 아닙니다.").optional().or(z.literal("")),
-})
+export const projectSchema = z
+  .object({
+    name: z.string().min(1, "프로젝트명을 입력해주세요."),
+    role: z.string().optional(),
+    startDate: optionalDate,
+    endDate: optionalDate,
+    description: z.string().optional(),
+    url: z.string().url("올바른 URL 형식이 아닙니다.").optional().or(z.literal("")),
+  })
+  .superRefine((data, ctx) => endNotBeforeStart(data, ctx))
 
-export const certificationSchema = z.object({
-  name: z.string().min(1, "자격증명을 입력해주세요."),
-  issuer: z.string().optional(),
-  issueDate: optionalDate,
-  expiryDate: optionalDate,
-})
+export const certificationSchema = z
+  .object({
+    name: z.string().min(1, "자격증명을 입력해주세요."),
+    issuer: z.string().optional(),
+    issueDate: optionalDate,
+    expiryDate: optionalDate,
+  })
+  .superRefine((data, ctx) =>
+    endNotBeforeStart(data, ctx, "issueDate", "expiryDate", "만료일은 발급일 이후여야 합니다."),
+  )
 
 export const createResumeSchema = z.object({
   title: z.string().min(1, "제목을 입력해주세요.").max(100, "제목은 100자 이하로 입력해주세요."),

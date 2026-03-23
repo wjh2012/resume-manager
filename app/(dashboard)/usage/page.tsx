@@ -7,21 +7,12 @@ import { FeatureChart } from "@/components/usage/feature-chart"
 import { ModelChart } from "@/components/usage/model-chart"
 import { PeriodFilter } from "@/components/usage/period-filter"
 import { QuotaProgress } from "@/components/usage/quota-progress"
-
-interface UsageSummary {
-  totalTokens: number
-  totalCost: number
-  requestCount: number
-  byFeature: { feature: string; totalTokens: number; count: number }[]
-  byModel: { model: string; totalTokens: number; totalCost: number }[]
-  daily: { date: string; totalTokens: number; totalCost: number; count: number }[]
-  quotas: { id: string; limitType: string; limitValue: number; period: string; currentUsage: number }[]
-}
+import type { UsageSummaryWithQuotas } from "@/types/token-usage"
 
 type FetchState =
   | { status: "loading" }
   | { status: "error"; message: string }
-  | { status: "success"; data: UsageSummary }
+  | { status: "success"; data: UsageSummaryWithQuotas }
 
 export default function UsagePage() {
   const [period, setPeriod] = useState("30d")
@@ -48,7 +39,7 @@ export default function UsagePage() {
     fetch(`/api/token-usage/summary?${params}`)
       .then((r) => {
         if (!r.ok) throw new Error("데이터를 불러올 수 없습니다.")
-        return r.json() as Promise<UsageSummary>
+        return r.json() as Promise<UsageSummaryWithQuotas>
       })
       .then((data) => setFetchState({ status: "success", data }))
       .catch((e: Error) => setFetchState({ status: "error", message: e.message }))
