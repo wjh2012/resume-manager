@@ -106,7 +106,7 @@ export async function POST(request: Request) {
       )
     }
 
-    // RAG 컨텍스트 + 모델 병렬 로드 (limitToDocumentIds로 격리)
+    // 문서 요약 컨텍스트 + 모델 병렬 로드
     const [context, { model, isServerKey, provider: aiProvider, modelId }] = await Promise.all([
       buildContext(user.id, {
         selectedDocumentIds: allowedDocIds,
