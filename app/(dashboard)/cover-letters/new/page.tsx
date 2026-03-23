@@ -14,6 +14,7 @@ export default async function NewCoverLetterPage() {
     id: doc.id,
     title: doc.title,
     type: doc.type,
+    summary: doc.summary,
   }))
 
   return (

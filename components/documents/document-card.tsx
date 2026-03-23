@@ -33,7 +33,7 @@ interface DocumentCardProps {
     type: string
     fileSize: number
     createdAt: string
-    _count: { chunks: number }
+    summary: string | null
   }
   onDelete: (id: string) => void
   isDeleting?: boolean
@@ -86,7 +86,7 @@ export function DocumentCard({
             <span>·</span>
             <span suppressHydrationWarning>{formatDate(document.createdAt)}</span>
             <span>·</span>
-            <span>{document._count.chunks}개 청크</span>
+            <span>{document.summary ? "요약 완료" : "요약 없음"}</span>
           </CardDescription>
         </CardHeader>
       </Link>

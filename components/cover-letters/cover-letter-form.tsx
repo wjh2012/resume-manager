@@ -15,6 +15,7 @@ interface DocumentItem {
   id: string
   title: string
   type: string
+  summary: string | null
 }
 
 interface CoverLetterFormProps {
@@ -167,7 +168,14 @@ export function CoverLetterForm({ documents }: CoverLetterFormProps) {
                   onCheckedChange={() => toggleDoc(doc.id)}
                   disabled={isSubmitting}
                 />
-                <span className="text-sm">{doc.title}</span>
+                <span className="text-sm">
+                  {doc.title}
+                  {!doc.summary && (
+                    <span className="text-muted-foreground ml-1 text-xs">
+                      (요약 없음)
+                    </span>
+                  )}
+                </span>
               </label>
             ))}
           </div>

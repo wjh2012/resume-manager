@@ -13,7 +13,7 @@ interface Document {
   type: string
   fileSize: number
   createdAt: string
-  _count: { chunks: number }
+  summary: string | null
 }
 
 interface DocumentListProps {

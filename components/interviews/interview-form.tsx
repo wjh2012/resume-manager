@@ -15,6 +15,7 @@ interface DocumentItem {
   id: string
   title: string
   type: string
+  summary: string | null
 }
 
 interface InterviewFormProps {
@@ -152,7 +153,14 @@ export function InterviewForm({ documents }: InterviewFormProps) {
                   htmlFor={doc.id}
                   className="flex flex-1 cursor-pointer items-center gap-2 text-sm"
                 >
-                  <span className="flex-1">{doc.title}</span>
+                  <span className="flex-1">
+                    {doc.title}
+                    {!doc.summary && (
+                      <span className="text-muted-foreground ml-1 text-xs">
+                        (요약 없음)
+                      </span>
+                    )}
+                  </span>
                   <Badge variant="outline" className="text-xs">
                     {doc.type}
                   </Badge>
