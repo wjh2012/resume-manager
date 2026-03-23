@@ -17,10 +17,10 @@ interface QuotaCheckResult {
 function getPeriodStart(period: string): Date {
   const now = new Date()
   if (period === "DAILY") {
-    return new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()))
   }
   // MONTHLY
-  return new Date(now.getFullYear(), now.getMonth(), 1)
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1))
 }
 
 /**
