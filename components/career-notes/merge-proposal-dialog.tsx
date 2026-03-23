@@ -165,7 +165,7 @@ export function MergeProposalDialog({ open, onOpenChange }: MergeProposalDialogP
         ) : (
           <div className="space-y-4">
             {/* Comparison view */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               {/* Existing note (target) */}
               <div className="space-y-2 rounded-lg border p-4">
                 <p className="text-xs font-medium text-muted-foreground">기존 노트</p>
