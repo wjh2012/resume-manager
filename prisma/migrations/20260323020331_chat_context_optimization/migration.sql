@@ -5,6 +5,9 @@
   - You are about to drop the `document_chunks` table. If the table is not empty, all the data it contains will be lost.
 
 */
+-- Delete EMBEDDING usage records before enum change
+DELETE FROM "token_usage_logs" WHERE "feature" = 'EMBEDDING';
+
 -- AlterEnum
 BEGIN;
 CREATE TYPE "UsageFeature_new" AS ENUM ('COVER_LETTER', 'INTERVIEW', 'INSIGHT', 'DOCUMENT_SUMMARY', 'CAREER_NOTE');
