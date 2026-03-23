@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest"
+import { describe, it, expect, vi, beforeEach } from "vitest"
 
 vi.mock("ai", () => ({
   generateText: vi.fn(),
@@ -32,6 +32,10 @@ const mockCompress = vi.mocked(compressMessages)
 const mockStreamText = vi.mocked(streamText)
 
 describe("handleClassification", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
   it("분류 결과에 따라 문서를 조회하고 streamText를 tools 없이 호출한다", async () => {
     mockClassify.mockResolvedValue({
       classification: {
@@ -136,5 +140,31 @@ describe("handleClassification", () => {
         system: expect.stringContaining("노트"),
       })
     )
+  })
+
+  it("includeCareerNotes가 false이면 compareCareerNotes: true여도 커리어노트를 조회하지 않는다", async () => {
+    mockClassify.mockResolvedValue({
+      classification: {
+        documentsToRead: [],
+        compareCareerNotes: true,
+        needsCompression: false,
+      },
+      usage: { inputTokens: 100, outputTokens: 20 },
+    })
+    mockStreamText.mockReturnValue({ toUIMessageStreamResponse: vi.fn() } as never)
+
+    await handleClassification({
+      model: {} as never,
+      system: "프롬프트",
+      modelMessages: [] as never,
+      userId: "user-1",
+      context: "",
+      selectedDocumentIds: [],
+      includeCareerNotes: false,
+      schema: {} as never,
+      onFinish: vi.fn(),
+    })
+
+    expect(prisma.careerNote.findMany).not.toHaveBeenCalled()
   })
 })
