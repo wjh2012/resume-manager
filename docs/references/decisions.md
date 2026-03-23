@@ -61,6 +61,13 @@
 - **패턴**: `conversation.userId === user.id && conversation.coverLetterId === coverLetterId` 동시 검증.
 - **출처**: [PR #17 @claude 리뷰](https://github.com/wjh2012/resume-manager/pull/17)
 
+## classification 파이프라인: includeCareerNotes 파라미터 강제 적용
+
+- **결정**: classification 파이프라인에서 `includeCareerNotes` 파라미터를 LLM 분류 결과(`compareCareerNotes`)와 AND 조건으로 결합하여 강제한다.
+- **근거**: LLM 분류 결과만으로 커리어노트 접근을 결정하면, 면접 라우트(`includeCareerNotes: false`)에서도 스키마 변경 시 의도치 않게 커리어노트가 조회될 수 있다.
+- **패턴**: `const compareNotes = params.includeCareerNotes && (result.compareCareerNotes ?? false)`
+- **출처**: [PR #82 @claude 1차 리뷰](https://github.com/wjh2012/resume-manager/pull/82) — 이슈 1
+
 ## 접근성: label-input 연결 필수
 
 - **결정**: `<label>`에는 `htmlFor`, 대응하는 입력 요소에는 `id`를 반드시 부여한다.
