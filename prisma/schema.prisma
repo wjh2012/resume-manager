@@ -5,7 +5,7 @@ generator client {
 
 datasource db {
   provider   = "postgresql"
-  extensions = [vector]
+  extensions = []
 }
 
 enum CoverLetterStatus {
@@ -34,7 +34,7 @@ enum UsageFeature {
   COVER_LETTER
   INTERVIEW
   INSIGHT
-  EMBEDDING
+  DOCUMENT_SUMMARY
   CAREER_NOTE
 }
 
@@ -113,26 +113,15 @@ model Document {
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
 
+  summary       String?
+
   user                 User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  chunks               DocumentChunk[]
   interviewDocuments   InterviewDocument[]
   coverLetterDocuments CoverLetterDocument[]
 
   @@map("documents")
 }
 
-model DocumentChunk {
-  id         String                         @id @default(uuid()) @db.Uuid
-  documentId String                         @map("document_id") @db.Uuid
-  content    String                         @db.Text
-  chunkIndex Int                            @map("chunk_index")
-  embedding  Unsupported("vector(1536)")?
-
-  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
-
-  @@index([documentId])
-  @@map("document_chunks")
-}
 
 model Resume {
   id        String   @id @default(uuid()) @db.Uuid
@@ -405,6 +394,7 @@ model CareerNote {
   title     String           @db.VarChar(200)
   content   String           @db.Text
   metadata  Json?
+  summary   String?
   status    CareerNoteStatus @default(CONFIRMED)
   createdAt DateTime         @default(now()) @map("created_at")
   updatedAt DateTime         @updatedAt @map("updated_at")
