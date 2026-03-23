@@ -70,7 +70,7 @@ export function InterviewCard({
           <FileText className="h-3 w-3" />
           {documentCount}개 문서
         </span>
-        <span>{formatDate(updatedAt)}</span>
+        <span suppressHydrationWarning>{formatDate(updatedAt)}</span>
       </div>
 
       <div
