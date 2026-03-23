@@ -39,10 +39,14 @@ vi.mock("@/lib/token-usage/quota", () => ({
   checkQuotaExceeded: vi.fn(),
 }))
 
+vi.mock("@/lib/ai/tools", () => ({
+  createReadDocumentTool: vi.fn().mockReturnValue({}),
+  calculateMaxSteps: vi.fn().mockReturnValue({}),
+}))
+
 vi.mock("ai", () => ({
   streamText: vi.fn(),
   convertToModelMessages: vi.fn(),
-  embedMany: vi.fn().mockResolvedValue({ embeddings: [] }),
 }))
 
 vi.mock("@ai-sdk/openai", () => ({
@@ -111,7 +115,7 @@ beforeEach(() => {
     userId: VALID_USER_ID,
     interviewSessionId: VALID_SESSION_ID,
   } as never)
-  mockBuildContext.mockResolvedValue("context text")
+  mockBuildContext.mockResolvedValue({ context: "context text", careerNoteCount: 0 } as never)
   mockGetLanguageModel.mockResolvedValue({ model: mockModel, isServerKey: false, provider: "openai", modelId: "gpt-4o" } as never)
   mockCheckQuotaExceeded.mockResolvedValue({ exceeded: false } as never)
   mockRecordUsage.mockResolvedValue(undefined as never)
@@ -146,11 +150,11 @@ describe("POST /api/chat/interview", () => {
     expect(mockStreamText).toHaveBeenCalledOnce()
   })
 
-  it("buildContext를 limitToDocumentIds와 함께 호출해야 한다", async () => {
+  it("buildContext를 selectedDocumentIds와 함께 호출해야 한다", async () => {
     await POST(makeRequest(VALID_BODY))
     expect(mockBuildContext).toHaveBeenCalledWith(
       VALID_USER_ID,
-      expect.objectContaining({ limitToDocumentIds: [VALID_DOC_ID] }),
+      expect.objectContaining({ selectedDocumentIds: [VALID_DOC_ID] }),
     )
   })
 

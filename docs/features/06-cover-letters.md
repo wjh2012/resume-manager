@@ -59,11 +59,12 @@ CoverLetterWorkspace (상태 소유: content)
 ## AI 채팅
 
 - **AI SDK v6** `useChat` + `DefaultChatTransport` 사용
-- 서버: `streamText()` → `toUIMessageStreamResponse()`
+- 서버: `streamText()` + `tools` + `stopWhen` → `toUIMessageStreamResponse()`
 - `convertToModelMessages()`로 UIMessage → ModelMessage 변환
-- **RAG 컨텍스트**: 선택 문서(전체 텍스트) + 벡터 검색(관련 청크, 유사도 < 0.7) + 인사이트
-- 선택 문서는 벡터 검색에서 자동 제외되어 중복 방지
+- **컨텍스트**: 선택 문서 요약 + 커리어노트 요약 (시스템 프롬프트에 포함)
+- **Tool Use**: LLM이 필요시 `readDocument` / `readCareerNote`로 전문 읽기, `saveCareerNote`로 커리어노트 생성/갱신
 - `onFinish` 콜백에서 assistant 메시지 DB 저장
+- 동적 stepCount: `min(문서 수 + 커리어노트 수 + 2, 15)`
 
 ## 참고 문서 선택
 

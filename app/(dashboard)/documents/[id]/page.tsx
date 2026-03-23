@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Skeleton } from "@/components/ui/skeleton"
 import { DeleteButton } from "@/components/documents/delete-button"
+import { SummarySection } from "@/components/documents/summary-section"
 import type { DocumentType } from "@/lib/validations/document"
 
 async function DocumentContent({
@@ -35,8 +36,7 @@ async function DocumentContent({
             </Badge>
           </div>
           <p className="text-muted-foreground mt-1 text-sm">
-            {formatFileSize(document.fileSize)} · {document._count.chunks}개
-            청크 ·{" "}
+            {formatFileSize(document.fileSize)} ·{" "}
             {new Date(document.createdAt).toLocaleDateString("ko-KR", {
               year: "numeric",
               month: "long",
@@ -49,6 +49,11 @@ async function DocumentContent({
           documentTitle={document.title}
         />
       </div>
+
+      <SummarySection
+        documentId={document.id}
+        initialSummary={document.summary}
+      />
 
       <div className="flex min-h-0 flex-1 flex-col rounded-lg border">
         <div className="shrink-0 border-b px-4 py-3">

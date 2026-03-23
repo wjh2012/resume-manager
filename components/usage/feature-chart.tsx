@@ -19,7 +19,8 @@ const chartConfig = {
   COVER_LETTER: { label: "자기소개서", color: "var(--chart-1)" },
   INTERVIEW: { label: "모의면접", color: "var(--chart-2)" },
   INSIGHT: { label: "인사이트", color: "var(--chart-3)" },
-  EMBEDDING: { label: "문서 분석", color: "var(--chart-4)" },
+  DOCUMENT_SUMMARY: { label: "문서 요약", color: "var(--chart-4)" },
+  CAREER_NOTE: { label: "커리어노트", color: "var(--chart-5)" },
 } satisfies ChartConfig
 
 interface FeatureChartProps {

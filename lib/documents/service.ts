@@ -1,15 +1,13 @@
 import { prisma } from "@/lib/prisma"
 import { parseFile } from "@/lib/files/parser"
 import { uploadFile, deleteFile } from "@/lib/storage"
-import { splitIntoChunks, generateEmbeddings } from "@/lib/ai/embedding"
-import { recordUsage } from "@/lib/token-usage/service"
-import { checkQuotaExceeded } from "@/lib/token-usage/quota"
 import {
   resolveDocumentType,
   verifyMagicBytes,
   MAX_FILE_SIZE,
   type DocumentType,
 } from "@/lib/validations/document"
+import { generateDocumentSummary } from "@/lib/documents/summary"
 
 export class DocumentNotFoundError extends Error {
   constructor() {
@@ -30,11 +28,9 @@ interface UploadResult {
   title: string
   type: DocumentType
   fileSize: number
-  chunkCount: number
-  embeddingSkipped?: boolean
 }
 
-// 문서 업로드: 파싱 → 청크 분할 → DB 저장 → 임베딩
+// 문서 업로드: 파싱 → DB 저장
 export async function uploadDocument(
   userId: string,
   file: File,
@@ -73,43 +69,19 @@ export async function uploadDocument(
     throw new DocumentValidationError("파일에서 텍스트를 추출할 수 없습니다.")
   }
 
-  const MAX_CHUNKS = 500
-  let chunks = splitIntoChunks(extractedText)
-
-  if (chunks.length > MAX_CHUNKS) {
-    console.warn(
-      `청크 수 제한 초과: ${chunks.length}개 → ${MAX_CHUNKS}개만 저장`,
-    )
-    chunks = chunks.slice(0, MAX_CHUNKS)
-  }
-
-  // DB 저장 (트랜잭션)
+  // DB 저장
   let document: { id: string }
   try {
-    document = await prisma.$transaction(async (tx) => {
-      const doc = await tx.document.create({
-        data: {
-          userId,
-          title,
-          type,
-          originalUrl: storagePath,
-          extractedText,
-          fileSize: file.size,
-        },
-        select: { id: true },
-      })
-
-      if (chunks.length > 0) {
-        await tx.documentChunk.createMany({
-          data: chunks.map((content, index) => ({
-            documentId: doc.id,
-            content,
-            chunkIndex: index,
-          })),
-        })
-      }
-
-      return doc
+    document = await prisma.document.create({
+      data: {
+        userId,
+        title,
+        type,
+        originalUrl: storagePath,
+        extractedText,
+        fileSize: file.size,
+      },
+      select: { id: true },
     })
   } catch (error) {
     await deleteFile(storagePath).catch((e) =>
@@ -118,71 +90,23 @@ export async function uploadDocument(
     throw error
   }
 
-  // 임베딩 생성 (트랜잭션 외부 — 실패해도 문서는 유지)
-  if (chunks.length > 0) {
-    const quotaResult = await checkQuotaExceeded(userId)
-    if (quotaResult.exceeded) {
-      console.warn("Quota 초과로 임베딩 생성 스킵:", document.id)
-      return { id: document.id, title, type, fileSize: file.size, chunkCount: chunks.length, embeddingSkipped: true }
-    }
-    try {
-      const { embeddings, totalTokens } = await generateEmbeddings(chunks)
-
-      // NaN/Infinity 검증
-      for (const embedding of embeddings) {
-        if (embedding.some((v) => !Number.isFinite(v))) {
-          throw new Error("임베딩에 유효하지 않은 값(NaN/Infinity)이 포함됨")
-        }
+  // 요약 생성 — 트랜잭션 외부에서 실행 (실패해도 업로드 성공)
+  generateDocumentSummary(userId, extractedText)
+    .then(async ({ summary }) => {
+      if (summary) {
+        await prisma.document.update({
+          where: { id: document.id },
+          data: { summary },
+        })
       }
-
-      const dbChunks = await prisma.documentChunk.findMany({
-        where: { documentId: document.id },
-        orderBy: { chunkIndex: "asc" },
-        select: { id: true },
-      })
-
-      if (embeddings.length !== dbChunks.length) {
-        throw new Error(
-          `임베딩 수 불일치: ${embeddings.length} vs ${dbChunks.length}`,
-        )
-      }
-
-      // 배치 업데이트로 N+1 방지
-      await prisma.$transaction(
-        dbChunks.map((chunk, i) => {
-          const vectorStr = `[${embeddings[i].join(",")}]`
-          return prisma.$executeRaw`
-            UPDATE document_chunks
-            SET embedding = ${vectorStr}::vector
-            WHERE id = ${chunk.id}::uuid
-          `
-        }),
-      )
-
-      // 토큰 사용량 기록
-      if (totalTokens > 0) {
-        await recordUsage({
-          userId,
-          provider: "openai",
-          model: "text-embedding-3-small",
-          feature: "EMBEDDING",
-          promptTokens: totalTokens,
-          completionTokens: 0,
-          totalTokens,
-          isServerKey: true,
-        }).catch((e) => console.error("토큰 사용량 기록 실패:", e))
-      }
-    } catch {
-      console.error("임베딩 생성 실패 (문서는 정상 저장됨):", document.id)
-    }
-  }
+    })
+    .catch((e) => console.error("문서 요약 생성 실패:", e))
 
   return {
     id: document.id,
     title,
     type,
     fileSize: file.size,
-    chunkCount: chunks.length,
   }
 }
 
@@ -223,7 +147,7 @@ export async function listDocuments(userId: string) {
       type: true,
       fileSize: true,
       createdAt: true,
-      _count: { select: { chunks: true } },
+      summary: true,
     },
     orderBy: { createdAt: "desc" },
   })
@@ -249,7 +173,7 @@ export async function getDocument(documentId: string, userId: string) {
       fileSize: true,
       createdAt: true,
       updatedAt: true,
-      _count: { select: { chunks: true } },
+      summary: true,
     },
   })
 

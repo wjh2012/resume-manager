@@ -28,13 +28,13 @@ InterviewSession (면접 세션)
 
 → [`docs/specs/api-reference.md`](../specs/api-reference.md) 참조
 
-### 문서 격리 (RAG)
+### 문서 컨텍스트
 
-면접 채팅 시 `buildContext()`에 `limitToDocumentIds`를 전달하여 해당 면접에서 선택한 문서만 참조하도록 제한한다.
+면접 채팅 시 `buildContext()`에 `selectedDocumentIds`로 해당 면접에서 선택한 문서의 요약만 포함한다. LLM이 필요시 `readDocument` 도구로 전문을 읽는다. 커리어노트는 포함하지 않는다.
 
 ```typescript
 const allowedDocIds = allowedDocs.map((d) => d.documentId)
-const context = await buildContext(userId, { query, limitToDocumentIds: allowedDocIds })
+const { context } = await buildContext(userId, { selectedDocumentIds: allowedDocIds })
 ```
 
 ### 서비스 레이어 (`lib/interviews/service.ts`)

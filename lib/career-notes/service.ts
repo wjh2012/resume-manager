@@ -1,4 +1,4 @@
-import { generateObject } from "ai"
+import { generateObject, generateText } from "ai"
 
 import { prisma } from "@/lib/prisma"
 import { getLanguageModel } from "@/lib/ai/provider"
@@ -285,6 +285,38 @@ export async function updateCareerNote(
     })
     if (!exists) throw new CareerNoteNotFoundError()
     throw new CareerNoteForbiddenError()
+  }
+
+  if (data.content) {
+    try {
+      const { model, isServerKey, provider, modelId } = await getLanguageModel(userId)
+      const { text, usage } = await generateText({
+        model,
+        system: "주어진 커리어노트의 핵심 내용을 1~2줄로 요약하세요.",
+        prompt: data.content,
+      })
+      await prisma.careerNote.update({
+        where: { id },
+        data: { summary: text },
+      })
+
+      if (usage) {
+        await recordUsage({
+          userId,
+          provider,
+          model: modelId,
+          feature: "CAREER_NOTE",
+          promptTokens: usage.inputTokens ?? 0,
+          completionTokens: usage.outputTokens ?? 0,
+          totalTokens: (usage.inputTokens ?? 0) + (usage.outputTokens ?? 0),
+          isServerKey,
+          metadata: {},
+        }).catch((e) => console.error("커리어노트 요약 토큰 기록 실패:", e))
+      }
+    } catch (error) {
+      console.error("커리어노트 요약 재생성 실패:", error)
+      // 실패해도 업데이트 자체는 성공으로 처리
+    }
   }
 }
 

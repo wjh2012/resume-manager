@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma"
 import { getLanguageModel, AiSettingsNotFoundError } from "@/lib/ai/provider"
 import { buildContext } from "@/lib/ai/context"
 import { buildInterviewSystemPrompt } from "@/lib/ai/prompts/interview"
+import { createReadDocumentTool, calculateMaxSteps } from "@/lib/ai/tools"
 import { interviewChatSchema } from "@/lib/validations/interview"
 import { recordUsage } from "@/lib/token-usage/service"
 import { checkQuotaExceeded } from "@/lib/token-usage/quota"
@@ -105,12 +106,10 @@ export async function POST(request: Request) {
       )
     }
 
-    // RAG 컨텍스트 + 모델 병렬 로드 (limitToDocumentIds로 격리)
-    const [context, { model, isServerKey, provider: aiProvider, modelId }] = await Promise.all([
+    // 문서 요약 컨텍스트 + 모델 병렬 로드
+    const [{ context }, { model, isServerKey, provider: aiProvider, modelId }] = await Promise.all([
       buildContext(user.id, {
-        query: lastMessageContent,
-        limitToDocumentIds: allowedDocIds,
-        includeInsights: true,
+        selectedDocumentIds: allowedDocIds,
       }),
       getLanguageModel(user.id),
     ])
@@ -127,6 +126,10 @@ export async function POST(request: Request) {
       model,
       system,
       messages: modelMessages,
+      tools: {
+        readDocument: createReadDocumentTool(user.id, allowedDocIds),
+      },
+      stopWhen: calculateMaxSteps(allowedDocIds.length, 0),
       onFinish: async ({ text, usage }) => {
         const ops = [
           ...(lastMessage.role === "user" && lastMessageContent

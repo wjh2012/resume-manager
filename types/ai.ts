@@ -23,10 +23,6 @@ export const PROVIDER_MODELS: Record<AIProvider, { value: string; label: string 
 }
 
 export interface BuildContextOptions {
-  query: string
   selectedDocumentIds?: string[]
-  limitToDocumentIds?: string[]
-  includeInsights?: boolean
   includeCareerNotes?: boolean
-  maxChunks?: number
 }
