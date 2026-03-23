@@ -8,8 +8,7 @@ import {
 } from "lucide-react"
 import { getAuthUser } from "@/lib/supabase/user"
 import { getDashboardStats, getRecentActivity } from "@/lib/dashboard/service"
-import { StatCard } from "@/components/dashboard/stat-card"
-import { QuickActionCard } from "@/components/dashboard/quick-action-card"
+import { StatCard, QuickActionCard } from "@/components/dashboard/stat-card"
 import { RecentActivitySection } from "@/components/dashboard/recent-activity"
 
 export default async function DashboardPage() {
