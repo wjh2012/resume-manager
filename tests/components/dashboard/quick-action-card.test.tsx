@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest"
 import { render, screen } from "@testing-library/react"
-import { QuickActionCard } from "@/components/dashboard/stat-card"
+import { QuickActionCard } from "@/components/dashboard/quick-action-card"
 
 vi.mock("next/link", () => ({
   default: ({ href, children }: { href: string; children: React.ReactNode }) => (
