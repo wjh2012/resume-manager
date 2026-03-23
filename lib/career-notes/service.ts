@@ -1,4 +1,4 @@
-import { generateObject, generateText } from "ai"
+import { generateText, Output } from "ai"
 
 import { prisma } from "@/lib/prisma"
 import { getLanguageModel } from "@/lib/ai/provider"
@@ -149,9 +149,9 @@ export async function extractCareerNotes(userId: string, conversationId: string)
 
   // 4. Call generateObject with extraction schema
   const { model, isServerKey, provider: aiProvider, modelId } = await getLanguageModel(userId)
-  const { object, usage } = await generateObject({
+  const { output, usage } = await generateText({
     model,
-    schema: careerNoteExtractionSchema,
+    output: Output.object({ schema: careerNoteExtractionSchema }),
     system: buildCareerNoteExtractionPrompt(
       existingNotes.map((n) => ({
         id: n.id,
@@ -209,7 +209,7 @@ export async function extractCareerNotes(userId: string, conversationId: string)
     const createdNotes: Awaited<ReturnType<typeof tx.careerNote.create>>[] = []
     const createdProposals: Awaited<ReturnType<typeof tx.careerNoteMergeProposal.create>>[] = []
 
-    for (const extractedNote of object.notes) {
+    for (const extractedNote of output!.notes) {
       const hasRelated = extractedNote.relatedExistingNoteId && extractedNote.suggestedMerge
 
       const noteStatus = hasRelated ? "PENDING" : "CONFIRMED"

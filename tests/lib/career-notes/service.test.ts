@@ -41,7 +41,8 @@ vi.mock("@/lib/ai/provider", () => ({
 }))
 
 vi.mock("ai", () => ({
-  generateObject: vi.fn(),
+  generateText: vi.fn(),
+  Output: { object: vi.fn((opts: unknown) => opts) },
 }))
 
 vi.mock("@/lib/ai/prompts/career-note-extraction", () => ({
@@ -64,7 +65,7 @@ vi.mock("@/lib/token-usage/quota", () => ({
 
 import { prisma } from "@/lib/prisma"
 import { getLanguageModel } from "@/lib/ai/provider"
-import { generateObject } from "ai"
+import { generateText } from "ai"
 import { checkQuotaExceeded, QuotaExceededError } from "@/lib/token-usage/quota"
 import { recordUsage } from "@/lib/token-usage/service"
 import {
@@ -89,7 +90,7 @@ import {
 // mock 타입 단축 헬퍼
 const mockPrisma = vi.mocked(prisma)
 const mockGetLanguageModel = vi.mocked(getLanguageModel)
-const mockGenerateObject = vi.mocked(generateObject)
+const mockGenerateText = vi.mocked(generateText)
 const mockCheckQuotaExceeded = vi.mocked(checkQuotaExceeded)
 const mockRecordUsage = vi.mocked(recordUsage)
 
@@ -314,8 +315,8 @@ describe("extractCareerNotes()", () => {
       provider: "openai",
       modelId: "gpt-4o",
     } as never)
-    mockGenerateObject.mockResolvedValue({
-      object: { notes: extractedNotes },
+    mockGenerateText.mockResolvedValue({
+      output: { notes: extractedNotes },
       usage: { inputTokens: 100, outputTokens: 50 },
     } as never)
     mockPrisma.$transaction.mockImplementation(async (fn) => {
@@ -389,7 +390,7 @@ describe("extractCareerNotes()", () => {
 
     expect(result).toHaveProperty("notes")
     expect(result).toHaveProperty("proposals")
-    expect(mockGenerateObject).toHaveBeenCalledOnce()
+    expect(mockGenerateText).toHaveBeenCalledOnce()
   })
 
   it("relatedExistingNoteId가 있는 노트는 PENDING 상태로 생성되고 MergeProposal이 만들어진다", async () => {
@@ -405,8 +406,8 @@ describe("extractCareerNotes()", () => {
       provider: "openai",
       modelId: "gpt-4o",
     } as never)
-    mockGenerateObject.mockResolvedValue({
-      object: {
+    mockGenerateText.mockResolvedValue({
+      output: {
         notes: [
           {
             title: "업데이트된 노트",
@@ -476,8 +477,8 @@ describe("extractCareerNotes()", () => {
       provider: "openai",
       modelId: "gpt-4o",
     } as never)
-    mockGenerateObject.mockResolvedValue({
-      object: { notes: [] },
+    mockGenerateText.mockResolvedValue({
+      output: { notes: [] },
       usage: { inputTokens: 10, outputTokens: 5 },
     } as never)
     mockRecordUsage.mockResolvedValue(undefined as never)

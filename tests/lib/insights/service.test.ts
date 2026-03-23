@@ -24,7 +24,8 @@ vi.mock("@/lib/ai/provider", () => ({
 }))
 
 vi.mock("ai", () => ({
-  generateObject: vi.fn(),
+  generateText: vi.fn(),
+  Output: { object: vi.fn((opts: unknown) => opts) },
 }))
 
 import { prisma } from "@/lib/prisma"
