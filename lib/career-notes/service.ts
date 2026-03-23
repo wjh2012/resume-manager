@@ -261,7 +261,6 @@ export async function extractCareerNotes(userId: string, conversationId: string)
 interface UpdateCareerNoteData {
   title?: string
   content?: string
-  summary?: string
   metadata?: Record<string, string | undefined>
 }
 

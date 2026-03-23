@@ -1,11 +1,17 @@
 import { prisma } from "@/lib/prisma"
 import type { BuildContextOptions } from "@/types/ai"
 
+interface BuildContextResult {
+  context: string
+  careerNoteCount: number
+}
+
 export async function buildContext(
   userId: string,
   opts: BuildContextOptions,
-): Promise<string> {
+): Promise<BuildContextResult> {
   const parts: string[] = []
+  let careerNoteCount = 0
 
   // 1. 선택 문서 요약
   if (opts.selectedDocumentIds && opts.selectedDocumentIds.length > 0) {
@@ -33,6 +39,8 @@ export async function buildContext(
       orderBy: { updatedAt: "desc" },
     })
 
+    careerNoteCount = notes.length
+
     for (const note of notes) {
       if (note.summary) {
         parts.push(
@@ -46,5 +54,8 @@ export async function buildContext(
     }
   }
 
-  return parts.join("\n\n---\n\n")
+  return {
+    context: parts.join("\n\n---\n\n"),
+    careerNoteCount,
+  }
 }

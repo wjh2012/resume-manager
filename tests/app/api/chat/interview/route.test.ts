@@ -115,7 +115,7 @@ beforeEach(() => {
     userId: VALID_USER_ID,
     interviewSessionId: VALID_SESSION_ID,
   } as never)
-  mockBuildContext.mockResolvedValue("context text")
+  mockBuildContext.mockResolvedValue({ context: "context text", careerNoteCount: 0 } as never)
   mockGetLanguageModel.mockResolvedValue({ model: mockModel, isServerKey: false, provider: "openai", modelId: "gpt-4o" } as never)
   mockCheckQuotaExceeded.mockResolvedValue({ exceeded: false } as never)
   mockRecordUsage.mockResolvedValue(undefined as never)

@@ -181,7 +181,7 @@ beforeEach(() => {
   mockGetLanguageModel.mockResolvedValue({ model: mockModel, isServerKey: false, provider: "openai", modelId: "gpt-4o" } as never)
   mockCheckQuotaExceeded.mockResolvedValue({ exceeded: false } as never)
   mockRecordUsage.mockResolvedValue(undefined as never)
-  mockBuildContext.mockResolvedValue("컨텍스트 내용" as never)
+  mockBuildContext.mockResolvedValue({ context: "컨텍스트 내용", careerNoteCount: 0 } as never)
   mockBuildCoverLetterSystemPrompt.mockReturnValue("시스템 프롬프트")
   mockConvertToModelMessages.mockResolvedValue([] as never)
 

@@ -33,9 +33,9 @@ describe("buildContext", () => {
       selectedDocumentIds: ["doc-1"],
     })
 
-    expect(result).toContain("[문서:")
-    expect(result).toContain("doc-1")
-    expect(result).toContain("3년차 개발자")
+    expect(result.context).toContain("[문서:")
+    expect(result.context).toContain("doc-1")
+    expect(result.context).toContain("3년차 개발자")
   })
 
   it("summary가 null인 문서는 fallback 메시지를 표시한다", async () => {
@@ -47,8 +47,8 @@ describe("buildContext", () => {
       selectedDocumentIds: ["doc-1"],
     })
 
-    expect(result).toContain("요약 없음")
-    expect(result).toContain("readDocument")
+    expect(result.context).toContain("요약 없음")
+    expect(result.context).toContain("readDocument")
   })
 
   it("includeCareerNotes=true면 전체 확정 커리어노트 요약을 포함한다", async () => {
@@ -60,21 +60,22 @@ describe("buildContext", () => {
       includeCareerNotes: true,
     })
 
-    expect(result).toContain("[커리어노트:")
-    expect(result).toContain("note-1")
+    expect(result.context).toContain("[커리어노트:")
+    expect(result.context).toContain("note-1")
+    expect(result.careerNoteCount).toBe(1)
   })
 
   it("includeCareerNotes 미지정이면 커리어노트를 포함하지 않는다", async () => {
     const result = await buildContext("user-1", {})
 
-    expect(result).not.toContain("[커리어노트:")
+    expect(result.context).not.toContain("[커리어노트:")
     expect(mockNoteFindMany).not.toHaveBeenCalled()
   })
 
   it("selectedDocumentIds가 비어있으면 문서 섹션 없음", async () => {
     const result = await buildContext("user-1", {})
 
-    expect(result).not.toContain("[문서:")
+    expect(result.context).not.toContain("[문서:")
     expect(mockDocFindMany).not.toHaveBeenCalled()
   })
 
@@ -87,7 +88,7 @@ describe("buildContext", () => {
       includeCareerNotes: true,
     })
 
-    expect(result).toContain("요약 없음")
-    expect(result).toContain("readCareerNote")
+    expect(result.context).toContain("요약 없음")
+    expect(result.context).toContain("readCareerNote")
   })
 })

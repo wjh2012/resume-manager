@@ -92,7 +92,7 @@ export async function POST(request: Request) {
     }
 
     // 문서 요약 컨텍스트 + 모델 병렬 로드
-    const [context, { model, isServerKey, provider: aiProvider, modelId }] = await Promise.all([
+    const [{ context, careerNoteCount }, { model, isServerKey, provider: aiProvider, modelId }] = await Promise.all([
       buildContext(user.id, {
         selectedDocumentIds,
         includeCareerNotes: true,
@@ -106,10 +106,6 @@ export async function POST(request: Request) {
       position: coverLetter.position,
       jobPostingText: coverLetter.jobPostingText ?? undefined,
       context,
-    })
-
-    const careerNoteCount = await prisma.careerNote.count({
-      where: { userId: user.id, status: "CONFIRMED" },
     })
 
     const modelMessages = await convertToModelMessages(
