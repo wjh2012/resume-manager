@@ -15,16 +15,16 @@ const optionalDate = z
   })
 
 function endNotBeforeStart(
-  data: { startDate?: Date | null; endDate?: Date | null },
+  data: Record<string, Date | null | undefined>,
   ctx: z.RefinementCtx,
-  endFieldName = "endDate",
+  startField = "startDate",
+  endField = "endDate",
+  message = "종료일은 시작일 이후여야 합니다.",
 ) {
-  if (data.startDate && data.endDate && data.endDate < data.startDate) {
-    ctx.addIssue({
-      code: "custom",
-      message: "종료일은 시작일 이후여야 합니다.",
-      path: [endFieldName],
-    })
+  const start = data[startField]
+  const end = data[endField]
+  if (start && end && end < start) {
+    ctx.addIssue({ code: "custom", message, path: [endField] })
   }
 }
 
@@ -45,7 +45,7 @@ export const educationSchema = z
     endDate: optionalDate,
     description: z.string().optional(),
   })
-  .superRefine(endNotBeforeStart)
+  .superRefine((data, ctx) => endNotBeforeStart(data, ctx))
 
 export const experienceSchema = z
   .object({
@@ -88,7 +88,7 @@ export const projectSchema = z
     description: z.string().optional(),
     url: z.string().url("올바른 URL 형식이 아닙니다.").optional().or(z.literal("")),
   })
-  .superRefine(endNotBeforeStart)
+  .superRefine((data, ctx) => endNotBeforeStart(data, ctx))
 
 export const certificationSchema = z
   .object({
@@ -97,15 +97,9 @@ export const certificationSchema = z
     issueDate: optionalDate,
     expiryDate: optionalDate,
   })
-  .superRefine((data, ctx) => {
-    if (data.issueDate && data.expiryDate && data.expiryDate < data.issueDate) {
-      ctx.addIssue({
-        code: "custom",
-        message: "만료일은 발급일 이후여야 합니다.",
-        path: ["expiryDate"],
-      })
-    }
-  })
+  .superRefine((data, ctx) =>
+    endNotBeforeStart(data, ctx, "issueDate", "expiryDate", "만료일은 발급일 이후여야 합니다."),
+  )
 
 export const createResumeSchema = z.object({
   title: z.string().min(1, "제목을 입력해주세요.").max(100, "제목은 100자 이하로 입력해주세요."),
