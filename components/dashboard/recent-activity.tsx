@@ -4,8 +4,9 @@ import { Badge } from "@/components/ui/badge"
 import { formatShortDate } from "@/lib/utils"
 import type { RecentActivity } from "@/lib/dashboard/service"
 
-function interviewStatusLabel(status: string): string {
-  return status === "COMPLETED" ? "완료" : "진행 중"
+const INTERVIEW_STATUS_LABEL: Record<string, string> = {
+  COMPLETED: "완료",
+  IN_PROGRESS: "진행 중",
 }
 
 interface RecentActivitySectionProps {
@@ -71,7 +72,7 @@ export function RecentActivitySection({ activity }: RecentActivitySectionProps) 
                 <div className="flex min-w-0 items-center gap-2">
                   <span className="truncate text-sm font-medium">{iv.title}</span>
                   <Badge variant="secondary" className="shrink-0 text-xs">
-                    {interviewStatusLabel(iv.status)}
+                    {INTERVIEW_STATUS_LABEL[iv.status] ?? "진행 중"}
                   </Badge>
                 </div>
                 <span className="text-muted-foreground shrink-0 text-xs">
