@@ -71,4 +71,24 @@ describe("usageSummaryQuerySchema", () => {
     })
     expect(result.success).toBe(true)
   })
+
+  it("startDate만 있으면 실패 (쌍 검증)", () => {
+    const result = usageSummaryQuerySchema.safeParse({
+      startDate: "2024-01-01",
+    })
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(result.error.issues[0].message).toBe("startDate와 endDate는 함께 지정해야 합니다.")
+    }
+  })
+
+  it("endDate만 있으면 실패 (쌍 검증)", () => {
+    const result = usageSummaryQuerySchema.safeParse({
+      endDate: "2024-12-31",
+    })
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(result.error.issues[0].message).toBe("startDate와 endDate는 함께 지정해야 합니다.")
+    }
+  })
 })

@@ -13,6 +13,22 @@ const refineEndDateAfterStartDate = (
   }
 }
 
+const refineStartEndDatePair = (
+  data: { startDate?: Date; endDate?: Date },
+  ctx: z.RefinementCtx,
+) => {
+  const hasStart = data.startDate !== undefined
+  const hasEnd = data.endDate !== undefined
+  if (hasStart !== hasEnd) {
+    ctx.addIssue({
+      code: "custom",
+      message: "startDate와 endDate는 함께 지정해야 합니다.",
+      path: [hasStart ? "endDate" : "startDate"],
+    })
+  }
+  refineEndDateAfterStartDate(data, ctx)
+}
+
 export const tokenUsageQuerySchema = z
   .object({
     cursor: z.string().uuid().optional(),
@@ -31,4 +47,4 @@ export const usageSummaryQuerySchema = z
     endDate: z.coerce.date().optional(),
     tz: z.string().regex(/^[A-Za-z0-9_/+-]+$/).max(64).optional().default("UTC"),
   })
-  .superRefine(refineEndDateAfterStartDate)
+  .superRefine(refineStartEndDatePair)
