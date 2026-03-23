@@ -55,9 +55,9 @@ Spring Boot 기반 PG 연동. 일 10만건 처리...
 - `summary`가 null인 문서는 `[문서: 파일명 (ID: xxx)] 요약 없음 — readDocument 도구로 전문을 확인하세요` 표시
 - 벡터 검색(RAG) 제거 — 미선택 문서 참조 안 함
 - 인사이트 제거 (향후 deprecated 예정)
-- 커리어노트: 전체 확정(CONFIRMED) 노트의 요약만 포함 (10개 제한 제거). ID 명시하여 `readCareerNote` 도구 호출 시 사용
+- 커리어노트: 자소서에서만 전체 확정(CONFIRMED) 노트의 요약 포함 (10개 제한 제거). ID 명시하여 `readCareerNote` 도구 호출 시 사용
 - `summary`가 null인 커리어노트는 `[커리어노트: 제목 (ID: xxx)] 요약 없음 — readCareerNote 도구로 전문을 확인하세요` 표시
-- 면접 라우트에도 커리어노트 포함 적용 (기존에는 미포함이었으나 통일)
+- 면접은 커리어노트 미포함 (선택된 문서만 참조). 도구는 `readDocument`만 제공. 커리어노트 관련 기능은 추후 면접 코치 에이전트에서 처리
 
 #### Tool Use 도입
 
@@ -81,15 +81,23 @@ step 수 동적 계산: `선택 문서 수 + 커리어노트 수 + 2` (saveCaree
 
 **`saveCareerNote` 도구**
 
-- 목적: 대화 중 LLM이 기록할 만한 내용을 발견하면 커리어노트로 저장
-- 흐름:
+- 목적: 대화 중 LLM이 기록할 만한 내용을 발견하면 커리어노트를 생성하거나, 기존 노트에 반영할 내용이 있으면 갱신
+- 생성 흐름:
   1. LLM이 텍스트로 제안: "이 경험을 커리어노트로 저장할까요? 제목: ..."
   2. 사용자가 채팅으로 승인: "응" / "아니"
   3. 승인 시 LLM이 `saveCareerNote` 도구 호출
-- 입력 (LLM이 제공): `title: string`, `content: string`, `summary: string` (1~2줄 요약), `metadata?: { role?, result?, feeling? }`
+- 갱신 흐름 (새 내용 보강 또는 기존 내용 정정):
+  1. LLM이 시스템 프롬프트의 커리어노트 요약을 보고 관련 노트 발견
+  2. `readCareerNote`로 기존 전문 읽기
+  3. 텍스트로 수정 내용 제안 (변경 이유 + 구체적 변경 내용 설명). 예:
+     - 보강: "기존 노트에 이번 대화에서 나온 장애 대응 경험을 추가하면 좋겠습니다. 수정할까요?"
+     - 정정: "기존 노트에 성능 개선이 40%로 기록되어 있는데, 대화 내용에 따르면 60%입니다. 수정할까요?"
+  4. 사용자 승인 시 기존 내용을 적절히 편집하여 `saveCareerNote(careerNoteId: xxx, ...)` 호출
+- 입력 (LLM이 제공): `careerNoteId?: string` (없으면 생성, 있으면 갱신), `title: string`, `content: string`, `summary: string` (1~2줄 요약), `metadata?: { role?, result?, feeling? }`
 - 암묵적 컨텍스트 (route handler closure에서 주입, LLM 입력 아님): `userId`, `conversationId`
-- 동작: CareerNote 생성 (status: CONFIRMED, summary 포함) + CareerNoteSource 연결 (conversationId)
-- 기존 커리어노트 수정 API로 content가 변경될 때도 LLM으로 summary 재생성
+- 생성 동작: CareerNote 생성 (status: CONFIRMED, summary 포함) + CareerNoteSource 연결 (conversationId)
+- 갱신 동작: 기존 CareerNote의 title, content, summary, metadata 업데이트 + CareerNoteSource 연결 (conversationId)
+- 기존 커리어노트 수정 API(`PUT /api/career-notes/[id]`)로 content가 변경될 때도 LLM으로 summary 재생성
 
 #### 토큰 사용량 추적
 
@@ -138,7 +146,7 @@ step 수 동적 계산: `선택 문서 수 + 커리어노트 수 + 2` (saveCaree
 - `Document` 테이블에 `summary` 컬럼 추가 (nullable String)
 - `CareerNote` 테이블에 `summary` 컬럼 추가 (nullable String)
 - `DocumentChunk` 테이블 drop
-- `UsageFeature` enum에 `DOCUMENT_SUMMARY` 추가. `EMBEDDING`은 기존 기록 보존을 위해 enum에서 유지하되, 새로 사용하지 않음
+- `UsageFeature` enum에 `DOCUMENT_SUMMARY` 추가. `EMBEDDING`은 기존 사용량 기록 삭제 후 enum에서 제거
 - 기존 문서/커리어노트에 대한 요약은 마이그레이션에서 생성하지 않음 (별도 스크립트 또는 수동)
 
 ## 데이터 흐름
@@ -168,4 +176,4 @@ step 수 동적 계산: `선택 문서 수 + 커리어노트 수 + 2` (saveCaree
 - `toUIMessageStreamResponse()`가 스트리밍 중 tool 실행을 투명하게 처리
 - 문서 목록/상세에서 청크 수 표시 제거 (UI 업데이트 필요)
 - 문서 선택 UI에서 summary가 null인 문서에 "요약 없음" 표시 (선택은 허용)
-- 도구 실행 중 응답 지연에 대한 로딩 표시 UI 추가 고려 (선택적)
+- 도구 실행 중 로딩 표시 UI 추가 (예: "문서를 읽고 있습니다...", "커리어노트를 저장하고 있습니다...")
