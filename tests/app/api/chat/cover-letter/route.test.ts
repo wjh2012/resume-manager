@@ -14,6 +14,9 @@ vi.mock("@/lib/prisma", () => ({
     conversation: {
       findUnique: vi.fn(),
     },
+    careerNote: {
+      count: vi.fn(),
+    },
     message: {
       create: vi.fn(),
     },
@@ -46,10 +49,16 @@ vi.mock("@/lib/token-usage/quota", () => ({
   checkQuotaExceeded: vi.fn(),
 }))
 
+vi.mock("@/lib/ai/tools", () => ({
+  createReadDocumentTool: vi.fn().mockReturnValue({}),
+  createReadCareerNoteTool: vi.fn().mockReturnValue({}),
+  createSaveCareerNoteTool: vi.fn().mockReturnValue({}),
+  calculateMaxSteps: vi.fn().mockReturnValue({}),
+}))
+
 vi.mock("ai", () => ({
   streamText: vi.fn(),
   convertToModelMessages: vi.fn(),
-  embedMany: vi.fn().mockResolvedValue({ embeddings: [] }),
 }))
 
 // prisma.ts가 임베딩 관련 SDK를 import할 수 있으므로 사전 mock 처리
@@ -167,6 +176,7 @@ beforeEach(() => {
   mockPrisma.conversation.findUnique.mockResolvedValue(MOCK_CONVERSATION as never)
   mockPrisma.$transaction.mockResolvedValue([])
   mockPrisma.message.create.mockResolvedValue({ id: "msg-created" } as never)
+  ;(mockPrisma.careerNote.count as ReturnType<typeof vi.fn>).mockResolvedValue(0)
 
   mockGetLanguageModel.mockResolvedValue({ model: mockModel, isServerKey: false, provider: "openai", modelId: "gpt-4o" } as never)
   mockCheckQuotaExceeded.mockResolvedValue({ exceeded: false } as never)
@@ -429,7 +439,10 @@ describe("POST /api/chat/cover-letter", () => {
       // Assert
       expect(mockBuildContext).toHaveBeenCalledWith(
         VALID_USER_ID,
-        expect.objectContaining({ selectedDocumentIds: [VALID_DOC_ID] }),
+        expect.objectContaining({
+          selectedDocumentIds: [VALID_DOC_ID],
+          includeCareerNotes: true,
+        }),
       )
     })
   })

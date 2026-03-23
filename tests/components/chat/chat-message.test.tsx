@@ -8,6 +8,13 @@ vi.mock("react-markdown", () => ({
 
 vi.mock("remark-gfm", () => ({ default: {} }))
 
+vi.mock("ai", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("ai")>()
+  return {
+    ...actual,
+  }
+})
+
 import { ChatMessage } from "@/components/chat/chat-message"
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
@@ -85,8 +92,14 @@ describe("ChatMessage", () => {
     it("텍스트 타입이 아닌 파트만 있으면 null을 반환해야 한다", () => {
       const message: UIMessage = {
         id: "msg-no-text",
-        role: "user",
-        parts: [{ type: "tool-invocation" } as never],
+        role: "assistant",
+        parts: [{
+          type: "tool-readDocument" as "tool-readDocument",
+          toolCallId: "tc-1",
+          state: "output-available" as const,
+          input: {},
+          output: "result",
+        } as never],
       }
 
       const { container } = render(<ChatMessage message={message} />)

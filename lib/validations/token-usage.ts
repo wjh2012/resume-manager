@@ -3,7 +3,7 @@ import { z } from "zod"
 export const tokenUsageQuerySchema = z.object({
   cursor: z.string().uuid().optional(),
   limit: z.coerce.number().int().min(1).max(100).optional().default(50),
-  feature: z.enum(["COVER_LETTER", "INTERVIEW", "INSIGHT", "EMBEDDING"]).optional(),
+  feature: z.enum(["COVER_LETTER", "INTERVIEW", "INSIGHT", "DOCUMENT_SUMMARY", "CAREER_NOTE"]).optional(),
   startDate: z.coerce.date().optional(),
   endDate: z.coerce.date().optional(),
   tz: z.string().regex(/^[A-Za-z_/]+$/).optional().default("UTC"),
