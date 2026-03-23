@@ -18,12 +18,11 @@ export async function getSystemUsageSummary(startDate: Date, endDate: Date) {
       where: { createdAt: { gte: startDate, lte: endDate } },
       _sum: { totalTokens: true, estimatedCost: true },
     }),
-    prisma.tokenUsageLog
-      .groupBy({
-        by: ["userId"],
-        where: { createdAt: { gte: startDate, lte: endDate } },
-      })
-      .then((r) => r.length),
+    prisma.$queryRaw<[{ count: bigint }]>`
+      SELECT COUNT(DISTINCT user_id) as count
+      FROM token_usage_logs
+      WHERE created_at >= ${startDate} AND created_at <= ${endDate}
+    `.then((r) => Number(r[0].count)),
     prisma.$queryRaw<{ date: string; total_tokens: bigint; total_cost: string; count: bigint }[]>`
       SELECT
         DATE(created_at) as date,

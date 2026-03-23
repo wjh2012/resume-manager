@@ -34,8 +34,9 @@ describe("getSystemUsageSummary", () => {
       .mockResolvedValueOnce([
         { model: "gpt-4o", _sum: { totalTokens: 8000, estimatedCost: { toNumber: () => 0.4 } } },
       ] as unknown as Awaited<ReturnType<typeof mockGroupBy>>)
-      .mockResolvedValueOnce([{ userId: "u1" }] as unknown as Awaited<ReturnType<typeof mockGroupBy>>) // activeUsers
-    mockQueryRaw.mockResolvedValue([]) // daily
+    mockQueryRaw
+      .mockResolvedValueOnce([{ count: BigInt(1) }]) // activeUsers (COUNT DISTINCT)
+      .mockResolvedValueOnce([]) // daily
 
     const start = new Date("2026-01-01")
     const end = new Date("2026-01-31")
@@ -43,6 +44,7 @@ describe("getSystemUsageSummary", () => {
 
     expect(result.totalTokens).toBe(10000)
     expect(result.requestCount).toBe(20)
+    expect(result.activeUsers).toBe(1)
     expect(result.byFeature).toHaveLength(1)
     expect(result.byModel).toHaveLength(1)
   })
