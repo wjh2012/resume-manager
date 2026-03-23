@@ -89,7 +89,7 @@ describe("ChatMessage", () => {
       expect(container.firstChild).toBeNull()
     })
 
-    it("텍스트 타입이 아닌 파트만 있으면 null을 반환해야 한다", () => {
+    it("완료된 도구 파트만 있으면 도구 표시를 렌더링해야 한다", () => {
       const message: UIMessage = {
         id: "msg-no-text",
         role: "assistant",
@@ -99,6 +99,20 @@ describe("ChatMessage", () => {
           state: "output-available" as const,
           input: {},
           output: "result",
+        } as never],
+      }
+
+      const { container } = render(<ChatMessage message={message} />)
+
+      expect(container.firstChild).not.toBeNull()
+    })
+
+    it("도구가 아닌 알 수 없는 파트만 있으면 null을 반환해야 한다", () => {
+      const message: UIMessage = {
+        id: "msg-unknown",
+        role: "assistant",
+        parts: [{
+          type: "unknown-type" as never,
         } as never],
       }
 

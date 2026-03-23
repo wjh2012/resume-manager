@@ -23,6 +23,7 @@ describe("createReadDocumentTool", () => {
 
   it("허용된 문서의 전체 텍스트를 반환한다", async () => {
     mockFindFirst.mockResolvedValue({
+      title: "이력서",
       extractedText: "이력서 전체 텍스트 내용",
     } as never)
 
@@ -32,10 +33,10 @@ describe("createReadDocumentTool", () => {
       { messages: [], toolCallId: "tc-1" }
     )
 
-    expect(result).toBe("이력서 전체 텍스트 내용")
+    expect(result).toBe("[이력서]\n이력서 전체 텍스트 내용")
     expect(mockFindFirst).toHaveBeenCalledWith({
       where: { id: "doc-1", userId },
-      select: { extractedText: true },
+      select: { title: true, extractedText: true },
     })
   })
 
@@ -62,8 +63,9 @@ describe("createReadDocumentTool", () => {
     expect(result).toBe("문서를 찾을 수 없습니다.")
   })
 
-  it("extractedText가 null인 문서는 찾을 수 없음 메시지를 반환한다", async () => {
+  it("extractedText가 null인 문서는 빈 텍스트로 반환한다", async () => {
     mockFindFirst.mockResolvedValue({
+      title: "빈 문서",
       extractedText: null,
     } as never)
 
@@ -73,6 +75,6 @@ describe("createReadDocumentTool", () => {
       { messages: [], toolCallId: "tc-1" }
     )
 
-    expect(result).toBe("문서를 찾을 수 없습니다.")
+    expect(result).toBe("[빈 문서]\n")
   })
 })

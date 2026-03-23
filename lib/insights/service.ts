@@ -1,4 +1,4 @@
-import { generateObject } from "ai"
+import { generateText, Output } from "ai"
 import { z } from "zod"
 
 import { prisma } from "@/lib/prisma"
@@ -63,9 +63,9 @@ export async function extractInsights(userId: string, conversationId: string) {
 
   // AI 호출을 먼저 수행 — 실패해도 기존 인사이트 보존
   const { model, isServerKey, provider: aiProvider, modelId } = await getLanguageModel(userId)
-  const { object, usage } = await generateObject({
+  const { output, usage } = await generateText({
     model,
-    schema: insightObjectSchema,
+    output: Output.object({ schema: insightObjectSchema }),
     system: insightExtractionPrompt,
     prompt: messages.map((m) => `${m.role}: ${m.content}`).join("\n"),
   })
@@ -88,7 +88,7 @@ export async function extractInsights(userId: string, conversationId: string) {
   // 삭제 + 생성을 트랜잭션으로 원자적 처리
   const created = await prisma.$transaction([
     prisma.insight.deleteMany({ where: { conversationId, userId } }),
-    ...object.insights.map((insight) =>
+    ...output!.insights.map((insight) =>
       prisma.insight.create({
         data: {
           userId,

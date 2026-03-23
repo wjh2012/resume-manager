@@ -4,6 +4,23 @@
 
 ---
 
+## 2026-03-23 — 파이프라인 분기
+
+> Branch: `feat/chat-pipeline-branching`
+
+### Added
+- provider 기반 파이프라인 선택 (`selectPipeline`): OpenAI → multi-step, 그 외 → classification
+- classification 파이프라인: LLM 분류 → 서버 데이터 수집 → 대화 압축 → 응답 생성
+- 분류 스키마: 자소서용 (`coverLetterClassificationSchema`), 면접용 (`interviewClassificationSchema`)
+- 대화 압축 (`compressMessages`): 최근 4턴 유지, 이전 대화 LLM 요약
+- `lib/ai/pipeline/` 모듈 (`index`, `types`, `schema`, `classify`, `compress`, `classification`, `multi-step`)
+
+### Changed
+- 자소서/면접 채팅 route: `streamText` 직접 호출 → 파이프라인 핸들러로 위임
+- `maxDuration`: 60 → 120 (classification 파이프라인의 다단계 처리 대응)
+
+---
+
 ## 2026-03-23 — 채팅 컨텍스트 최적화
 
 > Branch: `feature/chat-context-optimization`

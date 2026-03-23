@@ -57,9 +57,19 @@ vi.mock("@/lib/ai/tools", () => ({
 }))
 
 vi.mock("ai", () => ({
-  streamText: vi.fn(),
   convertToModelMessages: vi.fn(),
 }))
+
+vi.mock("@/lib/ai/pipeline", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/ai/pipeline")>()
+  return {
+    ...actual,
+    selectPipeline: vi.fn().mockReturnValue("multi-step"),
+    handleMultiStep: vi.fn(),
+    handleClassification: vi.fn(),
+    coverLetterClassificationSchema: {},
+  }
+})
 
 // prisma.ts가 임베딩 관련 SDK를 import할 수 있으므로 사전 mock 처리
 vi.mock("@ai-sdk/openai", () => ({
@@ -74,7 +84,8 @@ import { prisma } from "@/lib/prisma"
 import { getLanguageModel, AiSettingsNotFoundError } from "@/lib/ai/provider"
 import { buildContext } from "@/lib/ai/context"
 import { buildCoverLetterSystemPrompt } from "@/lib/ai/prompts/cover-letter"
-import { streamText, convertToModelMessages } from "ai"
+import { convertToModelMessages } from "ai"
+import { handleMultiStep } from "@/lib/ai/pipeline"
 import { recordUsage } from "@/lib/token-usage/service"
 import { checkQuotaExceeded } from "@/lib/token-usage/quota"
 
@@ -85,8 +96,8 @@ const mockPrisma = vi.mocked(prisma)
 const mockGetLanguageModel = vi.mocked(getLanguageModel)
 const mockBuildContext = vi.mocked(buildContext)
 const mockBuildCoverLetterSystemPrompt = vi.mocked(buildCoverLetterSystemPrompt)
-const mockStreamText = vi.mocked(streamText)
 const mockConvertToModelMessages = vi.mocked(convertToModelMessages)
+const mockHandleMultiStep = vi.mocked(handleMultiStep)
 const mockRecordUsage = vi.mocked(recordUsage)
 const mockCheckQuotaExceeded = vi.mocked(checkQuotaExceeded)
 
@@ -151,11 +162,11 @@ function makeValidBody(overrides?: Partial<{
   }
 }
 
-// streamText mock에서 onFinish 콜백을 캡처하고 나중에 직접 호출하는 헬퍼
-function captureOnFinish(): { getOnFinish: () => ((args: { text: string; usage?: unknown }) => Promise<void>) | undefined } {
-  let capturedOnFinish: ((args: { text: string; usage?: unknown }) => Promise<void>) | undefined
-  mockStreamText.mockImplementation((opts: Parameters<typeof streamText>[0]) => {
-    capturedOnFinish = opts.onFinish as (args: { text: string; usage?: unknown }) => Promise<void>
+// handleMultiStep mock에서 onFinish 콜백을 캡처하고 나중에 직접 호출하는 헬퍼
+function captureOnFinish(): { getOnFinish: () => ((args: { text: string; usage?: unknown; steps?: unknown[] }) => Promise<void>) | undefined } {
+  let capturedOnFinish: ((args: { text: string; usage?: unknown; steps?: unknown[] }) => Promise<void>) | undefined
+  mockHandleMultiStep.mockImplementation((opts: { onFinish?: unknown }) => {
+    capturedOnFinish = opts.onFinish as (args: { text: string; usage?: unknown; steps?: unknown[] }) => Promise<void>
     return {
       toUIMessageStreamResponse: vi.fn().mockReturnValue(new Response("stream", { status: 200 })),
     } as never
@@ -185,7 +196,7 @@ beforeEach(() => {
   mockBuildCoverLetterSystemPrompt.mockReturnValue("시스템 프롬프트")
   mockConvertToModelMessages.mockResolvedValue([] as never)
 
-  mockStreamText.mockReturnValue({
+  mockHandleMultiStep.mockReturnValue({
     toUIMessageStreamResponse: vi.fn().mockReturnValue(new Response("stream", { status: 200 })),
   } as never)
 })
@@ -327,7 +338,7 @@ describe("POST /api/chat/cover-letter", () => {
       expect(onFinish).toBeDefined()
 
       // onFinish 콜백을 직접 실행
-      await onFinish!({ text: "AI 응답 내용입니다." })
+      await onFinish!({ text: "AI 응답 내용입니다.", steps: [] })
 
       // Assert — $transaction이 USER와 ASSISTANT 두 create 연산으로 호출되어야 함
       expect(mockPrisma.$transaction).toHaveBeenCalledOnce()
@@ -348,7 +359,7 @@ describe("POST /api/chat/cover-letter", () => {
       expect(onFinish).toBeDefined()
 
       // text가 빈 문자열 → ASSISTANT create는 포함되지 않아야 함
-      await onFinish!({ text: "" })
+      await onFinish!({ text: "", steps: [] })
 
       // Assert — USER create만 포함 (1개)
       expect(mockPrisma.$transaction).toHaveBeenCalledOnce()
@@ -375,7 +386,7 @@ describe("POST /api/chat/cover-letter", () => {
       expect(onFinish).toBeDefined()
 
       // lastMessage가 assistant → USER create는 포함되지 않아야 함
-      await onFinish!({ text: "새 AI 응답" })
+      await onFinish!({ text: "새 AI 응답", steps: [] })
 
       // Assert — ASSISTANT create만 포함 (1개)
       expect(mockPrisma.$transaction).toHaveBeenCalledOnce()
@@ -398,7 +409,7 @@ describe("POST /api/chat/cover-letter", () => {
       // Act
       await POST(request)
       const onFinish = getOnFinish()
-      await onFinish!({ text: "AI가 생성한 자기소개서 내용" })
+      await onFinish!({ text: "AI가 생성한 자기소개서 내용", steps: [] })
 
       // Assert — message.create가 USER와 ASSISTANT 데이터로 각각 호출되어야 함
       expect(mockPrisma.message.create).toHaveBeenCalledWith({
@@ -412,10 +423,10 @@ describe("POST /api/chat/cover-letter", () => {
 
   // ── 성공 경로 ─────────────────────────────────────────────────────────────
   describe("성공적으로 처리될 때", () => {
-    it("streamText.toUIMessageStreamResponse() 결과를 반환해야 한다", async () => {
+    it("handleMultiStep.toUIMessageStreamResponse() 결과를 반환해야 한다", async () => {
       // Arrange
       const mockStreamResponse = new Response("stream-data", { status: 200 })
-      mockStreamText.mockReturnValue({
+      mockHandleMultiStep.mockReturnValue({
         toUIMessageStreamResponse: vi.fn().mockReturnValue(mockStreamResponse),
       } as never)
       const request = makeRequest(makeValidBody())
