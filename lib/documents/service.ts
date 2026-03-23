@@ -29,7 +29,7 @@ interface UploadResult {
   fileSize: number
 }
 
-// 문서 업로드: 파싱 → 청크 분할 → DB 저장 → 임베딩
+// 문서 업로드: 파싱 → DB 저장
 export async function uploadDocument(
   userId: string,
   file: File,
