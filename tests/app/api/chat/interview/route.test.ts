@@ -41,12 +41,17 @@ vi.mock("@/lib/token-usage/quota", () => ({
 
 vi.mock("@/lib/ai/tools", () => ({
   createReadDocumentTool: vi.fn().mockReturnValue({}),
-  calculateMaxSteps: vi.fn().mockReturnValue({}),
 }))
 
 vi.mock("ai", () => ({
-  streamText: vi.fn(),
   convertToModelMessages: vi.fn(),
+}))
+
+vi.mock("@/lib/ai/pipeline", () => ({
+  selectPipeline: vi.fn().mockReturnValue("multi-step"),
+  handleMultiStep: vi.fn(),
+  handleClassification: vi.fn(),
+  interviewClassificationSchema: {},
 }))
 
 vi.mock("@ai-sdk/openai", () => ({
@@ -58,18 +63,20 @@ import { createClient } from "@/lib/supabase/server"
 import { prisma } from "@/lib/prisma"
 import { getLanguageModel, AiSettingsNotFoundError } from "@/lib/ai/provider"
 import { buildContext } from "@/lib/ai/context"
-import { streamText, convertToModelMessages } from "ai"
+import { convertToModelMessages } from "ai"
 import { recordUsage } from "@/lib/token-usage/service"
 import { checkQuotaExceeded } from "@/lib/token-usage/quota"
+import { selectPipeline, handleMultiStep } from "@/lib/ai/pipeline"
 
 const mockCreateClient = vi.mocked(createClient)
 const mockPrisma = vi.mocked(prisma)
 const mockGetLanguageModel = vi.mocked(getLanguageModel)
 const mockBuildContext = vi.mocked(buildContext)
-const mockStreamText = vi.mocked(streamText)
 const mockConvertToModelMessages = vi.mocked(convertToModelMessages)
 const mockRecordUsage = vi.mocked(recordUsage)
 const mockCheckQuotaExceeded = vi.mocked(checkQuotaExceeded)
+const mockSelectPipeline = vi.mocked(selectPipeline)
+const mockHandleMultiStep = vi.mocked(handleMultiStep)
 
 const mockModel = { modelId: "gpt-4o" }
 
@@ -120,7 +127,8 @@ beforeEach(() => {
   mockCheckQuotaExceeded.mockResolvedValue({ exceeded: false } as never)
   mockRecordUsage.mockResolvedValue(undefined as never)
   mockConvertToModelMessages.mockResolvedValue([])
-  mockStreamText.mockReturnValue(mockStreamResponse as never)
+  mockSelectPipeline.mockReturnValue("multi-step")
+  mockHandleMultiStep.mockReturnValue(mockStreamResponse as never)
 })
 
 describe("POST /api/chat/interview", () => {
@@ -145,9 +153,9 @@ describe("POST /api/chat/interview", () => {
     expect(response.status).toBe(404)
   })
 
-  it("정상 요청이면 streamText를 호출해야 한다", async () => {
+  it("정상 요청이면 handleMultiStep을 호출해야 한다", async () => {
     await POST(makeRequest(VALID_BODY))
-    expect(mockStreamText).toHaveBeenCalledOnce()
+    expect(mockHandleMultiStep).toHaveBeenCalledOnce()
   })
 
   it("buildContext를 selectedDocumentIds와 함께 호출해야 한다", async () => {
