@@ -113,7 +113,8 @@ step 수 5 근거: readDocument 2~3회 + saveCareerNote 1회 + 최종 응답 생
 | 업로드 시 청크/임베딩 로직 | `lib/documents/service.ts` |
 | `UploadResult`의 `chunkCount`, `embeddingSkipped` | `lib/documents/service.ts` |
 | `_count: { select: { chunks: true } }` | `lib/documents/service.ts` (listDocuments, getDocument 등) |
-| 청크 수 표시 UI | `components/documents/` 관련 컴포넌트 |
+| 청크 수 표시 UI | `components/documents/` 관련 컴포넌트, `app/(dashboard)/documents/[id]/page.tsx` |
+| `BuildContextOptions` 타입에서 제거된 필드 | `types/ai.ts` (query, limitToDocumentIds, includeInsights, maxChunks 제거) |
 | `buildContext`의 query, includeInsights, RAG 로직 | `lib/ai/context.ts` |
 | `includeInsights` 호출 | `app/api/chat/cover-letter/route.ts`, `app/api/chat/interview/route.ts` |
 
