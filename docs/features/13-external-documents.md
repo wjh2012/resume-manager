@@ -130,7 +130,7 @@ lib/validations/external-document.ts   — Zod 검증 스키마
 lib/ai/tools/read-external-document.ts — readExternalDocument 도구
 app/api/external-documents/
   route.ts                             — POST (생성)
-  [id]/route.ts                        — GET, PUT, DELETE
+  [id]/route.ts                        — GET, PATCH, DELETE
 app/(dashboard)/external-documents/
   page.tsx                             — 목록 페이지
   [id]/page.tsx                        — 상세 페이지
