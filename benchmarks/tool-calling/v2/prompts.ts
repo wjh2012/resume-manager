@@ -7,7 +7,7 @@
 
 import {
   MOCK_DOCUMENTS,
-} from "../v1/scenarios"
+} from "../../fixtures/mock-data"
 
 // v1의 공유 유틸리티 재사용
 export { buildContext, createTools, type PromptVariant } from "../v1/prompts"
