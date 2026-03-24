@@ -16,8 +16,8 @@ interface CreateCoverLetterData {
   title: string
   companyName: string
   position: string
-  jobPostingText?: string
   selectedDocumentIds?: string[]
+  selectedExternalDocumentIds?: string[]
 }
 
 interface UpdateCoverLetterData {
@@ -35,7 +35,6 @@ export async function createCoverLetter(userId: string, data: CreateCoverLetterD
         title: data.title,
         companyName: data.companyName,
         position: data.position,
-        jobPostingText: data.jobPostingText,
       },
       select: { id: true },
     })
@@ -64,6 +63,21 @@ export async function createCoverLetter(userId: string, data: CreateCoverLetterD
       })
     }
 
+    if (data.selectedExternalDocumentIds && data.selectedExternalDocumentIds.length > 0) {
+      const ownedExtCount = await tx.externalDocument.count({
+        where: { id: { in: data.selectedExternalDocumentIds }, userId },
+      })
+      if (ownedExtCount !== data.selectedExternalDocumentIds.length) {
+        throw new CoverLetterForbiddenError()
+      }
+      await tx.coverLetterExternalDoc.createMany({
+        data: data.selectedExternalDocumentIds.map((externalDocumentId) => ({
+          coverLetterId: coverLetter.id,
+          externalDocumentId,
+        })),
+      })
+    }
+
     return coverLetter
   })
 }
@@ -88,6 +102,13 @@ export async function getCoverLetter(id: string, userId: string) {
         select: {
           document: {
             select: { id: true, title: true, type: true },
+          },
+        },
+      },
+      coverLetterExternalDocs: {
+        select: {
+          externalDocument: {
+            select: { id: true, title: true, category: true, sourceType: true },
           },
         },
       },
@@ -183,6 +204,44 @@ export async function updateSelectedDocuments(
         data: documentIds.map((documentId) => ({
           coverLetterId,
           documentId,
+        })),
+      })
+    }
+  })
+}
+
+// 참고 외부 문서 선택 변경
+export async function updateSelectedExternalDocuments(
+  coverLetterId: string,
+  userId: string,
+  externalDocumentIds: string[],
+) {
+  return prisma.$transaction(async (tx) => {
+    const coverLetter = await tx.coverLetter.findUnique({
+      where: { id: coverLetterId },
+      select: { userId: true },
+    })
+    if (!coverLetter) throw new CoverLetterNotFoundError()
+    if (coverLetter.userId !== userId) throw new CoverLetterForbiddenError()
+
+    if (externalDocumentIds.length > 0) {
+      const ownedCount = await tx.externalDocument.count({
+        where: { id: { in: externalDocumentIds }, userId },
+      })
+      if (ownedCount !== externalDocumentIds.length) {
+        throw new CoverLetterForbiddenError()
+      }
+    }
+
+    await tx.coverLetterExternalDoc.deleteMany({
+      where: { coverLetterId },
+    })
+
+    if (externalDocumentIds.length > 0) {
+      await tx.coverLetterExternalDoc.createMany({
+        data: externalDocumentIds.map((externalDocumentId) => ({
+          coverLetterId,
+          externalDocumentId,
         })),
       })
     }

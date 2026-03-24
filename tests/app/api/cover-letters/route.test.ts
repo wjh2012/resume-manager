@@ -257,12 +257,12 @@ describe("POST /api/cover-letters", () => {
       expect(mockCreateCoverLetter).toHaveBeenCalledWith(VALID_USER_ID, VALID_BODY)
     })
 
-    it("선택적 필드(jobPostingText, selectedDocumentIds)를 포함해도 성공해야 한다", async () => {
+    it("선택적 필드(selectedDocumentIds, selectedExternalDocumentIds)를 포함해도 성공해야 한다", async () => {
       // Arrange
       const bodyWithOptionals = {
         ...VALID_BODY,
-        jobPostingText: "채용공고 내용입니다.",
         selectedDocumentIds: [VALID_DOC_ID],
+        selectedExternalDocumentIds: [VALID_DOC_ID],
       }
       const request = makeRequest(bodyWithOptionals)
 

@@ -31,3 +31,7 @@ export const coverLetterChatSchema = z.object({
 export const updateSelectedDocumentsSchema = z.object({
   documentIds: z.array(z.string().uuid()),
 })
+
+export const updateSelectedExternalDocumentsSchema = z.object({
+  externalDocumentIds: z.array(z.string().uuid()),
+})
