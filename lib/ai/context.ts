@@ -4,6 +4,7 @@ import type { BuildContextOptions } from "@/types/ai"
 interface BuildContextResult {
   context: string
   careerNoteCount: number
+  externalDocumentCount: number
 }
 
 export async function buildContext(
@@ -12,6 +13,7 @@ export async function buildContext(
 ): Promise<BuildContextResult> {
   const parts: string[] = []
   let careerNoteCount = 0
+  let externalDocumentCount = 0
 
   // 1. 선택 문서 요약
   if (opts.selectedDocumentIds && opts.selectedDocumentIds.length > 0) {
@@ -31,7 +33,24 @@ export async function buildContext(
     }
   }
 
-  // 2. 커리어노트 요약 (자소서 전용, 전체 확정 노트)
+  // 2. 외부 문서 요약
+  if (opts.selectedExternalDocumentIds && opts.selectedExternalDocumentIds.length > 0) {
+    const extDocs = await prisma.externalDocument.findMany({
+      where: { id: { in: opts.selectedExternalDocumentIds }, userId },
+      select: { id: true, title: true, category: true, summary: true },
+    })
+    externalDocumentCount = extDocs.length
+    for (const doc of extDocs) {
+      const label = doc.category ? `${doc.category}: ${doc.title}` : doc.title
+      if (doc.summary) {
+        parts.push(`[외부 문서: ${label} (ID: ${doc.id})]\n${doc.summary}`)
+      } else {
+        parts.push(`[외부 문서: ${label} (ID: ${doc.id})]\n요약 없음 — readExternalDocument 도구로 전문을 확인하세요`)
+      }
+    }
+  }
+
+  // 3. 커리어노트 요약 (자소서 전용, 전체 확정 노트)
   if (opts.includeCareerNotes) {
     const notes = await prisma.careerNote.findMany({
       where: { userId, status: "CONFIRMED" },
@@ -57,5 +76,6 @@ export async function buildContext(
   return {
     context: parts.join("\n\n---\n\n"),
     careerNoteCount,
+    externalDocumentCount,
   }
 }

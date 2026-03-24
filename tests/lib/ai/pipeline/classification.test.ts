@@ -9,6 +9,7 @@ vi.mock("ai", () => ({
 vi.mock("@/lib/prisma", () => ({
   prisma: {
     document: { findMany: vi.fn() },
+    externalDocument: { findMany: vi.fn() },
     careerNote: { findMany: vi.fn() },
   },
 }))
@@ -57,6 +58,7 @@ describe("handleClassification", () => {
       userId: "user-1",
       context: "요약",
       selectedDocumentIds: ["doc-1", "doc-2"],
+      selectedExternalDocumentIds: [],
       includeCareerNotes: false,
       schema: {} as never,
       onFinish: vi.fn(),
@@ -125,6 +127,7 @@ describe("handleClassification", () => {
       userId: "user-1",
       context: "",
       selectedDocumentIds: [],
+      selectedExternalDocumentIds: [],
       includeCareerNotes: true,
       schema: {} as never,
       onFinish: vi.fn(),
@@ -160,11 +163,57 @@ describe("handleClassification", () => {
       userId: "user-1",
       context: "",
       selectedDocumentIds: [],
+      selectedExternalDocumentIds: [],
       includeCareerNotes: false,
       schema: {} as never,
       onFinish: vi.fn(),
     })
 
     expect(prisma.careerNote.findMany).not.toHaveBeenCalled()
+  })
+
+  it("selectedExternalDocumentIds 범위 밖의 외부 문서는 조회하지 않는다", async () => {
+    mockClassify.mockResolvedValue({
+      classification: {
+        documentsToRead: [],
+        externalDocumentsToRead: ["ext-1", "ext-999"],
+        compareCareerNotes: false,
+        needsCompression: false,
+      },
+      usage: { inputTokens: 100, outputTokens: 20 },
+    })
+    vi.mocked(prisma.externalDocument.findMany).mockResolvedValue([
+      { id: "ext-1", title: "채용공고", content: "내용" },
+    ] as never)
+    mockStreamText.mockReturnValue({ toUIMessageStreamResponse: vi.fn() } as never)
+
+    await handleClassification({
+      model: {} as never,
+      system: "프롬프트",
+      modelMessages: [] as never,
+      userId: "user-1",
+      context: "",
+      selectedDocumentIds: [],
+      selectedExternalDocumentIds: ["ext-1"],
+      includeCareerNotes: false,
+      schema: {} as never,
+      onFinish: vi.fn(),
+    })
+
+    // ext-999는 selectedExternalDocumentIds에 없으므로 필터링됨 → ext-1만 조회
+    expect(prisma.externalDocument.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          id: { in: ["ext-1"] },
+          userId: "user-1",
+        },
+      })
+    )
+    // 시스템 프롬프트에 ext-1의 내용이 포함됨
+    expect(mockStreamText).toHaveBeenCalledWith(
+      expect.objectContaining({
+        system: expect.stringContaining("채용공고"),
+      })
+    )
   })
 })

@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/popover"
 import { useChatScroll } from "@/hooks/use-chat-scroll"
 import { ChatMessage, ChatInput, ChatLoading } from "@/components/chat"
+import type { ExternalDocumentItem } from "@/lib/external-documents/types"
 
 interface DocumentItem {
   id: string
@@ -39,6 +40,8 @@ interface CoverLetterChatProps {
   initialMessages: UIMessage[]
   documents: DocumentItem[]
   initialSelectedDocIds: string[]
+  externalDocuments: ExternalDocumentItem[]
+  initialSelectedExtDocIds: string[]
   onAppendToEditor: (text: string) => void
 }
 
@@ -55,10 +58,14 @@ export function CoverLetterChat({
   initialMessages,
   documents,
   initialSelectedDocIds,
+  externalDocuments,
+  initialSelectedExtDocIds,
   onAppendToEditor,
 }: CoverLetterChatProps) {
   const [selectedDocIds, setSelectedDocIds] = useState<string[]>(initialSelectedDocIds)
+  const [selectedExtDocIds, setSelectedExtDocIds] = useState<string[]>(initialSelectedExtDocIds)
   const [isUpdatingDocs, setIsUpdatingDocs] = useState(false)
+  const [isUpdatingExtDocs, setIsUpdatingExtDocs] = useState(false)
   const [input, setInput] = useState("")
   const [isExtracting, setIsExtracting] = useState(false)
   const [isExtractingCareerNotes, setIsExtractingCareerNotes] = useState(false)
@@ -175,37 +182,88 @@ export function CoverLetterChat({
     [selectedDocIds, coverLetterId],
   )
 
+  const handleExtDocToggle = useCallback(
+    async (docId: string) => {
+      const newIds = selectedExtDocIds.includes(docId)
+        ? selectedExtDocIds.filter((id) => id !== docId)
+        : [...selectedExtDocIds, docId]
+
+      setSelectedExtDocIds(newIds)
+      setIsUpdatingExtDocs(true)
+      try {
+        const res = await fetch(`/api/cover-letters/${coverLetterId}/external-documents`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ externalDocumentIds: newIds }),
+        })
+
+        if (!res.ok) throw new Error()
+      } catch {
+        setSelectedExtDocIds(selectedExtDocIds)
+        toast.error("외부 문서 변경에 실패했습니다.")
+      } finally {
+        setIsUpdatingExtDocs(false)
+      }
+    },
+    [selectedExtDocIds, coverLetterId],
+  )
+
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center justify-between border-b px-4 py-2">
         <h2 className="text-sm font-medium">AI 채팅</h2>
-        {documents.length > 0 && (
+        {(documents.length > 0 || externalDocuments.length > 0) && (
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="outline" size="sm" className="h-7 text-xs">
                 <FileText aria-hidden="true" className="mr-1.5 h-3.5 w-3.5" />
-                참고 문서 ({selectedDocIds.length})
+                참고 문서 ({selectedDocIds.length + selectedExtDocIds.length})
               </Button>
             </PopoverTrigger>
             <PopoverContent align="end" className="w-64 p-2">
-              <div className="space-y-1">
-                {documents.map((doc) => (
-                  <div
-                    key={doc.id}
-                    className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors hover:bg-accent"
-                  >
-                    <Checkbox
-                      id={`doc-${doc.id}`}
-                      checked={selectedDocIds.includes(doc.id)}
-                      onCheckedChange={() => handleDocToggle(doc.id)}
-                      disabled={isUpdatingDocs}
-                    />
-                    <label htmlFor={`doc-${doc.id}`} className="line-clamp-1 cursor-pointer">
-                      {doc.title}
-                    </label>
-                  </div>
-                ))}
-              </div>
+              {documents.length > 0 && (
+                <div className="space-y-1">
+                  <p className="px-2 py-1 text-xs font-medium text-muted-foreground">참고자료</p>
+                  {documents.map((doc) => (
+                    <div
+                      key={doc.id}
+                      className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors hover:bg-accent"
+                    >
+                      <Checkbox
+                        id={`doc-${doc.id}`}
+                        checked={selectedDocIds.includes(doc.id)}
+                        onCheckedChange={() => handleDocToggle(doc.id)}
+                        disabled={isUpdatingDocs}
+                      />
+                      <label htmlFor={`doc-${doc.id}`} className="line-clamp-1 cursor-pointer">
+                        {doc.title}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {externalDocuments.length > 0 && (
+                <div className="space-y-1">
+                  {documents.length > 0 && <div className="my-1 border-t" />}
+                  <p className="px-2 py-1 text-xs font-medium text-muted-foreground">외부 문서</p>
+                  {externalDocuments.map((doc) => (
+                    <div
+                      key={doc.id}
+                      className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors hover:bg-accent"
+                    >
+                      <Checkbox
+                        id={`ext-doc-${doc.id}`}
+                        checked={selectedExtDocIds.includes(doc.id)}
+                        onCheckedChange={() => handleExtDocToggle(doc.id)}
+                        disabled={isUpdatingExtDocs}
+                      />
+                      <label htmlFor={`ext-doc-${doc.id}`} className="line-clamp-1 cursor-pointer">
+                        {doc.title}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              )}
             </PopoverContent>
           </Popover>
         )}

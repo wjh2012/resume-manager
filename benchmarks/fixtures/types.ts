@@ -38,3 +38,8 @@ export interface MockCareerNote {
 }
 
 export type ConvMessage = { role: "user" | "assistant"; content: string }
+
+/** 벤치마크용 메시지 — ConvMessage 확장 (tool role 포함) */
+export type BenchmarkMessage =
+  | { role: "user" | "assistant"; content: string }
+  | { role: "tool"; toolCallId: string; content: string }

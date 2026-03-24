@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma"
 import { getLanguageModel, AiSettingsNotFoundError } from "@/lib/ai/provider"
 import { buildContext } from "@/lib/ai/context"
 import { buildInterviewSystemPrompt } from "@/lib/ai/prompts/interview"
-import { createReadDocumentTool } from "@/lib/ai/tools"
+import { createReadDocumentTool, createReadExternalDocumentTool } from "@/lib/ai/tools"
 import { interviewChatSchema } from "@/lib/validations/interview"
 import { recordUsage } from "@/lib/token-usage/service"
 import { checkQuotaExceeded } from "@/lib/token-usage/quota"
@@ -88,6 +88,13 @@ export async function POST(request: Request) {
     })
     const allowedDocIds = allowedDocs.map((d) => d.documentId)
 
+    // 허용된 외부 문서 ID 목록 조회
+    const allowedExtDocs = await prisma.interviewExternalDoc.findMany({
+      where: { interviewSessionId },
+      select: { externalDocumentId: true },
+    })
+    const allowedExternalDocIds = allowedExtDocs.map((d) => d.externalDocumentId)
+
     // 마지막 user 메시지 텍스트 추출
     const lastMessage = messages[messages.length - 1]
     const lastMessageContent =
@@ -107,9 +114,10 @@ export async function POST(request: Request) {
     }
 
     // 문서 요약 컨텍스트 + 모델 병렬 로드
-    const [{ context }, { model, isServerKey, provider: aiProvider, modelId }] = await Promise.all([
+    const [{ context, externalDocumentCount }, { model, isServerKey, provider: aiProvider, modelId }] = await Promise.all([
       buildContext(user.id, {
         selectedDocumentIds: allowedDocIds,
+        selectedExternalDocumentIds: allowedExternalDocIds,
       }),
       getLanguageModel(user.id),
     ])
@@ -135,9 +143,11 @@ export async function POST(request: Request) {
         model, system, modelMessages,
         tools: {
           readDocument: createReadDocumentTool(user.id, allowedDocIds),
+          readExternalDocument: createReadExternalDocumentTool(user.id, allowedExternalDocIds),
         },
         documentCount: allowedDocIds.length,
         careerNoteCount: 0,
+        externalDocumentCount,
         onFinish,
       })
       return result.toUIMessageStreamResponse()
@@ -147,6 +157,7 @@ export async function POST(request: Request) {
           model, system, modelMessages,
           userId: user.id, context,
           selectedDocumentIds: allowedDocIds,
+          selectedExternalDocumentIds: allowedExternalDocIds,
           includeCareerNotes: false,
           schema: interviewClassificationSchema,
           onFinish,
@@ -165,8 +176,12 @@ export async function POST(request: Request) {
         console.error("[interview classification fallback]", error)
         const result = handleMultiStep({
           model, system, modelMessages,
-          tools: { readDocument: createReadDocumentTool(user.id, allowedDocIds) },
+          tools: {
+            readDocument: createReadDocumentTool(user.id, allowedDocIds),
+            readExternalDocument: createReadExternalDocumentTool(user.id, allowedExternalDocIds),
+          },
           documentCount: allowedDocIds.length, careerNoteCount: 0,
+          externalDocumentCount,
           onFinish,
         })
         return result.toUIMessageStreamResponse()

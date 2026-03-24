@@ -10,6 +10,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { CoverLetterEditor } from "./cover-letter-editor"
 import { CoverLetterChat } from "./cover-letter-chat"
+import type { ExternalDocumentItem } from "@/lib/external-documents/types"
 
 const mobileMql =
   typeof window !== "undefined"
@@ -34,6 +35,8 @@ interface CoverLetterWorkspaceProps {
   initialMessages: UIMessage[]
   documents: DocumentItem[]
   selectedDocumentIds: string[]
+  externalDocuments: ExternalDocumentItem[]
+  selectedExternalDocumentIds: string[]
 }
 
 export function CoverLetterWorkspace({
@@ -43,6 +46,8 @@ export function CoverLetterWorkspace({
   initialMessages,
   documents,
   selectedDocumentIds,
+  externalDocuments,
+  selectedExternalDocumentIds,
 }: CoverLetterWorkspaceProps) {
   const [content, setContent] = useState(initialContent)
   const isMobile = useSyncExternalStore(
@@ -70,6 +75,8 @@ export function CoverLetterWorkspace({
       initialMessages={initialMessages}
       documents={documents}
       initialSelectedDocIds={selectedDocumentIds}
+      externalDocuments={externalDocuments}
+      initialSelectedExtDocIds={selectedExternalDocumentIds}
       onAppendToEditor={handleAppendToEditor}
     />
   )

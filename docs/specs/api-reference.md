@@ -29,6 +29,103 @@
 
 ---
 
+## 외부 문서 (External Documents)
+
+채용공고, JD 등 텍스트 형식의 외부 자료를 관리한다. 텍스트 직접 입력 또는 파일 업로드로 생성한다.
+
+### `POST /api/external-documents`
+
+외부 문서 생성. 텍스트 입력(`application/json`) 또는 파일 업로드(`multipart/form-data`) 두 가지 방식을 지원한다.
+
+**텍스트 입력 (`application/json`)**
+
+- **Body**:
+  ```json
+  {
+    "title": "네이버 백엔드 채용공고",
+    "category": "job_posting",
+    "content": "채용공고 전문..."
+  }
+  ```
+- **Response**: `201 Created`
+  ```json
+  {
+    "id": "uuid",
+    "title": "네이버 백엔드 채용공고",
+    "sourceType": "text"
+  }
+  ```
+
+**파일 업로드 (`multipart/form-data`)**
+
+- **Body**: `file` (File), `title` (string, optional), `category` (string, optional)
+- **처리 흐름**:
+  1. 파일 타입별 텍스트 추출 (unpdf / mammoth / 직접 읽기)
+  2. Supabase Storage에 파일 저장 (`external-documents/{userId}/{id}.ext`)
+  3. `ExternalDocument` DB 저장
+  4. AI 요약 비동기 생성
+- **Response**: `201 Created` — `{ "id": "uuid", "title": "...", "sourceType": "pdf" }`
+- **에러**: `400` (지원하지 않는 파일 형식), `413` (파일 크기 초과 10MB)
+
+> 요약(`summary`)은 비동기로 생성된다. 생성 직후에는 `null`일 수 있다.
+
+### `GET /api/external-documents`
+
+외부 문서 목록 조회 (로그인 사용자 소유 문서).
+
+- **Response**: `200 OK`
+  ```json
+  [
+    {
+      "id": "uuid",
+      "title": "네이버 백엔드 채용공고",
+      "category": "job_posting",
+      "sourceType": "text",
+      "summary": "네이버 백엔드 개발자 채용...",
+      "createdAt": "2026-03-16T00:00:00Z"
+    }
+  ]
+  ```
+
+### `GET /api/external-documents/[id]`
+
+외부 문서 상세 조회 (전체 텍스트 포함).
+
+- **Response**: `200 OK`
+  ```json
+  {
+    "id": "uuid",
+    "title": "네이버 백엔드 채용공고",
+    "category": "job_posting",
+    "sourceType": "text",
+    "fileType": null,
+    "originalUrl": null,
+    "fileSize": null,
+    "content": "채용공고 전문...",
+    "summary": "네이버 백엔드 개발자 채용...",
+    "createdAt": "2026-03-16T00:00:00Z",
+    "updatedAt": "2026-03-16T00:00:00Z"
+  }
+  ```
+- **에러**: `404` (존재하지 않거나 소유자 불일치)
+
+### `PATCH /api/external-documents/[id]`
+
+외부 문서 수정 (제목, 카테고리, 내용).
+
+- **Body**: `{ "title"?: "...", "category"?: "...", "content"?: "..." }` (모두 optional)
+- **Response**: `200 OK` — 수정된 외부 문서
+- **에러**: `403` (소유자 불일치), `404` (존재하지 않음)
+
+### `DELETE /api/external-documents/[id]`
+
+외부 문서 삭제 (파일 업로드 시 Storage 파일도 함께 삭제).
+
+- **Response**: `200 OK` — `{ "success": true }`
+- **에러**: `403` (소유자 불일치), `404` (존재하지 않음)
+
+---
+
 ## 문서 (Documents)
 
 ### `POST /api/documents`
@@ -304,7 +401,8 @@
     "title": "네이버 백엔드 자기소개서",
     "companyName": "네이버",
     "position": "백엔드 개발자",
-    "jobPostingText": "채용공고 전문..."
+    "selectedDocumentIds": ["uuid"],
+    "selectedExternalDocumentIds": ["uuid"]
   }
   ```
 - **Response**: `201 Created`
@@ -332,6 +430,19 @@
   }
   ```
 - **Response**: `200 OK`
+
+### `PATCH /api/cover-letters/[id]/external-documents`
+
+자기소개서에 연결된 외부 문서(채용공고 등) 목록 업데이트.
+
+- **Body**:
+  ```json
+  {
+    "externalDocumentIds": ["uuid", "uuid"]
+  }
+  ```
+- **Response**: `200 OK` — `{ "success": true }`
+- **에러**: `403` (소유자 불일치), `404` (자기소개서 없음)
 
 ---
 

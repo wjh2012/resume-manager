@@ -8,6 +8,7 @@ interface MultiStepParams {
   tools: Parameters<typeof streamText>[0]["tools"]
   documentCount: number
   careerNoteCount: number
+  externalDocumentCount: number
   onFinish: Parameters<typeof streamText>[0]["onFinish"]
 }
 
@@ -17,7 +18,7 @@ export function handleMultiStep(params: MultiStepParams) {
     system: params.system,
     messages: params.modelMessages ?? [],
     tools: params.tools,
-    stopWhen: calculateMaxSteps(params.documentCount, params.careerNoteCount),
+    stopWhen: calculateMaxSteps(params.documentCount, params.careerNoteCount, params.externalDocumentCount),
     onFinish: params.onFinish,
   })
 }

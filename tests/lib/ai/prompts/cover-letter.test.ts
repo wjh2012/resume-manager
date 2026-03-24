@@ -32,49 +32,31 @@ describe("buildCoverLetterSystemPrompt()", () => {
     })
   })
 
-  describe("jobPostingText 없을 때", () => {
+  describe("도구 안내", () => {
+    it("readExternalDocument 도구 안내가 포함되어야 한다", () => {
+      const result = buildCoverLetterSystemPrompt(baseParams)
+
+      expect(result).toContain("readExternalDocument")
+    })
+
+    it("readDocument 도구 안내가 포함되어야 한다", () => {
+      const result = buildCoverLetterSystemPrompt(baseParams)
+
+      expect(result).toContain("readDocument")
+    })
+
+    it("readCareerNote 도구 안내가 포함되어야 한다", () => {
+      const result = buildCoverLetterSystemPrompt(baseParams)
+
+      expect(result).toContain("readCareerNote")
+    })
+  })
+
+  describe("jobPostingText 파라미터 제거 확인", () => {
     it("채용공고 섹션이 없어야 한다", () => {
       const result = buildCoverLetterSystemPrompt(baseParams)
 
       expect(result).not.toContain("[채용공고]")
-    })
-
-    it("jobPostingText를 명시적으로 undefined로 전달해도 채용공고 섹션이 없어야 한다", () => {
-      const result = buildCoverLetterSystemPrompt({
-        ...baseParams,
-        jobPostingText: undefined,
-      })
-
-      expect(result).not.toContain("[채용공고]")
-    })
-  })
-
-  describe("jobPostingText 있을 때", () => {
-    it("채용공고 섹션 헤더가 포함되어야 한다", () => {
-      const result = buildCoverLetterSystemPrompt({
-        ...baseParams,
-        jobPostingText: "Node.js 3년 이상 경력자 우대",
-      })
-
-      expect(result).toContain("[채용공고]")
-    })
-
-    it("채용공고 본문이 결과에 포함되어야 한다", () => {
-      const result = buildCoverLetterSystemPrompt({
-        ...baseParams,
-        jobPostingText: "Node.js 3년 이상 경력자 우대",
-      })
-
-      expect(result).toContain("Node.js 3년 이상 경력자 우대")
-    })
-
-    it("채용공고가 참고자료 섹션보다 앞에 위치해야 한다", () => {
-      const result = buildCoverLetterSystemPrompt({
-        ...baseParams,
-        jobPostingText: "우대 조건: TypeScript",
-      })
-
-      expect(result.indexOf("[채용공고]")).toBeLessThan(result.indexOf("[참고자료]"))
     })
   })
 

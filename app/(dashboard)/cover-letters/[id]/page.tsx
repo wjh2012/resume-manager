@@ -3,6 +3,7 @@ import type { UIMessage } from "ai"
 import { getAuthUser } from "@/lib/supabase/user"
 import { getCoverLetter } from "@/lib/cover-letters/service"
 import { listDocuments } from "@/lib/documents/service"
+import { listExternalDocuments } from "@/lib/external-documents/service"
 import { CoverLetterWorkspace } from "@/components/cover-letters/cover-letter-workspace"
 
 function toUIMessages(
@@ -25,9 +26,10 @@ export default async function CoverLetterWorkspacePage({
   if (!user) redirect("/login")
 
   const { id } = await params
-  const [coverLetter, documents] = await Promise.all([
+  const [coverLetter, documents, externalDocuments] = await Promise.all([
     getCoverLetter(id, user.id),
     listDocuments(user.id),
+    listExternalDocuments(user.id),
   ])
 
   if (!coverLetter) notFound()
@@ -44,6 +46,17 @@ export default async function CoverLetterWorkspacePage({
     (cld) => cld.document.id,
   )
 
+  const serializedExtDocs = externalDocuments.map((doc) => ({
+    id: doc.id,
+    title: doc.title,
+    category: doc.category,
+    sourceType: doc.sourceType,
+  }))
+
+  const selectedExternalDocumentIds = coverLetter.coverLetterExternalDocs.map(
+    (cled) => cled.externalDocument.id,
+  )
+
   const initialMessages = toUIMessages(conversation.messages)
 
   // -m-6으로 부모 p-6 padding을 상쇄, spacing.12 = p-6 상하 합산(3rem)
@@ -56,6 +69,8 @@ export default async function CoverLetterWorkspacePage({
         initialMessages={initialMessages}
         documents={serializedDocs}
         selectedDocumentIds={selectedDocumentIds}
+        externalDocuments={serializedExtDocs}
+        selectedExternalDocumentIds={selectedExternalDocumentIds}
       />
     </div>
   )

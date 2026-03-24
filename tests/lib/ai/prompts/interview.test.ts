@@ -125,4 +125,22 @@ describe("buildInterviewSystemPrompt()", () => {
       expect(result.indexOf("[참고자료]")).toBeLessThan(result.indexOf(baseContext))
     })
   })
+
+  describe("도구 안내", () => {
+    it("readExternalDocument 도구 안내가 포함되어야 한다", () => {
+      const result = buildInterviewSystemPrompt({
+        context: baseContext,
+      })
+
+      expect(result).toContain("readExternalDocument")
+    })
+
+    it("readDocument 도구 안내가 포함되어야 한다", () => {
+      const result = buildInterviewSystemPrompt({
+        context: baseContext,
+      })
+
+      expect(result).toContain("readDocument")
+    })
+  })
 })

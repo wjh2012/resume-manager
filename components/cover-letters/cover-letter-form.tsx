@@ -8,8 +8,9 @@ import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Badge } from "@/components/ui/badge"
+import type { ExternalDocumentItem } from "@/lib/external-documents/types"
 
 interface DocumentItem {
   id: string
@@ -20,16 +21,24 @@ interface DocumentItem {
 
 interface CoverLetterFormProps {
   documents: DocumentItem[]
+  externalDocuments: ExternalDocumentItem[]
 }
 
-export function CoverLetterForm({ documents }: CoverLetterFormProps) {
+export function CoverLetterForm({ documents, externalDocuments }: CoverLetterFormProps) {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [selectedDocIds, setSelectedDocIds] = useState<string[]>([])
+  const [selectedExtDocIds, setSelectedExtDocIds] = useState<string[]>([])
 
   const toggleDoc = (id: string) => {
     setSelectedDocIds((prev) =>
+      prev.includes(id) ? prev.filter((d) => d !== id) : [...prev, id],
+    )
+  }
+
+  const toggleExtDoc = (id: string) => {
+    setSelectedExtDocIds((prev) =>
       prev.includes(id) ? prev.filter((d) => d !== id) : [...prev, id],
     )
   }
@@ -42,7 +51,6 @@ export function CoverLetterForm({ documents }: CoverLetterFormProps) {
     const title = (formData.get("title") as string)?.trim()
     const companyName = (formData.get("companyName") as string)?.trim()
     const position = (formData.get("position") as string)?.trim()
-    const jobPostingText = (formData.get("jobPostingText") as string)?.trim()
 
     const newErrors: Record<string, string> = {}
     if (!title) newErrors.title = "제목을 입력해주세요."
@@ -64,8 +72,8 @@ export function CoverLetterForm({ documents }: CoverLetterFormProps) {
           title,
           companyName,
           position,
-          jobPostingText: jobPostingText || undefined,
           selectedDocumentIds: selectedDocIds.length > 0 ? selectedDocIds : undefined,
+          selectedExternalDocumentIds: selectedExtDocIds.length > 0 ? selectedExtDocIds : undefined,
         }),
       })
 
@@ -138,19 +146,6 @@ export function CoverLetterForm({ documents }: CoverLetterFormProps) {
         </div>
       </div>
 
-      <div className="space-y-2">
-        <label htmlFor="jobPostingText" className="text-sm font-medium">
-          채용공고 (선택)
-        </label>
-        <Textarea
-          id="jobPostingText"
-          name="jobPostingText"
-          placeholder="채용공고 내용을 붙여넣으면 AI가 맞춤 자기소개서를 작성하는데 참고합니다."
-          rows={6}
-          disabled={isSubmitting}
-        />
-      </div>
-
       {documents.length > 0 && (
         <div className="space-y-3">
           <label className="text-sm font-medium">참고 문서 (선택)</label>
@@ -174,6 +169,44 @@ export function CoverLetterForm({ documents }: CoverLetterFormProps) {
                     <span className="text-muted-foreground ml-1 text-xs">
                       (요약 없음)
                     </span>
+                  )}
+                </span>
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {externalDocuments.length > 0 && (
+        <div className="space-y-3">
+          <label className="text-sm font-medium">외부 문서 (선택)</label>
+          <p className="text-muted-foreground text-sm">
+            채용공고, 기업 정보 등 외부 문서를 선택하면 AI가 참고합니다.
+          </p>
+          <div className="space-y-2">
+            {externalDocuments.map((doc) => (
+              <label
+                key={doc.id}
+                className="flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-colors hover:bg-accent"
+              >
+                <Checkbox
+                  checked={selectedExtDocIds.includes(doc.id)}
+                  onCheckedChange={() => toggleExtDoc(doc.id)}
+                  disabled={isSubmitting}
+                />
+                <span className="flex flex-1 items-center gap-2 text-sm">
+                  <span className="flex-1">
+                    {doc.title}
+                    {!doc.summary && (
+                      <span className="text-muted-foreground ml-1 text-xs">
+                        (요약 없음)
+                      </span>
+                    )}
+                  </span>
+                  {doc.category && (
+                    <Badge variant="outline" className="text-xs">
+                      {doc.category}
+                    </Badge>
                   )}
                 </span>
               </label>
