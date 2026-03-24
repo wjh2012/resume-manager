@@ -1,3 +1,4 @@
+import { pathToFileURL } from "node:url";
 import type { ProviderName } from "./providers/types";
 import { ALL_PERSONAS } from "../fixtures/mock-data";
 
@@ -58,7 +59,7 @@ export function validatePersonas(personas: string[]): string[] {
 }
 
 export async function loadConfig(configPath: string): Promise<BenchmarkConfig> {
-  const mod = await import(configPath);
+  const mod = await import(pathToFileURL(configPath).href);
   const config = mod.default;
 
   if (!config || typeof config !== "object") {
