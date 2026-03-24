@@ -66,14 +66,18 @@ async function main() {
   const personas = validatePersonas(config.personas);
 
   // Suite 목록 resolve
-  const suiteNames = config.suites === "all"
-    ? Object.keys(SUITES)
-    : Array.isArray(config.suites) ? config.suites : [config.suites];
+  const suitesValue = config.suites;
+  const suiteNames =
+    suitesValue === "all" || (Array.isArray(suitesValue) && suitesValue.includes("all" as never))
+      ? Object.keys(SUITES)
+      : Array.isArray(suitesValue) ? suitesValue : [suitesValue];
 
   // Providers 필터 resolve
-  const allowedProviders = !config.providers || config.providers === "all"
-    ? null // 제한 없음
-    : new Set(Array.isArray(config.providers) ? config.providers : [config.providers]);
+  const providersValue = config.providers;
+  const allowedProviders =
+    !providersValue || providersValue === "all" || (Array.isArray(providersValue) && providersValue.includes("all" as never))
+      ? null // 제한 없음
+      : new Set(Array.isArray(providersValue) ? providersValue : [providersValue]);
 
   // Models resolve: 명시된 모델이 없으면, 허용된 provider들의 기본 모델 사용
   let models = config.models;

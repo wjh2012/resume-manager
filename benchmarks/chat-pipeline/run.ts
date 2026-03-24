@@ -344,6 +344,7 @@ export async function runChatPipeline(
       timestamp,
       totalRuns: activeScenarios.length,
       failedRuns,
+      persona: { id: personaId },
     },
     results,
     cost,

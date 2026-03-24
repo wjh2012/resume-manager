@@ -64,21 +64,17 @@ export async function loadConfig(configPath: string): Promise<BenchmarkConfig> {
 
   const errors: string[] = [];
 
-  if (!Array.isArray(config.models) && config.models !== undefined) {
-    errors.push("models must be an array of strings");
+  if (!Array.isArray(config.models)) {
+    errors.push("models is required and must be an array of strings");
   }
-  if (!Array.isArray(config.personas) && config.personas !== undefined) {
-    errors.push("personas must be an array of strings");
+  if (!Array.isArray(config.personas)) {
+    errors.push("personas is required and must be an array of strings");
   }
-  if (typeof config.batch !== "boolean" && config.batch !== undefined) {
-    errors.push("batch must be a boolean");
+  if (typeof config.batch !== "boolean") {
+    errors.push("batch is required and must be a boolean");
   }
-  if (
-    config.suites !== "all" &&
-    !Array.isArray(config.suites) &&
-    config.suites !== undefined
-  ) {
-    errors.push('suites must be "all" or an array');
+  if (config.suites !== "all" && !Array.isArray(config.suites)) {
+    errors.push('suites is required and must be "all" or an array');
   }
 
   if (errors.length > 0) {
