@@ -26,18 +26,12 @@ import {
 } from "@/components/ui/popover"
 import { useChatScroll } from "@/hooks/use-chat-scroll"
 import { ChatMessage, ChatInput, ChatLoading } from "@/components/chat"
+import type { ExternalDocumentItem } from "@/lib/external-documents/types"
 
 interface DocumentItem {
   id: string
   title: string
   type: string
-}
-
-interface ExternalDocumentItem {
-  id: string
-  title: string
-  category: string
-  sourceType: string
 }
 
 interface CoverLetterChatProps {

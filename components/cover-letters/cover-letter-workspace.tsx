@@ -10,6 +10,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { CoverLetterEditor } from "./cover-letter-editor"
 import { CoverLetterChat } from "./cover-letter-chat"
+import type { ExternalDocumentItem } from "@/lib/external-documents/types"
 
 const mobileMql =
   typeof window !== "undefined"
@@ -25,13 +26,6 @@ interface DocumentItem {
   id: string
   title: string
   type: string
-}
-
-interface ExternalDocumentItem {
-  id: string
-  title: string
-  category: string
-  sourceType: string
 }
 
 interface CoverLetterWorkspaceProps {

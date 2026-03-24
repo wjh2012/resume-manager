@@ -10,19 +10,12 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
+import type { ExternalDocumentItem } from "@/lib/external-documents/types"
 
 interface DocumentItem {
   id: string
   title: string
   type: string
-  summary: string | null
-}
-
-interface ExternalDocumentItem {
-  id: string
-  title: string
-  category: string
-  sourceType: string
   summary: string | null
 }
 
