@@ -12,7 +12,8 @@
     "postinstall": "prisma generate",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "bench": "tsx benchmarks/run.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.58",
@@ -55,7 +56,9 @@
     "seed": "npx tsx prisma/seed.ts"
   },
   "devDependencies": {
+    "@anthropic-ai/sdk": "^0.80.0",
     "@eslint/eslintrc": "^3",
+    "@google/genai": "^1.46.0",
     "@tailwindcss/postcss": "^4.1.18",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
@@ -68,6 +71,8 @@
     "eslint": "^9.39.2",
     "eslint-config-next": "16.1.6",
     "jsdom": "^29.0.0",
+    "openai": "^6.32.0",
+    "p-limit": "^7.3.0",
     "postcss": "^8",
     "prettier": "^3.8.1",
     "prettier-plugin-tailwindcss": "^0.7.2",
