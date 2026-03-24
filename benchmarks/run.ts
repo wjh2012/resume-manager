@@ -1,6 +1,16 @@
 import "dotenv/config";
-import { parseArgs, openaiProvider, anthropicProvider, googleProvider } from "./lib";
-import type { BenchmarkProvider } from "./lib";
+import * as path from "node:path";
+import {
+  parseArgs,
+  resolveProvider,
+  mergeWithCli,
+  validatePersonas,
+  loadConfig,
+  openaiProvider,
+  anthropicProvider,
+  googleProvider,
+} from "./lib";
+import type { BenchmarkProvider, BenchmarkConfig, CliOverrides } from "./lib";
 import { runToolCalling } from "./tool-calling/run";
 import { runChatPipeline } from "./chat-pipeline/run";
 
@@ -10,22 +20,72 @@ const PROVIDERS: Record<string, BenchmarkProvider> = {
   google: googleProvider,
 };
 
-const SUITES: Record<string, (provider: BenchmarkProvider, model: string, batch: boolean) => Promise<unknown>> = {
+const SUITES: Record<string, (provider: BenchmarkProvider, model: string, batch: boolean, personaId: string) => Promise<unknown>> = {
   "tool-calling": runToolCalling,
   "chat-pipeline": runChatPipeline,
 };
 
+const DEFAULT_MODELS: Record<string, string> = {
+  openai: "gpt-5.4-nano",
+  anthropic: "claude-haiku-4-5-20251001",
+  google: "gemini-3.1-flash-lite-preview",
+};
+
 async function main() {
-  const opts = parseArgs(process.argv.slice(2));
+  const cliOpts = parseArgs(process.argv.slice(2));
 
-  const providerNames = opts.provider === "all"
-    ? Object.keys(PROVIDERS)
-    : [opts.provider];
+  // Config 로드 + CLI 머지
+  let config: BenchmarkConfig;
 
-  const suiteNames = opts.suite === "all"
+  if (cliOpts.configPath) {
+    const configPath = path.resolve(cliOpts.configPath);
+    const fileConfig = await loadConfig(configPath);
+
+    // CLI에서 명시적으로 설정된 값만 override로 전달
+    const argv = process.argv;
+    const overrides: CliOverrides = {};
+    if (argv.includes("--suite")) overrides.suites = cliOpts.suites as BenchmarkConfig["suites"];
+    if (argv.includes("--provider")) overrides.providers = cliOpts.providers as BenchmarkConfig["providers"];
+    if (argv.includes("--model")) overrides.models = cliOpts.models;
+    if (argv.includes("--persona")) overrides.personas = cliOpts.personas;
+    if (argv.includes("--batch")) overrides.batch = cliOpts.batch;
+
+    config = mergeWithCli(fileConfig, overrides);
+  } else {
+    // config 없이 CLI만 사용
+    config = {
+      suites: cliOpts.suites as BenchmarkConfig["suites"],
+      providers: cliOpts.providers as BenchmarkConfig["providers"],
+      models: cliOpts.models,
+      personas: cliOpts.personas.length > 0 ? cliOpts.personas : ["sd-1"],
+      batch: cliOpts.batch,
+    };
+  }
+
+  // 페르소나 유효성 검증 + "all" 확장
+  const personas = validatePersonas(config.personas);
+
+  // Suite 목록 resolve
+  const suiteNames = config.suites === "all"
     ? Object.keys(SUITES)
-    : [opts.suite];
+    : Array.isArray(config.suites) ? config.suites : [config.suites];
 
+  // Providers 필터 resolve
+  const allowedProviders = !config.providers || config.providers === "all"
+    ? null // 제한 없음
+    : new Set(Array.isArray(config.providers) ? config.providers : [config.providers]);
+
+  // Models resolve: 명시된 모델이 없으면, 허용된 provider들의 기본 모델 사용
+  let models = config.models;
+  if (models.length === 0) {
+    if (allowedProviders) {
+      models = [...allowedProviders].map((p) => DEFAULT_MODELS[p]).filter(Boolean);
+    } else {
+      models = Object.values(DEFAULT_MODELS);
+    }
+  }
+
+  // 실행 루프: suite × model × persona
   for (const suiteName of suiteNames) {
     const suite = SUITES[suiteName];
     if (!suite) {
@@ -33,26 +93,29 @@ async function main() {
       process.exit(1);
     }
 
-    for (const providerName of providerNames) {
+    for (const model of models) {
+      const providerName = resolveProvider(model);
+      if (!providerName) {
+        console.warn(`⚠ Unknown model prefix, skipping: ${model}`);
+        continue;
+      }
+
+      if (allowedProviders && !allowedProviders.has(providerName)) {
+        console.warn(`⚠ Provider "${providerName}" not in allowed list, skipping model: ${model}`);
+        continue;
+      }
+
       const provider = PROVIDERS[providerName];
       if (!provider) {
         console.error(`Unknown provider: ${providerName}`);
-        process.exit(1);
+        continue;
       }
 
-      const model = opts.model ?? getDefaultModel(providerName);
-      console.log(`\n▶ Running ${suiteName} with ${providerName}/${model} (${opts.batch ? "batch" : "realtime"})\n`);
-      await suite(provider, model, opts.batch);
+      for (const personaId of personas) {
+        console.log(`\n▶ Running ${suiteName} | ${providerName}/${model} | persona: ${personaId} | ${config.batch ? "batch" : "realtime"}\n`);
+        await suite(provider, model, config.batch, personaId);
+      }
     }
-  }
-}
-
-function getDefaultModel(provider: string): string {
-  switch (provider) {
-    case "openai": return "gpt-5.4-nano";
-    case "anthropic": return "claude-haiku-4-5-20251001";
-    case "google": return "gemini-3.1-flash-lite-preview";
-    default: throw new Error(`Unknown provider: ${provider}`);
   }
 }
 
