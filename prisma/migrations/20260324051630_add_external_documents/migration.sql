@@ -54,7 +54,7 @@ DECLARE
   new_ext_id UUID;
 BEGIN
   FOR r IN
-    SELECT "id" AS cover_letter_id, "user_id", "company_name", "job_posting_text"
+    SELECT "id" AS cover_letter_id, "user_id", "company_name", "job_posting_text", "created_at"
     FROM "cover_letters"
     WHERE "job_posting_text" IS NOT NULL AND "job_posting_text" != ''
   LOOP
@@ -68,7 +68,7 @@ BEGIN
       '채용공고',
       'text',
       r."job_posting_text",
-      NOW(),
+      r."created_at",
       NOW()
     );
 
