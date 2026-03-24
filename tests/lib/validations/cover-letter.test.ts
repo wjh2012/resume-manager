@@ -23,13 +23,13 @@ describe("createCoverLetterSchema", () => {
       expect(result.success).toBe(true)
     })
 
-    it("선택 필드(jobPostingText, selectedDocumentIds)가 포함되어도 통과해야 한다", () => {
+    it("선택 필드(selectedDocumentIds, selectedExternalDocumentIds)가 포함되어도 통과해야 한다", () => {
       const result = createCoverLetterSchema.safeParse({
         title: "네이버 자기소개서",
         companyName: "네이버",
         position: "프론트엔드 개발자",
-        jobPostingText: "서울 소재 IT 기업에서 프론트엔드 개발자를 모집합니다.",
         selectedDocumentIds: [VALID_UUID, VALID_UUID_2],
+        selectedExternalDocumentIds: [VALID_UUID],
       })
       expect(result.success).toBe(true)
     })
@@ -53,12 +53,12 @@ describe("createCoverLetterSchema", () => {
       expect(result.success).toBe(true)
     })
 
-    it("jobPostingText가 정확히 10000자이면 통과해야 한다", () => {
+    it("selectedExternalDocumentIds가 빈 배열이어도 통과해야 한다", () => {
       const result = createCoverLetterSchema.safeParse({
         title: "제목",
         companyName: "회사",
         position: "직무",
-        jobPostingText: "가".repeat(10000),
+        selectedExternalDocumentIds: [],
       })
       expect(result.success).toBe(true)
     })
@@ -171,18 +171,14 @@ describe("createCoverLetterSchema", () => {
       }
     })
 
-    it("jobPostingText가 10001자이면 실패해야 한다", () => {
+    it("selectedExternalDocumentIds 항목이 유효하지 않은 UUID이면 실패해야 한다", () => {
       const result = createCoverLetterSchema.safeParse({
         title: "제목",
         companyName: "카카오",
         position: "개발자",
-        jobPostingText: "가".repeat(10001),
+        selectedExternalDocumentIds: ["not-a-uuid"],
       })
       expect(result.success).toBe(false)
-      if (!result.success) {
-        const messages = result.error.issues.map((i) => i.message)
-        expect(messages).toContain("채용공고는 10,000자 이하로 입력해주세요.")
-      }
     })
   })
 
