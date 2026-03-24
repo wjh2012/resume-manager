@@ -58,7 +58,7 @@ interface ToolCallRecord {
   stepIndex: number
 }
 
-function judgePass(
+export function judgePass(
   calls: ToolCallRecord[],
   expected: ToolCallExpectation
 ): boolean {
@@ -120,7 +120,7 @@ const PROPOSAL_PATTERNS: Record<string, RegExp[]> = {
   ],
 }
 
-function detectProposal(responseText: string, expectedTools: string[]): boolean {
+export function detectProposal(responseText: string, expectedTools: string[]): boolean {
   if (expectedTools.length === 0) return false
   for (const toolName of expectedTools) {
     const patterns = PROPOSAL_PATTERNS[toolName]
@@ -134,7 +134,7 @@ function detectProposal(responseText: string, expectedTools: string[]): boolean 
 // 단일 run 실행
 // ---------------------------------------------------------------------------
 
-function extractCalls(steps: any[]) {
+export function extractCalls(steps: any[]) {
   const records: ToolCallRecord[] = []
   const strings: string[] = []
   for (let i = 0; i < steps.length; i++) {
@@ -147,7 +147,7 @@ function extractCalls(steps: any[]) {
   return { records, strings }
 }
 
-function sumTokens(steps: any[]) {
+export function sumTokens(steps: any[]) {
   let input = 0
   let output = 0
   for (const step of steps) {
@@ -157,7 +157,7 @@ function sumTokens(steps: any[]) {
   return { input, output }
 }
 
-async function runSingle(
+export async function runSingle(
   model: LanguageModel,
   modelId: string,
   scenario: ToolCallingScenario,
@@ -264,7 +264,7 @@ async function runSingle(
 // 재시도 래퍼 (1회)
 // ---------------------------------------------------------------------------
 
-async function runWithRetry(
+export async function runWithRetry(
   model: LanguageModel,
   modelId: string,
   scenario: ToolCallingScenario,
