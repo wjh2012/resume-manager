@@ -15,10 +15,10 @@
 
 ```
 benchmarks/
-├── _archive/                    # 기존 코드 보존
-│   ├── chat-pipeline/v1/
-│   ├── tool-calling/v1/
-│   └── tool-calling/v2/
+├── _archive/                    # 기존 코드+결과 보존 (디렉토리 통째로 이동)
+│   ├── chat-pipeline/v1/        # 코드 + results/ + report.md 포함
+│   ├── tool-calling/v1/         # 코드 + results/ + report.md 포함
+│   └── tool-calling/v2/         # 코드 + results/ + report.md 포함
 │
 ├── fixtures/                    # 기존 유지 (25 페르소나)
 │   ├── types.ts
@@ -59,14 +59,32 @@ benchmarks/
 ```typescript
 // lib/providers/types.ts
 
+/** 도구 정의 — Provider 중립적 포맷 (내부에서 각 SDK 형식으로 변환) */
+interface BenchmarkToolDef {
+  name: string
+  description: string
+  parameters: Record<string, unknown>  // JSON Schema
+}
+
+/** 도구 호출 결과 — Provider 중립적 포맷 */
+interface BenchmarkToolCall {
+  name: string
+  args: Record<string, unknown>
+}
+
+/** 메시지 — ConvMessage 확장 (tool role 포함) */
+type BenchmarkMessage =
+  | { role: "user" | "assistant"; content: string }
+  | { role: "tool"; toolCallId: string; content: string }
+
 /** 단일 요청 정의 */
 interface BenchmarkRequest {
   id: string                    // 결과 매칭용 (Batch custom_id로도 사용)
   model: string
   system: string
-  messages: ConvMessage[]
-  tools?: ToolDefinition[]
-  maxSteps?: number
+  messages: BenchmarkMessage[]  // Provider별 변환은 각 구현체가 담당
+  tools?: BenchmarkToolDef[]
+  maxSteps?: number             // 실시간 전용 (Batch에서는 무시, 아래 제약사항 참조)
 }
 
 /** 단일 응답 */
@@ -74,7 +92,7 @@ interface BenchmarkResponse {
   id: string
   model: string
   text: string
-  toolCalls: ToolCall[]
+  toolCalls: BenchmarkToolCall[]
   inputTokens: number
   outputTokens: number
   durationMs: number           // Batch는 0 또는 총 대기시간
@@ -92,8 +110,16 @@ interface BenchmarkProvider {
 }
 ```
 
-- `run()`: Vercel AI SDK `generateText()` 사용
-- `runBatch()`: 각 Provider 네이티브 SDK로 배치 제출 → 폴링 → 결과 수집
+- `run()`: Vercel AI SDK `generateText()` 사용. `BenchmarkToolDef` → AI SDK `tool()` 변환, `ConvMessage` → AI SDK 메시지 변환은 각 Provider 구현체가 담당.
+- `runBatch()`: 각 Provider 네이티브 SDK로 배치 제출 → 폴링 → 결과 수집. `BenchmarkToolDef` → 네이티브 SDK 도구 형식 변환, `ConvMessage` → 네이티브 메시지 형식 변환도 각 구현체가 담당.
+
+### 메시지 변환 규칙
+
+| 필드 | Vercel AI SDK (실시간) | OpenAI (Batch) | Anthropic (Batch) | Google (Batch) |
+|---|---|---|---|---|
+| `system` | `system` 파라미터 | `messages[0].role = "system"` | `system` 파라미터 (분리) | `systemInstruction` |
+| `messages` | `messages` 배열 | `messages` 배열 | `messages` 배열 | `contents` 배열 |
+| `tools` | `tools` (AI SDK `tool()`) | `tools` (function calling) | `tools` (function calling) | `tools` (function declarations) |
 
 ### Batch 실행 흐름
 
@@ -103,7 +129,7 @@ interface BenchmarkProvider {
 runBatch(requests)
   → Provider별 형식으로 요청 변환
   → 배치 제출 (API 호출)
-  → 폴링 루프 (30~60초 간격, 상태 확인, 진행률 출력)
+  → 폴링 루프 (30초 간격 + 지수 백오프, 상태 확인, 진행률 출력)
   → 완료 시 결과 수집
   → BenchmarkResponse[]로 정규화해서 반환
 ```
@@ -117,6 +143,26 @@ runBatch(requests)
 | **결과 수신** | output JSONL 파일 다운로드 | `.results()` 스트리밍 이터레이터 | 인라인 응답 on job object |
 | **SLA** | 24시간 | 24시간 | 24시간 (48h 만료) |
 | **최대 배치** | 50K건 / 200MB | 100K건 / 256MB | 2GB |
+
+### Batch 에러 처리
+
+```
+runBatch(requests)
+  → 배치 제출
+  → 폴링 루프 (30초 간격 + 지수 백오프, 최대 2시간 타임아웃)
+  → 결과 상태 분기:
+      ├─ 전체 성공 → BenchmarkResponse[] 반환
+      ├─ 부분 실패 → 성공 건만 반환 + 실패 건 stderr 출력 + exit code 0
+      ├─ 전체 실패 → 에러 메시지 출력 + exit code 1
+      └─ 타임아웃/만료 → 에러 메시지 출력 + exit code 1
+```
+
+- 부분 실패 시 성공한 결과만으로 리포트를 생성하되, 실패 건수를 리포트에 명시
+- 재시도 로직 없음 — 실패 시 사용자가 다시 실행 (벤치마크는 멱등)
+
+### Batch 모드 제약사항
+
+- **멀티스텝 tool-calling 미지원**: Batch API는 단일 completion만 반환. `maxSteps > 1`인 요청은 Batch 모드에서 `maxSteps`를 무시하고 1회 호출만 수행. 멀티스텝이 필요한 시나리오(chat-pipeline의 multistep 전략 등)는 실시간 모드로만 실행해야 하며, `--batch` 모드에서 자동으로 건너뛰고 경고 출력.
 
 ## 비용 계산
 
@@ -139,6 +185,9 @@ const PRICING: Record<string, { input: number, output: number }> = {
 }
 
 const BATCH_DISCOUNT = 0.5  // 3사 모두 동일: Batch = 실시간 × 0.5
+
+// PRICING 조회 키: `${provider}:${model}` (예: "openai:gpt-5.4")
+// calculateCost(provider.name, req.model, ...) → PRICING[`${provider}:${model}`]
 
 interface CostResult {
   batchCost: number           // 실제 Batch 비용
@@ -180,7 +229,7 @@ npm run bench
   → 스위트가 시나리오 구성 + BenchmarkRequest[] 생성
   → batch 모드?
       ├─ yes → provider.runBatch(requests)
-      └─ no  → Promise.all(requests.map(r => provider.run(r)))
+      └─ no  → 동시성 제한(p-limit, 기본 5) 적용하여 provider.run() 병렬 호출
   → 스위트의 evaluate()로 결과 판정
   → lib/cost.ts로 비용 계산
   → lib/report.ts로 JSON + Markdown 저장
@@ -199,6 +248,7 @@ interface BenchmarkResult {
     mode: "batch" | "realtime"
     timestamp: string
     totalRuns: number
+    failedRuns: number            // 부분 실패 시 실패 건수 (0이면 전체 성공)
   }
   results: Array<{
     id: string
@@ -323,6 +373,7 @@ interface ToolCallingEvaluation {
 - S1~S6 전체를 한 번에 실행 가능
 - Provider별 파일 제거 → `run.ts` 하나, CLI에서 Provider/모델 선택
 - `runner.ts`의 `judgePass()`, `detectProposal()` 로직은 `evaluate.ts`로 이동
+- 시나리오 데이터는 기존 형식과 다르므로 완전히 새로 작성 (기존 코드는 `_archive/`에서 참조)
 
 ## 추가 패키지 (devDependencies)
 
@@ -331,6 +382,7 @@ interface ToolCallingEvaluation {
 | `openai` | OpenAI Batch API 네이티브 SDK |
 | `@anthropic-ai/sdk` | Anthropic Message Batches 네이티브 SDK |
 | `@google/genai` | Google Gemini Batch API 네이티브 SDK |
+| `p-limit` | 실시간 모드 동시성 제한 |
 
 ## 설계 원칙
 
