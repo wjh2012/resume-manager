@@ -41,5 +41,4 @@ next-env.d.ts
 .worktrees/
 
 # benchmark results
-benchmarks/**/results/*
 !benchmarks/**/results/.gitkeep

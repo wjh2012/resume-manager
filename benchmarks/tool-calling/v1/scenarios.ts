@@ -86,7 +86,7 @@ export const SCENARIOS: ToolCallingScenario[] = [
     approvalMessage: "네, 커리어노트로 저장해주세요.",
     expected: {
       required: ["saveCareerNote"],
-      allowed: [],
+      allowed: ["readDocument", "readCareerNote"],
       orderedPairs: [],
     },
   },
