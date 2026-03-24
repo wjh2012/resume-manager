@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { resolveProvider } from "../config";
+import { resolveProvider, mergeWithCli, validatePersonas } from "../config";
+import type { BenchmarkConfig } from "../config";
 
 describe("resolveProvider", () => {
   it("gpt- prefix → openai", () => {
@@ -28,5 +29,51 @@ describe("resolveProvider", () => {
 
   it("알 수 없는 prefix → null", () => {
     expect(resolveProvider("unknown-model")).toBeNull();
+  });
+});
+
+describe("mergeWithCli", () => {
+  const baseConfig: BenchmarkConfig = {
+    suites: ["tool-calling"],
+    providers: ["openai"],
+    models: ["gpt-5.4-nano"],
+    personas: ["sd-1"],
+    batch: false,
+  };
+
+  it("CLI 옵션이 config를 override", () => {
+    const cliOverrides = {
+      suites: ["chat-pipeline"] as Array<"tool-calling" | "chat-pipeline">,
+      models: ["claude-haiku-4-5-20251001"],
+      batch: true,
+    };
+    const merged = mergeWithCli(baseConfig, cliOverrides);
+    expect(merged.suites).toEqual(["chat-pipeline"]);
+    expect(merged.models).toEqual(["claude-haiku-4-5-20251001"]);
+    expect(merged.batch).toBe(true);
+    expect(merged.providers).toEqual(["openai"]);
+    expect(merged.personas).toEqual(["sd-1"]);
+  });
+
+  it("CLI override가 없으면 config 값 유지", () => {
+    const merged = mergeWithCli(baseConfig, {});
+    expect(merged).toEqual(baseConfig);
+  });
+});
+
+describe("validatePersonas", () => {
+  it("유효한 페르소나 ID는 통과", () => {
+    expect(() => validatePersonas(["sd-1", "jd-3"])).not.toThrow();
+  });
+
+  it("잘못된 페르소나 ID는 에러", () => {
+    expect(() => validatePersonas(["sd-1", "invalid-99"])).toThrow("invalid-99");
+  });
+
+  it('"all"은 전체 페르소나 ID 배열로 변환', () => {
+    const result = validatePersonas(["all"]);
+    expect(result.length).toBeGreaterThanOrEqual(25);
+    expect(result).toContain("sd-1");
+    expect(result).toContain("ua-1");
   });
 });

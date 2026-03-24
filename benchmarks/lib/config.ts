@@ -1,4 +1,5 @@
 import type { ProviderName } from "./providers/types";
+import { ALL_PERSONAS } from "../fixtures/mock-data";
 
 export interface BenchmarkConfig {
   suites: "all" | Array<"tool-calling" | "chat-pipeline">;
@@ -20,4 +21,40 @@ const MODEL_PREFIX_MAP: Array<{ prefix: string; provider: ProviderName }> = [
 export function resolveProvider(model: string): ProviderName | null {
   const match = MODEL_PREFIX_MAP.find((m) => model.startsWith(m.prefix));
   return match?.provider ?? null;
+}
+
+export interface CliOverrides {
+  suites?: BenchmarkConfig["suites"];
+  providers?: BenchmarkConfig["providers"];
+  models?: string[];
+  personas?: string[];
+  batch?: boolean;
+}
+
+export function mergeWithCli(config: BenchmarkConfig, cli: CliOverrides): BenchmarkConfig {
+  return {
+    suites: cli.suites ?? config.suites,
+    providers: cli.providers ?? config.providers,
+    models: cli.models ?? config.models,
+    personas: cli.personas ?? config.personas,
+    batch: cli.batch ?? config.batch,
+  };
+}
+
+export function validatePersonas(personas: string[]): string[] {
+  if (personas.length === 1 && personas[0] === "all") {
+    return ALL_PERSONAS.map((p) => p.id);
+  }
+
+  const validIds = new Set(ALL_PERSONAS.map((p) => p.id));
+  const invalid = personas.filter((id) => !validIds.has(id));
+  if (invalid.length > 0) {
+    throw new Error(`Unknown persona ID(s): ${invalid.join(", ")}`);
+  }
+  return personas;
+}
+
+export async function loadConfig(configPath: string): Promise<BenchmarkConfig> {
+  const mod = await import(configPath);
+  return mod.default as BenchmarkConfig;
 }
