@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma"
 import { getLanguageModel, AiSettingsNotFoundError } from "@/lib/ai/provider"
 import { buildContext } from "@/lib/ai/context"
 import { buildCoverLetterSystemPrompt } from "@/lib/ai/prompts/cover-letter"
-import { createReadDocumentTool, createReadCareerNoteTool, createSaveCareerNoteTool } from "@/lib/ai/tools"
+import { createReadDocumentTool, createReadExternalDocumentTool, createReadCareerNoteTool, createSaveCareerNoteTool } from "@/lib/ai/tools"
 import { coverLetterChatSchema } from "@/lib/validations/cover-letter"
 import { recordUsage } from "@/lib/token-usage/service"
 import { checkQuotaExceeded } from "@/lib/token-usage/quota"
@@ -52,7 +52,9 @@ export async function POST(request: Request) {
         userId: true,
         companyName: true,
         position: true,
-        jobPostingText: true,
+        coverLetterExternalDocs: {
+          select: { externalDocumentId: true },
+        },
       },
     })
 
@@ -62,6 +64,10 @@ export async function POST(request: Request) {
         { status: 404 },
       )
     }
+
+    const allowedExternalDocIds = coverLetter.coverLetterExternalDocs.map(
+      (d) => d.externalDocumentId,
+    )
 
     // conversationId 소유권 검증
     const conversation = await prisma.conversation.findUnique({
@@ -92,9 +98,10 @@ export async function POST(request: Request) {
     }
 
     // 문서 요약 컨텍스트 + 모델 병렬 로드
-    const [{ context, careerNoteCount }, { model, isServerKey, provider: aiProvider, modelId }] = await Promise.all([
+    const [{ context, careerNoteCount, externalDocumentCount }, { model, isServerKey, provider: aiProvider, modelId }] = await Promise.all([
       buildContext(user.id, {
         selectedDocumentIds,
+        selectedExternalDocumentIds: allowedExternalDocIds,
         includeCareerNotes: true,
       }),
       getLanguageModel(user.id),
@@ -104,7 +111,6 @@ export async function POST(request: Request) {
     const system = buildCoverLetterSystemPrompt({
       companyName: coverLetter.companyName,
       position: coverLetter.position,
-      jobPostingText: coverLetter.jobPostingText ?? undefined,
       context,
     })
 
@@ -125,11 +131,13 @@ export async function POST(request: Request) {
         model, system, modelMessages,
         tools: {
           readDocument: createReadDocumentTool(user.id, selectedDocumentIds ?? []),
+          readExternalDocument: createReadExternalDocumentTool(user.id, allowedExternalDocIds),
           readCareerNote: createReadCareerNoteTool(user.id),
           saveCareerNote: createSaveCareerNoteTool(user.id, conversationId),
         },
         documentCount: selectedDocumentIds?.length ?? 0,
         careerNoteCount,
+        externalDocumentCount,
         onFinish,
       })
       return result.toUIMessageStreamResponse()
@@ -139,6 +147,7 @@ export async function POST(request: Request) {
           model, system, modelMessages,
           userId: user.id, context,
           selectedDocumentIds: selectedDocumentIds ?? [],
+          selectedExternalDocumentIds: allowedExternalDocIds,
           includeCareerNotes: true,
           schema: coverLetterClassificationSchema,
           onFinish,
@@ -159,11 +168,13 @@ export async function POST(request: Request) {
           model, system, modelMessages,
           tools: {
             readDocument: createReadDocumentTool(user.id, selectedDocumentIds ?? []),
+            readExternalDocument: createReadExternalDocumentTool(user.id, allowedExternalDocIds),
             readCareerNote: createReadCareerNoteTool(user.id),
             saveCareerNote: createSaveCareerNoteTool(user.id, conversationId),
           },
           documentCount: selectedDocumentIds?.length ?? 0,
           careerNoteCount,
+          externalDocumentCount,
           onFinish,
         })
         return result.toUIMessageStreamResponse()

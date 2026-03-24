@@ -27,6 +27,13 @@ interface DocumentItem {
   type: string
 }
 
+interface ExternalDocumentItem {
+  id: string
+  title: string
+  category: string
+  sourceType: string
+}
+
 interface CoverLetterWorkspaceProps {
   coverLetterId: string
   conversationId: string
@@ -34,6 +41,8 @@ interface CoverLetterWorkspaceProps {
   initialMessages: UIMessage[]
   documents: DocumentItem[]
   selectedDocumentIds: string[]
+  externalDocuments: ExternalDocumentItem[]
+  selectedExternalDocumentIds: string[]
 }
 
 export function CoverLetterWorkspace({
@@ -43,6 +52,8 @@ export function CoverLetterWorkspace({
   initialMessages,
   documents,
   selectedDocumentIds,
+  externalDocuments,
+  selectedExternalDocumentIds,
 }: CoverLetterWorkspaceProps) {
   const [content, setContent] = useState(initialContent)
   const isMobile = useSyncExternalStore(
@@ -70,6 +81,8 @@ export function CoverLetterWorkspace({
       initialMessages={initialMessages}
       documents={documents}
       initialSelectedDocIds={selectedDocumentIds}
+      externalDocuments={externalDocuments}
+      initialSelectedExtDocIds={selectedExternalDocumentIds}
       onAppendToEditor={handleAppendToEditor}
     />
   )

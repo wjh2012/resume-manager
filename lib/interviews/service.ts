@@ -23,6 +23,7 @@ interface CreateInterviewData {
   companyName?: string
   position?: string
   documentIds: string[]
+  selectedExternalDocumentIds?: string[]
 }
 
 // 면접 세션 생성: InterviewSession + InterviewDocument + Conversation 트랜잭션
@@ -52,6 +53,21 @@ export async function createInterview(userId: string, data: CreateInterviewData)
         documentId,
       })),
     })
+
+    if (data.selectedExternalDocumentIds && data.selectedExternalDocumentIds.length > 0) {
+      const ownedExtCount = await tx.externalDocument.count({
+        where: { id: { in: data.selectedExternalDocumentIds }, userId },
+      })
+      if (ownedExtCount !== data.selectedExternalDocumentIds.length) {
+        throw new InterviewForbiddenError()
+      }
+      await tx.interviewExternalDoc.createMany({
+        data: data.selectedExternalDocumentIds.map((externalDocumentId) => ({
+          interviewSessionId: session.id,
+          externalDocumentId,
+        })),
+      })
+    }
 
     await tx.conversation.create({
       data: {
@@ -85,6 +101,13 @@ export async function getInterview(id: string, userId: string) {
         select: {
           document: {
             select: { id: true, title: true, type: true },
+          },
+        },
+      },
+      interviewExternalDocs: {
+        select: {
+          externalDocument: {
+            select: { id: true, title: true, category: true, sourceType: true },
           },
         },
       },

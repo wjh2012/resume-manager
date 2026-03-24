@@ -27,5 +27,6 @@ export const PROVIDER_MODELS: Record<AIProvider, { value: string; label: string 
 
 export interface BuildContextOptions {
   selectedDocumentIds?: string[]
+  selectedExternalDocumentIds?: string[]
   includeCareerNotes?: boolean
 }

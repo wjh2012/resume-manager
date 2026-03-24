@@ -12,6 +12,7 @@ interface ClassificationPipelineParams {
   userId: string
   context: string
   selectedDocumentIds: string[]
+  selectedExternalDocumentIds: string[]
   includeCareerNotes: boolean
   schema: z.ZodType
   onFinish: Parameters<typeof streamText>[0]["onFinish"]
@@ -37,14 +38,16 @@ export async function handleClassification(params: ClassificationPipelineParams)
   // 서버 실행: 분류 결과에 따라 병렬 데이터 수집
   const result = classification as BaseClassification
   const docsToRead = result.documentsToRead ?? []
+  const extDocsToRead = result.externalDocumentsToRead ?? []
   const compareNotes = params.includeCareerNotes && (result.compareCareerNotes ?? false)
   const needsCompress = result.needsCompression ?? false
 
   // selectedDocumentIds 범위로 제한 (multi-step의 readDocument 도구와 동일한 접근 범위)
   const allowedDocsToRead = docsToRead.filter((id: string) => params.selectedDocumentIds.includes(id))
+  const allowedExtDocsToRead = extDocsToRead.filter((id: string) => params.selectedExternalDocumentIds.includes(id))
 
   // 데이터 수집과 대화 압축을 병렬 실행 (압축은 modelMessages만 사용하므로 독립)
-  const [documents, careerNotes, compressed] = await Promise.all([
+  const [documents, externalDocuments, careerNotes, compressed] = await Promise.all([
     allowedDocsToRead.length > 0
       ? prisma.document.findMany({
           where: {
@@ -52,6 +55,15 @@ export async function handleClassification(params: ClassificationPipelineParams)
             userId: params.userId,
           },
           select: { id: true, title: true, extractedText: true },
+        })
+      : [],
+    allowedExtDocsToRead.length > 0
+      ? prisma.externalDocument.findMany({
+          where: {
+            id: { in: allowedExtDocsToRead },
+            userId: params.userId,
+          },
+          select: { id: true, title: true, content: true },
         })
       : [],
     compareNotes
@@ -80,6 +92,9 @@ export async function handleClassification(params: ClassificationPipelineParams)
   const docsContext = documents.length > 0
     ? documents.map((d) => `[${d.title}]\n${d.extractedText ?? ""}`).join("\n\n---\n\n")
     : ""
+  const extDocsContext = externalDocuments.length > 0
+    ? externalDocuments.map((d) => `[${d.title}]\n${d.content}`).join("\n\n---\n\n")
+    : ""
   const notesContext = careerNotes.length > 0
     ? careerNotes.map((n) => `[${n.title}]\n${n.content}`).join("\n\n---\n\n")
     : ""
@@ -87,6 +102,9 @@ export async function handleClassification(params: ClassificationPipelineParams)
   let extendedSystem = params.system
   if (docsContext) {
     extendedSystem += `\n\n[참고자료 — 문서 전문]\n${docsContext}`
+  }
+  if (extDocsContext) {
+    extendedSystem += `\n\n[참고자료 — 외부 문서 전문]\n${extDocsContext}`
   }
   if (notesContext) {
     extendedSystem += `\n\n[참고자료 — 커리어노트 전문]\n${notesContext}`

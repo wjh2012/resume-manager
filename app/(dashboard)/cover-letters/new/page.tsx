@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation"
 import { getAuthUser } from "@/lib/supabase/user"
 import { listDocuments } from "@/lib/documents/service"
+import { listExternalDocuments } from "@/lib/external-documents/service"
 import { CoverLetterForm } from "@/components/cover-letters/cover-letter-form"
 
 export default async function NewCoverLetterPage() {
@@ -8,12 +9,23 @@ export default async function NewCoverLetterPage() {
 
   if (!user) redirect("/login")
 
-  const documents = await listDocuments(user.id)
+  const [documents, externalDocuments] = await Promise.all([
+    listDocuments(user.id),
+    listExternalDocuments(user.id),
+  ])
 
-  const serialized = documents.map((doc) => ({
+  const serializedDocs = documents.map((doc) => ({
     id: doc.id,
     title: doc.title,
     type: doc.type,
+    summary: doc.summary,
+  }))
+
+  const serializedExtDocs = externalDocuments.map((doc) => ({
+    id: doc.id,
+    title: doc.title,
+    category: doc.category,
+    sourceType: doc.sourceType,
     summary: doc.summary,
   }))
 
@@ -26,7 +38,7 @@ export default async function NewCoverLetterPage() {
         </p>
       </div>
 
-      <CoverLetterForm documents={serialized} />
+      <CoverLetterForm documents={serializedDocs} externalDocuments={serializedExtDocs} />
     </div>
   )
 }
