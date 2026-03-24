@@ -59,7 +59,7 @@
 |--------|------|------|
 | POST | `/api/external-documents` | 생성 (텍스트 입력 또는 파일 업로드) |
 | GET | `/api/external-documents/[id]` | 단건 조회 |
-| PUT | `/api/external-documents/[id]` | 수정 |
+| PATCH | `/api/external-documents/[id]` | 수정 |
 | DELETE | `/api/external-documents/[id]` | 삭제 |
 
 자기소개서·면접의 외부 문서 선택 변경은 각 도메인의 API에서 처리:

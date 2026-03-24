@@ -4,7 +4,7 @@ import { BackToListLink } from "@/components/shared/back-to-list-link"
 
 import { getAuthUser } from "@/lib/supabase/user"
 import { getExternalDocument } from "@/lib/external-documents/service"
-import { formatFileSize } from "@/lib/utils"
+import { formatDate, formatFileSize } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -39,11 +39,9 @@ async function ExternalDocumentContent({
             {document.fileSize != null && (
               <>{formatFileSize(document.fileSize)} · </>
             )}
-            {new Date(document.createdAt).toLocaleDateString("ko-KR", {
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            })}
+            <span suppressHydrationWarning>
+              {formatDate(document.createdAt)}
+            </span>
           </p>
         </div>
         <DeleteButton
