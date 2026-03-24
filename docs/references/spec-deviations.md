@@ -232,6 +232,12 @@
 - **신규 패턴** (`CoverLetterExternalDoc`, `InterviewExternalDoc`): `@@id([coverLetterId, externalDocumentId])` (별도 UUID id 없음)
 - **이유**: 외부 문서 조인 테이블은 단순 M:N 관계이며 개별 레코드를 id로 직접 조회할 필요가 없어, 복합 PK가 더 적합하고 스토리지 효율적
 
+### 외부 문서 선택 API: 기존 라우트 수정 → 별도 라우트 생성
+
+- **스펙**: `app/api/cover-letters/[id]/documents/route.ts` 수정하여 외부 문서 선택 변경 지원
+- **실제**: `app/api/cover-letters/[id]/external-documents/route.ts` 별도 생성
+- **이유**: 개인 문서와 외부 문서의 관심사를 분리하여 각 라우트가 단일 책임을 가지도록 함
+
 ### CoverLetter.jobPostingText 제거
 
 - **스펙 (이전)**: `CoverLetter`에 `jobPostingText String? @db.Text` 컬럼 존재
