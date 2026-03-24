@@ -38,7 +38,7 @@ interface BenchmarkResult {
   }>;
   cost: CostResult;
 }
-import { SCENARIOS, buildContext, scenarioLabel, type ChatPipelineScenario } from "./scenarios";
+import { buildScenarios, buildContext, scenarioLabel, type ChatPipelineScenario } from "./scenarios";
 import { evaluateChatPipeline } from "./evaluate";
 import { createToolDefs } from "../tool-calling/prompts";
 
@@ -247,7 +247,9 @@ export async function runChatPipeline(
   provider: BenchmarkProvider,
   model: string,
   batch: boolean,
+  personaId: string = "sd-1",
 ): Promise<BenchmarkResult> {
+  const scenarios = buildScenarios(personaId);
   const timestamp = new Date().toISOString();
   const results: BenchmarkResult["results"] = [];
   let totalInputTokens = 0;
@@ -255,11 +257,11 @@ export async function runChatPipeline(
   let failedRuns = 0;
 
   const activeScenarios = batch
-    ? SCENARIOS.filter((s) => s.strategy === "classification")
-    : SCENARIOS;
+    ? scenarios.filter((s) => s.strategy === "classification")
+    : scenarios;
 
   if (batch) {
-    const skipped = SCENARIOS.filter((s) => s.strategy === "multistep");
+    const skipped = scenarios.filter((s) => s.strategy === "multistep");
     if (skipped.length > 0) {
       console.warn(
         `[chat-pipeline] Batch 모드: multistep 시나리오 ${skipped.length}개 스킵 (maxSteps > 1)`,
@@ -350,7 +352,7 @@ export async function runChatPipeline(
   const date = timestamp.split("T")[0];
   const modelSlug = model.replace(/\./g, "-");
   const mode = batch ? "batch" : "realtime";
-  const baseName = `benchmark-result-${date}_${modelSlug}_${mode}`;
+  const baseName = `benchmark-result-${date}_${modelSlug}_${personaId}_${mode}`;
   const jsonPath = `benchmarks/chat-pipeline/results/${baseName}.json`;
   saveJson(benchmarkResult, jsonPath);
 

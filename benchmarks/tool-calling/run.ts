@@ -22,7 +22,8 @@ import {
   generateTurn2Hint,
   createToolDefs,
 } from "./prompts";
-import { SCENARIOS, BASE_CONVERSATION } from "./scenarios";
+import { buildScenarios } from "./scenarios";
+import type { ToolCallingScenario } from "./scenarios";
 import { evaluateToolCalling, detectProposal } from "./evaluate";
 
 // ---------------------------------------------------------------------------
@@ -42,14 +43,14 @@ interface RequestEntry {
   baseSystemPrompt: string;
 }
 
-function buildRequests(model: string): RequestEntry[] {
-  const context = buildContext();
+function buildRequests(model: string, scenarios: ToolCallingScenario[], personaId: string): RequestEntry[] {
+  const context = buildContext(personaId);
   const tools = createToolDefs();
   const entries: RequestEntry[] = [];
 
-  for (const scenario of SCENARIOS) {
+  for (const scenario of scenarios) {
     for (const variant of PROMPT_VARIANTS) {
-      const baseSystemPrompt = variant.buildSystemPrompt(context);
+      const baseSystemPrompt = variant.buildSystemPrompt(context, personaId);
 
       // Pre-check 변형이면 사용자 메시지를 분류하고 힌트를 시스템 프롬프트에 주입
       let systemPrompt = baseSystemPrompt;
@@ -175,14 +176,16 @@ export async function runToolCalling(
   provider: BenchmarkProvider,
   model: string,
   batch: boolean,
+  personaId: string = "sd-1",
 ): Promise<void> {
-  const entries = buildRequests(model);
+  const scenarios = buildScenarios(personaId);
+  const entries = buildRequests(model, scenarios, personaId);
 
   console.log("=".repeat(70));
   console.log("  도구 호출 판단력 벤치마크");
-  console.log(`  Provider: ${provider.name} | Model: ${model} | Mode: ${batch ? "batch" : "realtime"}`);
+  console.log(`  Provider: ${provider.name} | Model: ${model} | Persona: ${personaId} | Mode: ${batch ? "batch" : "realtime"}`);
   console.log(
-    `  시나리오: ${SCENARIOS.length}개 × 프롬프트: ${PROMPT_VARIANTS.length}개 = ${entries.length} runs`,
+    `  시나리오: ${scenarios.length}개 × 프롬프트: ${PROMPT_VARIANTS.length}개 = ${entries.length} runs`,
   );
   console.log("=".repeat(70));
   console.log();
@@ -372,7 +375,7 @@ export async function runToolCalling(
   // 페르소나 정보 (첫 번째 시나리오 기준)
   // -------------------------------------------------------------------------
 
-  const firstPersona = SCENARIOS[0]?.persona;
+  const firstPersona = scenarios[0]?.persona;
   const persona = firstPersona
     ? { id: firstPersona.id, name: firstPersona.name, label: firstPersona.label }
     : undefined;
@@ -394,7 +397,7 @@ export async function runToolCalling(
       id: v.id,
       label: v.label,
     })),
-    scenarios: SCENARIOS.map((s) => {
+    scenarios: scenarios.map((s) => {
       const lastMsg = s.messages[s.messages.length - 1];
       const userMessage = lastMsg.role === "user" ? lastMsg.content : "";
       return {
@@ -448,7 +451,7 @@ export async function runToolCalling(
   const date = output.meta.timestamp.split("T")[0];
   const modelSlug = model.replace(/\./g, "-");
   const mode = output.meta.mode;
-  const baseName = `benchmark-result-${date}_${modelSlug}_${mode}`;
+  const baseName = `benchmark-result-${date}_${modelSlug}_${personaId}_${mode}`;
   const jsonPath = path.join("benchmarks", "tool-calling", "results", `${baseName}.json`);
 
   saveJson(output, jsonPath);
@@ -466,7 +469,7 @@ export async function runToolCalling(
   const headerRow = ["시나리오", ...variantIds];
   console.log("  " + headerRow.map((h) => h.padEnd(14)).join(""));
 
-  for (const scenario of SCENARIOS) {
+  for (const scenario of scenarios) {
     const row = [scenario.name];
     for (const variant of PROMPT_VARIANTS) {
       const id = `${scenario.id}_${variant.id}`;
