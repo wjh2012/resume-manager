@@ -1,8 +1,10 @@
 export interface BenchmarkOptions {
-  suite: string;
-  provider: string;
-  model?: string;
+  suites: string[];
+  providers: string[];
+  models: string[];
+  personas: string[];
   batch: boolean;
+  configPath?: string;
 }
 
 export function parseArgs(argv: string[]): BenchmarkOptions {
@@ -13,10 +15,18 @@ export function parseArgs(argv: string[]): BenchmarkOptions {
       : undefined;
   };
 
+  const splitComma = (value: string | undefined): string[] =>
+    value ? value.split(",").map((s) => s.trim()).filter(Boolean) : [];
+
+  const suite = getFlag("suite");
+  const provider = getFlag("provider");
+
   return {
-    suite: getFlag("suite") ?? "all",
-    provider: getFlag("provider") ?? "all",
-    model: getFlag("model"),
+    suites: suite ? [suite] : ["all"],
+    providers: provider ? [provider] : ["all"],
+    models: splitComma(getFlag("model")),
+    personas: splitComma(getFlag("persona")),
     batch: argv.includes("--batch"),
+    configPath: getFlag("config"),
   };
 }
