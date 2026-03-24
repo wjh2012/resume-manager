@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
+import type { ExternalDocumentItem } from "@/lib/external-documents/types"
 
 interface DocumentItem {
   id: string
@@ -20,19 +21,27 @@ interface DocumentItem {
 
 interface InterviewFormProps {
   documents: DocumentItem[]
+  externalDocuments: ExternalDocumentItem[]
 }
 
-export function InterviewForm({ documents }: InterviewFormProps) {
+export function InterviewForm({ documents, externalDocuments }: InterviewFormProps) {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [title, setTitle] = useState("")
   const [companyName, setCompanyName] = useState("")
   const [position, setPosition] = useState("")
   const [selectedDocIds, setSelectedDocIds] = useState<string[]>([])
+  const [selectedExtDocIds, setSelectedExtDocIds] = useState<string[]>([])
   const [errors, setErrors] = useState<Record<string, string>>({})
 
   const toggleDoc = (id: string) => {
     setSelectedDocIds((prev) =>
+      prev.includes(id) ? prev.filter((d) => d !== id) : [...prev, id],
+    )
+  }
+
+  const toggleExtDoc = (id: string) => {
+    setSelectedExtDocIds((prev) =>
       prev.includes(id) ? prev.filter((d) => d !== id) : [...prev, id],
     )
   }
@@ -60,6 +69,7 @@ export function InterviewForm({ documents }: InterviewFormProps) {
           companyName: companyName.trim() || undefined,
           position: position.trim() || undefined,
           documentIds: selectedDocIds,
+          selectedExternalDocumentIds: selectedExtDocIds.length > 0 ? selectedExtDocIds : undefined,
         }),
       })
 
@@ -174,6 +184,48 @@ export function InterviewForm({ documents }: InterviewFormProps) {
           <p className="text-sm text-destructive" aria-live="polite">{errors.documentIds}</p>
         )}
       </div>
+
+      {externalDocuments.length > 0 && (
+        <div className="space-y-3">
+          <div>
+            <label className="text-sm font-medium leading-none">외부 문서 (선택)</label>
+            <p className="mt-1 text-sm text-muted-foreground">
+              채용공고, 기업 정보 등 외부 문서를 선택하면 면접관이 참고합니다.
+            </p>
+          </div>
+
+          <div className="space-y-2 rounded-lg border p-4">
+            {externalDocuments.map((doc) => (
+              <div key={doc.id} className="flex items-center gap-3">
+                <Checkbox
+                  id={`ext-${doc.id}`}
+                  checked={selectedExtDocIds.includes(doc.id)}
+                  onCheckedChange={() => toggleExtDoc(doc.id)}
+                  disabled={isSubmitting}
+                />
+                <label
+                  htmlFor={`ext-${doc.id}`}
+                  className="flex flex-1 cursor-pointer items-center gap-2 text-sm"
+                >
+                  <span className="flex-1">
+                    {doc.title}
+                    {!doc.summary && (
+                      <span className="text-muted-foreground ml-1 text-xs">
+                        (요약 없음)
+                      </span>
+                    )}
+                  </span>
+                  {doc.category && (
+                    <Badge variant="outline" className="text-xs">
+                      {doc.category}
+                    </Badge>
+                  )}
+                </label>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="flex justify-end gap-3">
         <Button type="button" variant="outline" disabled={isSubmitting} asChild>

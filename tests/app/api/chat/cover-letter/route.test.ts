@@ -51,6 +51,7 @@ vi.mock("@/lib/token-usage/quota", () => ({
 
 vi.mock("@/lib/ai/tools", () => ({
   createReadDocumentTool: vi.fn().mockReturnValue({}),
+  createReadExternalDocumentTool: vi.fn().mockReturnValue({}),
   createReadCareerNoteTool: vi.fn().mockReturnValue({}),
   createSaveCareerNoteTool: vi.fn().mockReturnValue({}),
   calculateMaxSteps: vi.fn().mockReturnValue({}),
@@ -110,11 +111,13 @@ const VALID_COVER_LETTER_ID = "b0000000-0000-4000-8000-000000000001"
 const VALID_CONVERSATION_ID = "c0000000-0000-4000-8000-000000000001"
 const VALID_DOC_ID = "d0000000-0000-4000-8000-000000000001"
 
+const VALID_EXT_DOC_ID = "e0000000-0000-4000-8000-000000000001"
+
 const MOCK_COVER_LETTER = {
   userId: VALID_USER_ID,
   companyName: "카카오",
   position: "백엔드 개발자",
-  jobPostingText: null,
+  coverLetterExternalDocs: [{ externalDocumentId: VALID_EXT_DOC_ID }],
 }
 
 const MOCK_CONVERSATION = {
@@ -192,7 +195,7 @@ beforeEach(() => {
   mockGetLanguageModel.mockResolvedValue({ model: mockModel, isServerKey: false, provider: "openai", modelId: "gpt-4o" } as never)
   mockCheckQuotaExceeded.mockResolvedValue({ exceeded: false } as never)
   mockRecordUsage.mockResolvedValue(undefined as never)
-  mockBuildContext.mockResolvedValue({ context: "컨텍스트 내용", careerNoteCount: 0 } as never)
+  mockBuildContext.mockResolvedValue({ context: "컨텍스트 내용", careerNoteCount: 0, externalDocumentCount: 1 } as never)
   mockBuildCoverLetterSystemPrompt.mockReturnValue("시스템 프롬프트")
   mockConvertToModelMessages.mockResolvedValue([] as never)
 

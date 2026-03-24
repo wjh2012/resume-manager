@@ -8,6 +8,7 @@ vi.mock("@/lib/prisma", () => ({
   prisma: {
     interviewSession: { findUnique: vi.fn() },
     interviewDocument: { findMany: vi.fn() },
+    interviewExternalDoc: { findMany: vi.fn() },
     conversation: { findUnique: vi.fn() },
     message: { create: vi.fn() },
     $transaction: vi.fn(),
@@ -41,6 +42,7 @@ vi.mock("@/lib/token-usage/quota", () => ({
 
 vi.mock("@/lib/ai/tools", () => ({
   createReadDocumentTool: vi.fn().mockReturnValue({}),
+  createReadExternalDocumentTool: vi.fn().mockReturnValue({}),
 }))
 
 vi.mock("ai", () => ({
@@ -88,6 +90,7 @@ const VALID_USER_ID = "a0000000-0000-4000-8000-000000000001"
 const VALID_SESSION_ID = "b0000000-0000-4000-8000-000000000001"
 const VALID_CONV_ID = "c0000000-0000-4000-8000-000000000001"
 const VALID_DOC_ID = "d0000000-0000-4000-8000-000000000001"
+const VALID_EXT_DOC_ID = "e0000000-0000-4000-8000-000000000001"
 
 const MOCK_SESSION = {
   userId: VALID_USER_ID,
@@ -122,11 +125,14 @@ beforeEach(() => {
   mockPrisma.interviewDocument.findMany.mockResolvedValue([
     { documentId: VALID_DOC_ID },
   ] as never)
+  ;(mockPrisma.interviewExternalDoc.findMany as ReturnType<typeof vi.fn>).mockResolvedValue([
+    { externalDocumentId: VALID_EXT_DOC_ID },
+  ] as never)
   mockPrisma.conversation.findUnique.mockResolvedValue({
     userId: VALID_USER_ID,
     interviewSessionId: VALID_SESSION_ID,
   } as never)
-  mockBuildContext.mockResolvedValue({ context: "context text", careerNoteCount: 0 } as never)
+  mockBuildContext.mockResolvedValue({ context: "context text", careerNoteCount: 0, externalDocumentCount: 1 } as never)
   mockGetLanguageModel.mockResolvedValue({ model: mockModel, isServerKey: false, provider: "openai", modelId: "gpt-4o" } as never)
   mockCheckQuotaExceeded.mockResolvedValue({ exceeded: false } as never)
   mockRecordUsage.mockResolvedValue(undefined as never)

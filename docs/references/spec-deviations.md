@@ -224,6 +224,28 @@
 
 ---
 
+## ExternalDocument 분리
+
+### 조인 테이블 PK 패턴: 별도 UUID → 복합 PK
+
+- **기존 패턴** (`CoverLetterDocument`, `InterviewDocument`): `id String @id @default(uuid())` + `@@unique([a, b])`
+- **신규 패턴** (`CoverLetterExternalDoc`, `InterviewExternalDoc`): `@@id([coverLetterId, externalDocumentId])` (별도 UUID id 없음)
+- **이유**: 외부 문서 조인 테이블은 단순 M:N 관계이며 개별 레코드를 id로 직접 조회할 필요가 없어, 복합 PK가 더 적합하고 스토리지 효율적
+
+### 외부 문서 선택 API: 기존 라우트 수정 → 별도 라우트 생성
+
+- **스펙**: `app/api/cover-letters/[id]/documents/route.ts` 수정하여 외부 문서 선택 변경 지원
+- **실제**: `app/api/cover-letters/[id]/external-documents/route.ts` 별도 생성
+- **이유**: 개인 문서와 외부 문서의 관심사를 분리하여 각 라우트가 단일 책임을 가지도록 함
+
+### CoverLetter.jobPostingText 제거
+
+- **스펙 (이전)**: `CoverLetter`에 `jobPostingText String? @db.Text` 컬럼 존재
+- **실제**: 컬럼 제거 — 채용공고는 `ExternalDocument`로 분리하여 `CoverLetterExternalDoc`으로 연결
+- **이유**: 채용공고를 독립 엔티티로 관리하여 여러 자기소개서/면접에 재사용 가능하도록 설계 변경
+
+---
+
 ## 커리어노트 (Career Notes)
 
 ### 자소서 대화 자동 추출 미구현

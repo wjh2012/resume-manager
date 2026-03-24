@@ -28,6 +28,7 @@ describe("handleMultiStep", () => {
       tools: tools as never,
       documentCount: 3,
       careerNoteCount: 2,
+      externalDocumentCount: 1,
       onFinish,
     })
 

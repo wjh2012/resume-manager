@@ -13,6 +13,9 @@ vi.mock("@/lib/prisma", () => ({
       createMany: vi.fn(),
       findMany: vi.fn(),
     },
+    interviewExternalDoc: {
+      createMany: vi.fn(),
+    },
     conversation: {
       create: vi.fn(),
       findUnique: vi.fn(),
@@ -21,6 +24,9 @@ vi.mock("@/lib/prisma", () => ({
       findMany: vi.fn(),
     },
     document: {
+      count: vi.fn(),
+    },
+    externalDocument: {
       count: vi.fn(),
     },
     $transaction: vi.fn(),
@@ -44,6 +50,7 @@ const mockPrisma = vi.mocked(prisma)
 const USER_ID = "a0000000-0000-4000-8000-000000000001"
 const SESSION_ID = "b0000000-0000-4000-8000-000000000001"
 const DOC_ID = "c0000000-0000-4000-8000-000000000001"
+const EXT_DOC_ID = "d0000000-0000-4000-8000-000000000001"
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe("createInterview()", () => {
@@ -52,10 +59,12 @@ describe("createInterview()", () => {
     mockPrisma.$transaction.mockImplementation(async (fn) => {
       const tx = {
         document: { count: vi.fn().mockResolvedValue(1) },
+        externalDocument: { count: vi.fn().mockResolvedValue(0) },
         interviewSession: {
           create: vi.fn().mockResolvedValue({ id: SESSION_ID }),
         },
         interviewDocument: { createMany: vi.fn().mockResolvedValue({}) },
+        interviewExternalDoc: { createMany: vi.fn().mockResolvedValue({}) },
         conversation: { create: vi.fn().mockResolvedValue({}) },
       }
       return fn(tx)
@@ -75,8 +84,10 @@ describe("createInterview()", () => {
     mockPrisma.$transaction.mockImplementation(async (fn) => {
       const tx = {
         document: { count: vi.fn().mockResolvedValue(0) },
+        externalDocument: { count: vi.fn().mockResolvedValue(0) },
         interviewSession: { create: vi.fn() },
         interviewDocument: { createMany: vi.fn() },
+        interviewExternalDoc: { createMany: vi.fn() },
         conversation: { create: vi.fn() },
       }
       return fn(tx)
@@ -93,8 +104,10 @@ describe("createInterview()", () => {
     mockPrisma.$transaction.mockImplementation(async (fn) => {
       const tx = {
         document: { count: countFn },
+        externalDocument: { count: vi.fn().mockResolvedValue(0) },
         interviewSession: { create: vi.fn().mockResolvedValue({ id: SESSION_ID }) },
         interviewDocument: { createMany: createManyFn },
+        interviewExternalDoc: { createMany: vi.fn().mockResolvedValue({}) },
         conversation: { create: vi.fn().mockResolvedValue({}) },
       }
       return fn(tx)
@@ -114,6 +127,58 @@ describe("createInterview()", () => {
       expect.objectContaining({ data: [{ interviewSessionId: SESSION_ID, documentId: DOC_ID }] }),
     )
     expect(result).toEqual({ id: SESSION_ID })
+  })
+
+  it("selectedExternalDocumentIds가 있으면 interviewExternalDoc.createMany를 호출해야 한다", async () => {
+    const extCountFn = vi.fn().mockResolvedValue(1)
+    const extCreateManyFn = vi.fn().mockResolvedValue({})
+    mockPrisma.$transaction.mockImplementation(async (fn) => {
+      const tx = {
+        document: { count: vi.fn().mockResolvedValue(1) },
+        externalDocument: { count: extCountFn },
+        interviewSession: { create: vi.fn().mockResolvedValue({ id: SESSION_ID }) },
+        interviewDocument: { createMany: vi.fn().mockResolvedValue({}) },
+        interviewExternalDoc: { createMany: extCreateManyFn },
+        conversation: { create: vi.fn().mockResolvedValue({}) },
+      }
+      return fn(tx)
+    })
+
+    const result = await createInterview(USER_ID, {
+      title: "카카오 면접",
+      documentIds: [DOC_ID],
+      selectedExternalDocumentIds: [EXT_DOC_ID],
+    })
+
+    expect(extCountFn).toHaveBeenCalledWith({
+      where: { id: { in: [EXT_DOC_ID] }, userId: USER_ID },
+    })
+    expect(extCreateManyFn).toHaveBeenCalledWith({
+      data: [{ interviewSessionId: SESSION_ID, externalDocumentId: EXT_DOC_ID }],
+    })
+    expect(result).toEqual({ id: SESSION_ID })
+  })
+
+  it("소유하지 않은 외부 문서가 포함되면 InterviewForbiddenError를 던져야 한다", async () => {
+    mockPrisma.$transaction.mockImplementation(async (fn) => {
+      const tx = {
+        document: { count: vi.fn().mockResolvedValue(1) },
+        externalDocument: { count: vi.fn().mockResolvedValue(0) },
+        interviewSession: { create: vi.fn().mockResolvedValue({ id: SESSION_ID }) },
+        interviewDocument: { createMany: vi.fn().mockResolvedValue({}) },
+        interviewExternalDoc: { createMany: vi.fn() },
+        conversation: { create: vi.fn() },
+      }
+      return fn(tx)
+    })
+
+    await expect(
+      createInterview(USER_ID, {
+        title: "테스트",
+        documentIds: [DOC_ID],
+        selectedExternalDocumentIds: [EXT_DOC_ID],
+      }),
+    ).rejects.toThrow(InterviewForbiddenError)
   })
 })
 
@@ -135,10 +200,34 @@ describe("getInterview()", () => {
   })
 
   it("소유자라면 세션을 반환해야 한다", async () => {
-    const mockSession = { id: SESSION_ID, userId: USER_ID, conversations: [], interviewDocuments: [] }
+    const mockSession = { id: SESSION_ID, userId: USER_ID, conversations: [], interviewDocuments: [], interviewExternalDocs: [] }
     mockPrisma.interviewSession.findUnique.mockResolvedValue(mockSession as never)
     const result = await getInterview(SESSION_ID, USER_ID)
     expect(result).toEqual(mockSession)
+  })
+
+  it("interviewExternalDocs를 포함하여 반환해야 한다", async () => {
+    const mockSession = {
+      id: SESSION_ID,
+      userId: USER_ID,
+      conversations: [],
+      interviewDocuments: [],
+      interviewExternalDocs: [
+        {
+          externalDocument: {
+            id: EXT_DOC_ID,
+            title: "직무기술서",
+            category: "JOB_DESCRIPTION",
+            sourceType: "TEXT",
+          },
+        },
+      ],
+    }
+    mockPrisma.interviewSession.findUnique.mockResolvedValue(mockSession as never)
+    const result = await getInterview(SESSION_ID, USER_ID)
+    expect(result).toEqual(mockSession)
+    expect(result?.interviewExternalDocs).toHaveLength(1)
+    expect(result?.interviewExternalDocs[0].externalDocument.id).toBe(EXT_DOC_ID)
   })
 })
 

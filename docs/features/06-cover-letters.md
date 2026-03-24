@@ -8,7 +8,7 @@
 
 ## 핵심 흐름
 
-1. **생성** — 기업명, 직무, 채용공고(선택), 참고 문서(선택) 입력
+1. **생성** — 기업명, 직무, 참고 문서(선택), 외부 문서(선택) 입력
 2. **작업공간 진입** — 좌: 에디터, 우: AI 채팅 (리사이즈 가능)
 3. **AI 대화** — 자기소개서 작성 관련 질문, 초안 요청
 4. **에디터 반영** — AI 응답의 "에디터에 반영" 버튼으로 에디터에 텍스트 추가
@@ -23,15 +23,17 @@
 | title | 자기소개서 제목 |
 | companyName | 기업명 |
 | position | 직무 |
-| jobPostingText | 채용공고 텍스트 (선택) |
 | content | 자기소개서 본문 |
 | status | DRAFT / COMPLETED |
+
+> `jobPostingText` 컬럼은 제거되었다. 채용공고는 `ExternalDocument`로 별도 관리하고 `CoverLetterExternalDoc`으로 연결한다.
 
 ### 관련 모델
 
 - **Conversation** (`type: COVER_LETTER`) — 자기소개서 생성 시 함께 생성
 - **Message** — 대화 메시지 (USER / ASSISTANT)
-- **CoverLetterDocument** — 참고 문서 다대다 관계
+- **CoverLetterDocument** — 참고 문서(업로드 문서) 다대다 관계
+- **CoverLetterExternalDoc** — 외부 문서(채용공고 등) 다대다 관계 (복합 PK)
 
 ## API
 
@@ -67,8 +69,8 @@ CoverLetterWorkspace (상태 소유: content)
 
 AI 제공자에 따라 `selectPipeline(provider)`로 처리 방식 분기:
 
-- **multi-step** (OpenAI): `streamText` + `tools` + `stopWhen`. LLM이 `readDocument`, `readCareerNote`, `saveCareerNote` 도구를 자율 호출
-- **classification** (Anthropic, Google 등): 분류→문서/커리어노트 DB 조회→(대화 압축)→시스템 프롬프트에 주입 후 응답. 분류 스키마: `documentsToRead`, `compareCareerNotes`, `needsCompression`
+- **multi-step** (OpenAI): `streamText` + `tools` + `stopWhen`. LLM이 `readDocument`, `readExternalDocument`, `readCareerNote`, `saveCareerNote` 도구를 자율 호출
+- **classification** (Anthropic, Google 등): 분류→문서/외부 문서/커리어노트 DB 조회→(대화 압축)→시스템 프롬프트에 주입 후 응답. 분류 스키마: `documentsToRead`, `externalDocumentsToRead`, `compareCareerNotes`, `needsCompression`
 
 ## 참고 문서 선택
 
@@ -80,21 +82,23 @@ AI 제공자에 따라 `selectPipeline(provider)`로 처리 방식 분기:
 
 `lib/cover-letters/service.ts`:
 
-- `createCoverLetter()` — 트랜잭션으로 CoverLetter + Conversation + CoverLetterDocument 생성
-- `getCoverLetter()` — 상세 조회 (conversation, messages, selectedDocs 포함)
+- `createCoverLetter()` — 트랜잭션으로 CoverLetter + Conversation + CoverLetterDocument + CoverLetterExternalDoc 생성
+- `getCoverLetter()` — 상세 조회 (conversation, messages, selectedDocs, selectedExternalDocs 포함)
 - `listCoverLetters()` — 목록 조회 (updatedAt 내림차순)
 - `updateCoverLetter()` — 내용/상태 업데이트 (소유권 검증)
 - `deleteCoverLetter()` — 삭제 (소유권 검증, cascade)
 - `updateSelectedDocuments()` — 참고 문서 선택 변경
+- `updateSelectedExternalDocuments()` — 외부 문서 선택 변경
 - `getConversationMessages()` — 대화 메시지 조회
 
 ## 검증 스키마
 
 `lib/validations/cover-letter.ts`:
 
-- `createCoverLetterSchema` — title, companyName, position (필수), jobPostingText, selectedDocumentIds (선택)
+- `createCoverLetterSchema` — title, companyName, position (필수), selectedDocumentIds, selectedExternalDocumentIds (선택)
 - `updateCoverLetterSchema` — title, content, status (모두 선택)
 - `updateSelectedDocumentsSchema` — documentIds 배열
+- `updateSelectedExternalDocumentsSchema` — externalDocumentIds 배열
 
 ## 파일 구조
 
@@ -103,7 +107,8 @@ lib/cover-letters/service.ts          — 서비스 레이어
 lib/validations/cover-letter.ts       — Zod 검증 스키마
 app/api/cover-letters/route.ts        — POST
 app/api/cover-letters/[id]/route.ts            — GET, PUT, DELETE
-app/api/cover-letters/[id]/documents/route.ts  — PATCH (참고 문서 변경)
+app/api/cover-letters/[id]/documents/route.ts          — PATCH (참고 문서 변경)
+app/api/cover-letters/[id]/external-documents/route.ts — PATCH (외부 문서 변경)
 app/api/chat/cover-letter/route.ts    — 스트리밍 채팅
 app/(dashboard)/cover-letters/
   page.tsx                            — 목록 페이지

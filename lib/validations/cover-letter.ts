@@ -4,8 +4,8 @@ export const createCoverLetterSchema = z.object({
   title: z.string().min(1, "제목을 입력해주세요.").max(100, "제목은 100자 이하로 입력해주세요."),
   companyName: z.string().min(1, "기업명을 입력해주세요.").max(100, "기업명은 100자 이하로 입력해주세요."),
   position: z.string().min(1, "직무를 입력해주세요.").max(100, "직무는 100자 이하로 입력해주세요."),
-  jobPostingText: z.string().max(10000, "채용공고는 10,000자 이하로 입력해주세요.").optional(),
   selectedDocumentIds: z.array(z.string().uuid()).optional(),
+  selectedExternalDocumentIds: z.array(z.string().uuid()).optional(),
 })
 
 export const updateCoverLetterSchema = z.object({
@@ -30,4 +30,8 @@ export const coverLetterChatSchema = z.object({
 
 export const updateSelectedDocumentsSchema = z.object({
   documentIds: z.array(z.string().uuid()),
+})
+
+export const updateSelectedExternalDocumentsSchema = z.object({
+  externalDocumentIds: z.array(z.string().uuid()),
 })

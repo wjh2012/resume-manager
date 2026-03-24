@@ -24,6 +24,13 @@ vi.mock("@/lib/prisma", () => ({
     document: {
       count: vi.fn(),
     },
+    externalDocument: {
+      count: vi.fn(),
+    },
+    coverLetterExternalDoc: {
+      createMany: vi.fn(),
+      deleteMany: vi.fn(),
+    },
     $transaction: vi.fn(),
   },
 }))
@@ -36,6 +43,7 @@ import {
   updateCoverLetter,
   deleteCoverLetter,
   updateSelectedDocuments,
+  updateSelectedExternalDocuments,
   getConversationMessages,
   CoverLetterNotFoundError,
   CoverLetterForbiddenError,
@@ -166,6 +174,63 @@ describe("createCoverLetter()", () => {
     await expect(createCoverLetter("user-1", data)).resolves.toEqual({ id: "cl-1" })
   })
 
+  it("selectedExternalDocumentIds가 있으면 coverLetterExternalDoc.createMany를 호출해야 한다", async () => {
+    // Arrange
+    let capturedTx: Record<string, unknown> | null = null
+    mockPrisma.$transaction.mockImplementation(async (fn) => {
+      const tx = {
+        coverLetter: { create: vi.fn().mockResolvedValue({ id: "cl-1" }) },
+        conversation: { create: vi.fn().mockResolvedValue({}) },
+        coverLetterDocument: { createMany: vi.fn().mockResolvedValue({}) },
+        coverLetterExternalDoc: { createMany: vi.fn().mockResolvedValue({}) },
+        externalDocument: { count: vi.fn().mockResolvedValue(2) },
+      }
+      capturedTx = tx as unknown as Record<string, unknown>
+      return fn(tx)
+    })
+    const data = {
+      title: "카카오 자소서",
+      companyName: "카카오",
+      position: "백엔드 개발자",
+      selectedExternalDocumentIds: ["ext-1", "ext-2"],
+    }
+
+    // Act
+    await createCoverLetter("user-1", data)
+
+    // Assert
+    const txExtDoc = (capturedTx as { coverLetterExternalDoc: { createMany: ReturnType<typeof vi.fn> } }).coverLetterExternalDoc
+    expect(txExtDoc.createMany).toHaveBeenCalledWith({
+      data: [
+        { coverLetterId: "cl-1", externalDocumentId: "ext-1" },
+        { coverLetterId: "cl-1", externalDocumentId: "ext-2" },
+      ],
+    })
+  })
+
+  it("selectedExternalDocumentIds 중 소유하지 않은 문서가 있으면 CoverLetterForbiddenError를 던져야 한다", async () => {
+    // Arrange
+    mockPrisma.$transaction.mockImplementation(async (fn) => {
+      const tx = {
+        coverLetter: { create: vi.fn().mockResolvedValue({ id: "cl-1" }) },
+        conversation: { create: vi.fn().mockResolvedValue({}) },
+        coverLetterDocument: { createMany: vi.fn().mockResolvedValue({}) },
+        coverLetterExternalDoc: { createMany: vi.fn().mockResolvedValue({}) },
+        externalDocument: { count: vi.fn().mockResolvedValue(1) }, // 2개 요청했는데 1개만 소유
+      }
+      return fn(tx)
+    })
+    const data = {
+      title: "카카오 자소서",
+      companyName: "카카오",
+      position: "백엔드 개발자",
+      selectedExternalDocumentIds: ["ext-1", "ext-other"],
+    }
+
+    // Act & Assert
+    await expect(createCoverLetter("user-1", data)).rejects.toThrow(CoverLetterForbiddenError)
+  })
+
   it("Conversation에 올바른 userId, type, coverLetterId를 전달해야 한다", async () => {
     // Arrange
     let capturedTx: Record<string, unknown> | null = null
@@ -261,6 +326,7 @@ describe("getCoverLetter()", () => {
         include: expect.objectContaining({
           conversations: expect.any(Object),
           coverLetterDocuments: expect.any(Object),
+          coverLetterExternalDocs: expect.any(Object),
         }),
       }),
     )
@@ -645,6 +711,142 @@ describe("updateSelectedDocuments()", () => {
     it("반환값은 undefined여야 한다", async () => {
       // Act
       const result = await updateSelectedDocuments("cl-1", "user-1", [])
+
+      // Assert
+      expect(result).toBeUndefined()
+    })
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+describe("updateSelectedExternalDocuments()", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockPrisma.$transaction.mockImplementation(async (fn) => {
+      const tx = {
+        coverLetter: { findUnique: vi.fn().mockResolvedValue({ userId: "user-1" }) },
+        externalDocument: { count: vi.fn().mockResolvedValue(0) },
+        coverLetterExternalDoc: {
+          deleteMany: vi.fn().mockResolvedValue({}),
+          createMany: vi.fn().mockResolvedValue({}),
+        },
+      }
+      return fn(tx)
+    })
+  })
+
+  describe("소유권 검증", () => {
+    it("자기소개서가 없으면 CoverLetterNotFoundError를 던져야 한다", async () => {
+      // Arrange
+      mockPrisma.$transaction.mockImplementation(async (fn) => {
+        const tx = {
+          coverLetter: { findUnique: vi.fn().mockResolvedValue(null) },
+          externalDocument: { count: vi.fn() },
+          coverLetterExternalDoc: { deleteMany: vi.fn(), createMany: vi.fn() },
+        }
+        return fn(tx)
+      })
+
+      // Act & Assert
+      await expect(updateSelectedExternalDocuments("cl-999", "user-1", ["ext-1"])).rejects.toThrow(
+        CoverLetterNotFoundError,
+      )
+    })
+
+    it("userId가 소유자와 다르면 CoverLetterForbiddenError를 던져야 한다", async () => {
+      // Arrange
+      mockPrisma.$transaction.mockImplementation(async (fn) => {
+        const tx = {
+          coverLetter: { findUnique: vi.fn().mockResolvedValue({ userId: "owner-user" }) },
+          externalDocument: { count: vi.fn() },
+          coverLetterExternalDoc: { deleteMany: vi.fn(), createMany: vi.fn() },
+        }
+        return fn(tx)
+      })
+
+      // Act & Assert
+      await expect(updateSelectedExternalDocuments("cl-1", "other-user", ["ext-1"])).rejects.toThrow(
+        CoverLetterForbiddenError,
+      )
+    })
+
+    it("externalDocumentIds 중 소유하지 않은 문서가 있으면 CoverLetterForbiddenError를 던져야 한다", async () => {
+      // Arrange
+      mockPrisma.$transaction.mockImplementation(async (fn) => {
+        const tx = {
+          coverLetter: { findUnique: vi.fn().mockResolvedValue({ userId: "user-1" }) },
+          externalDocument: { count: vi.fn().mockResolvedValue(1) }, // 2개 요청했는데 1개만 소유
+          coverLetterExternalDoc: { deleteMany: vi.fn(), createMany: vi.fn() },
+        }
+        return fn(tx)
+      })
+
+      // Act & Assert
+      await expect(updateSelectedExternalDocuments("cl-1", "user-1", ["ext-1", "ext-other"])).rejects.toThrow(
+        CoverLetterForbiddenError,
+      )
+    })
+  })
+
+  describe("성공 경로", () => {
+    it("기존 외부 문서를 삭제하고 새 외부 문서를 createMany로 생성해야 한다", async () => {
+      // Arrange
+      let capturedTx: Record<string, unknown> | null = null
+      mockPrisma.$transaction.mockImplementation(async (fn) => {
+        const tx = {
+          coverLetter: { findUnique: vi.fn().mockResolvedValue({ userId: "user-1" }) },
+          externalDocument: { count: vi.fn().mockResolvedValue(2) },
+          coverLetterExternalDoc: {
+            deleteMany: vi.fn().mockResolvedValue({}),
+            createMany: vi.fn().mockResolvedValue({}),
+          },
+        }
+        capturedTx = tx as unknown as Record<string, unknown>
+        return fn(tx)
+      })
+
+      // Act
+      await updateSelectedExternalDocuments("cl-1", "user-1", ["ext-1", "ext-2"])
+
+      // Assert
+      const txExtDoc = (capturedTx as { coverLetterExternalDoc: { deleteMany: ReturnType<typeof vi.fn>; createMany: ReturnType<typeof vi.fn> } }).coverLetterExternalDoc
+      expect(txExtDoc.deleteMany).toHaveBeenCalledWith({ where: { coverLetterId: "cl-1" } })
+      expect(txExtDoc.createMany).toHaveBeenCalledWith({
+        data: [
+          { coverLetterId: "cl-1", externalDocumentId: "ext-1" },
+          { coverLetterId: "cl-1", externalDocumentId: "ext-2" },
+        ],
+      })
+    })
+
+    it("externalDocumentIds가 빈 배열이면 deleteMany만 호출하고 createMany는 호출하지 않아야 한다", async () => {
+      // Arrange
+      let capturedTx: Record<string, unknown> | null = null
+      mockPrisma.$transaction.mockImplementation(async (fn) => {
+        const tx = {
+          coverLetter: { findUnique: vi.fn().mockResolvedValue({ userId: "user-1" }) },
+          externalDocument: { count: vi.fn() },
+          coverLetterExternalDoc: {
+            deleteMany: vi.fn().mockResolvedValue({}),
+            createMany: vi.fn().mockResolvedValue({}),
+          },
+        }
+        capturedTx = tx as unknown as Record<string, unknown>
+        return fn(tx)
+      })
+
+      // Act
+      await updateSelectedExternalDocuments("cl-1", "user-1", [])
+
+      // Assert
+      const txExtDoc = (capturedTx as { coverLetterExternalDoc: { deleteMany: ReturnType<typeof vi.fn>; createMany: ReturnType<typeof vi.fn> } }).coverLetterExternalDoc
+      expect(txExtDoc.deleteMany).toHaveBeenCalledOnce()
+      expect(txExtDoc.createMany).not.toHaveBeenCalled()
+    })
+
+    it("반환값은 undefined여야 한다", async () => {
+      // Act
+      const result = await updateSelectedExternalDocuments("cl-1", "user-1", [])
 
       // Assert
       expect(result).toBeUndefined()

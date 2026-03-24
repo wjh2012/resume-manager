@@ -4,6 +4,7 @@ import {
   DollarSign,
   FileCheck,
   FileText,
+  Globe,
   Home,
   Lightbulb,
   MessageSquare,
@@ -22,6 +23,7 @@ export interface NavItem {
 export const navItems: NavItem[] = [
   { icon: Home, label: "대시보드", href: "/" },
   { icon: FileText, label: "참고자료", href: "/documents" },
+  { icon: Globe, label: "외부 문서", href: "/external-documents" },
   { icon: PenTool, label: "자기소개서", href: "/cover-letters" },
   { icon: MessageSquare, label: "모의면접", href: "/interviews" },
   { icon: Lightbulb, label: "인사이트", href: "/insights" },

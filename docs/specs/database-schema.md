@@ -7,6 +7,8 @@ User ─┬─ AiSettings (1:1)
       ├─ Document (1:N) ──── DocumentChunk (1:N)
       │                 ├─── InterviewDocument (N:M) ──── InterviewSession
       │                 └─── CoverLetterDocument (N:M) ── CoverLetter
+      ├─ ExternalDocument (1:N) ─┬─ CoverLetterExternalDoc (N:M) ── CoverLetter
+      │                          └─ InterviewExternalDoc (N:M) ──── InterviewSession
       ├─ Resume (1:N) ──┬─ PersonalInfo (1:1)
       │                  ├─ Education (1:N)
       │                  ├─ Experience (1:N)
@@ -277,22 +279,24 @@ model Certification {
 
 ### CoverLetter
 
+`jobPostingText` 컬럼이 제거되었다. 채용공고는 `ExternalDocument`로 별도 관리하고, `CoverLetterExternalDoc` 조인 테이블로 연결한다.
+
 ```prisma
 model CoverLetter {
-  id              String   @id @default(uuid()) @db.Uuid
-  userId          String   @map("user_id") @db.Uuid
-  title           String
-  companyName     String   @map("company_name")
-  position        String   // 지원 직무
-  jobPostingText  String?  @map("job_posting_text") @db.Text // 채용공고 원문
-  content         String?  @db.Text // 최종 자기소개서 내용
-  status          CoverLetterStatus @default(DRAFT)
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  title       String
+  companyName String   @map("company_name")
+  position    String   // 지원 직무
+  content     String?  @db.Text // 최종 자기소개서 내용
+  status      CoverLetterStatus @default(DRAFT)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
-  user                 User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  conversations        Conversation[]
-  coverLetterDocuments CoverLetterDocument[]
+  user                    User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversations           Conversation[]
+  coverLetterDocuments    CoverLetterDocument[]
+  coverLetterExternalDocs CoverLetterExternalDoc[]
 
   @@map("cover_letters")
 }
@@ -313,6 +317,67 @@ model CoverLetterDocument {
 
   @@unique([coverLetterId, documentId])
   @@map("cover_letter_documents")
+}
+```
+
+### ExternalDocument
+
+채용공고, JD, 기타 텍스트 형식의 외부 자료를 저장하는 테이블. 파일 업로드 또는 텍스트 직접 입력으로 생성된다.
+
+```prisma
+model ExternalDocument {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  title       String
+  category    String   @default("")          // "job_posting" | "jd" | 기타 자유 문자열
+  sourceType  String   @map("source_type")   // "text" | "pdf" | "docx" | "txt"
+  fileType    String?  @map("file_type")     // 파일 업로드 시 확장자
+  originalUrl String?  @map("original_url")  // Supabase Storage 경로 (파일 업로드 시)
+  fileSize    Int?     @map("file_size")     // bytes (파일 업로드 시)
+  content     String   @db.Text             // 전체 텍스트
+  summary     String?                       // AI 요약 (비동기 생성)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user                    User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  coverLetterExternalDocs CoverLetterExternalDoc[]
+  interviewExternalDocs   InterviewExternalDoc[]
+
+  @@map("external_documents")
+}
+```
+
+### CoverLetterExternalDoc
+
+자기소개서에 연결된 외부 문서(채용공고 등) 조인 테이블. 복합 PK(`@@id`) 패턴 사용 — `CoverLetterDocument`와 달리 별도 UUID id가 없다.
+
+```prisma
+model CoverLetterExternalDoc {
+  coverLetterId      String @map("cover_letter_id") @db.Uuid
+  externalDocumentId String @map("external_document_id") @db.Uuid
+
+  coverLetter      CoverLetter      @relation(fields: [coverLetterId], references: [id], onDelete: Cascade)
+  externalDocument ExternalDocument @relation(fields: [externalDocumentId], references: [id], onDelete: Cascade)
+
+  @@id([coverLetterId, externalDocumentId])
+  @@map("cover_letter_external_docs")
+}
+```
+
+### InterviewExternalDoc
+
+면접 세션에 연결된 외부 문서 조인 테이블. `CoverLetterExternalDoc`과 동일 패턴 (복합 PK).
+
+```prisma
+model InterviewExternalDoc {
+  interviewSessionId String @map("interview_session_id") @db.Uuid
+  externalDocumentId String @map("external_document_id") @db.Uuid
+
+  interviewSession InterviewSession @relation(fields: [interviewSessionId], references: [id], onDelete: Cascade)
+  externalDocument ExternalDocument @relation(fields: [externalDocumentId], references: [id], onDelete: Cascade)
+
+  @@id([interviewSessionId, externalDocumentId])
+  @@map("interview_external_docs")
 }
 ```
 

@@ -5,6 +5,9 @@ vi.mock("@/lib/prisma", () => ({
     document: {
       findMany: vi.fn(),
     },
+    externalDocument: {
+      findMany: vi.fn(),
+    },
     careerNote: {
       findMany: vi.fn(),
     },
@@ -15,11 +18,13 @@ import { buildContext } from "@/lib/ai/context"
 import { prisma } from "@/lib/prisma"
 
 const mockDocFindMany = vi.mocked(prisma.document.findMany)
+const mockExtDocFindMany = vi.mocked(prisma.externalDocument.findMany)
 const mockNoteFindMany = vi.mocked(prisma.careerNote.findMany)
 
 beforeEach(() => {
   vi.clearAllMocks()
   mockDocFindMany.mockResolvedValue([])
+  mockExtDocFindMany.mockResolvedValue([])
   mockNoteFindMany.mockResolvedValue([])
 })
 
@@ -90,5 +95,68 @@ describe("buildContext", () => {
 
     expect(result.context).toContain("요약 없음")
     expect(result.context).toContain("readCareerNote")
+  })
+
+  describe("외부 문서", () => {
+    it("선택 외부 문서의 요약과 ID를 포함한다", async () => {
+      mockExtDocFindMany.mockResolvedValue([
+        { id: "ext-1", title: "카카오 채용공고", category: "JOB_POSTING", summary: "백엔드 개발자 채용" },
+      ] as never)
+
+      const result = await buildContext("user-1", {
+        selectedExternalDocumentIds: ["ext-1"],
+      })
+
+      expect(result.context).toContain("[외부 문서:")
+      expect(result.context).toContain("ext-1")
+      expect(result.context).toContain("백엔드 개발자 채용")
+      expect(result.externalDocumentCount).toBe(1)
+    })
+
+    it("category가 있으면 라벨에 포함한다", async () => {
+      mockExtDocFindMany.mockResolvedValue([
+        { id: "ext-1", title: "카카오 채용공고", category: "JOB_POSTING", summary: "요약" },
+      ] as never)
+
+      const result = await buildContext("user-1", {
+        selectedExternalDocumentIds: ["ext-1"],
+      })
+
+      expect(result.context).toContain("JOB_POSTING: 카카오 채용공고")
+    })
+
+    it("category가 null이면 title만 라벨에 표시한다", async () => {
+      mockExtDocFindMany.mockResolvedValue([
+        { id: "ext-1", title: "기타 문서", category: null, summary: "요약" },
+      ] as never)
+
+      const result = await buildContext("user-1", {
+        selectedExternalDocumentIds: ["ext-1"],
+      })
+
+      expect(result.context).toContain("[외부 문서: 기타 문서")
+      expect(result.context).not.toContain("null:")
+    })
+
+    it("summary가 null인 외부 문서는 fallback 메시지를 표시한다", async () => {
+      mockExtDocFindMany.mockResolvedValue([
+        { id: "ext-1", title: "JD", category: null, summary: null },
+      ] as never)
+
+      const result = await buildContext("user-1", {
+        selectedExternalDocumentIds: ["ext-1"],
+      })
+
+      expect(result.context).toContain("요약 없음")
+      expect(result.context).toContain("readExternalDocument")
+    })
+
+    it("selectedExternalDocumentIds가 비어있으면 외부 문서 섹션 없음", async () => {
+      const result = await buildContext("user-1", {})
+
+      expect(result.context).not.toContain("[외부 문서:")
+      expect(mockExtDocFindMany).not.toHaveBeenCalled()
+      expect(result.externalDocumentCount).toBe(0)
+    })
   })
 })
