@@ -11,12 +11,19 @@ import { ALL_DOCUMENTS, ALL_CAREER_NOTES } from "../fixtures/mock-data"
 // 공통: 참고자료 context 빌더
 // ---------------------------------------------------------------------------
 
-export function buildContext(): string {
-  const docsSummary = ALL_DOCUMENTS.map(
+export function buildContext(personaId?: string): string {
+  const docs = personaId
+    ? ALL_DOCUMENTS.filter((d) => d.personaId === personaId)
+    : ALL_DOCUMENTS;
+  const notes = personaId
+    ? ALL_CAREER_NOTES.filter((n) => n.personaId === personaId)
+    : ALL_CAREER_NOTES;
+
+  const docsSummary = docs.map(
     (d) => `[문서: ${d.title}] (ID: ${d.id})\n${d.summary}`
   ).join("\n\n---\n\n")
 
-  const notesSummary = ALL_CAREER_NOTES.map(
+  const notesSummary = notes.map(
     (n) => `[커리어노트: ${n.title}] (ID: ${n.id})\n${n.summary}`
   ).join("\n\n---\n\n")
 
@@ -30,18 +37,25 @@ export function buildContext(): string {
 export interface PromptVariant {
   id: string
   label: string
-  buildSystemPrompt: (context: string) => string
+  buildSystemPrompt: (context: string, personaId?: string) => string
 }
 
 // ---------------------------------------------------------------------------
-// 채용공고 텍스트 (네이버 클라우드 — sd-1-ext-1)
+// 채용공고 텍스트
 // ---------------------------------------------------------------------------
 
 import { ALL_EXTERNAL_DOCUMENTS } from "../fixtures/mock-data"
 
-const JOB_POSTING_TEXT = ALL_EXTERNAL_DOCUMENTS.find(
-  (d) => d.id === "sd-1-ext-1"
-)!.extractedText
+export function getJobPostingText(personaId?: string): string {
+  const doc = personaId
+    ? ALL_EXTERNAL_DOCUMENTS.find((d) => d.personaId === personaId)
+    : ALL_EXTERNAL_DOCUMENTS.find((d) => d.id === "sd-1-ext-1");
+  if (!doc) {
+    console.warn(`⚠ No external document found for persona: ${personaId ?? "default"}`);
+    return "";
+  }
+  return doc.extractedText;
+}
 
 // ---------------------------------------------------------------------------
 // S1: 최소 — 도구 호출 지시 없음
@@ -50,7 +64,7 @@ const JOB_POSTING_TEXT = ALL_EXTERNAL_DOCUMENTS.find(
 const S1: PromptVariant = {
   id: "S1",
   label: "최소",
-  buildSystemPrompt: (context) => `당신은 전문 자기소개서 작성 도우미입니다.
+  buildSystemPrompt: (context, personaId) => `당신은 전문 자기소개서 작성 도우미입니다.
 사용자가 네이버 클라우드의 시니어 백엔드 개발자 포지션에 지원하려 합니다.
 
 아래 참고자료를 바탕으로 자기소개서 작성을 도와주세요:
@@ -60,7 +74,7 @@ const S1: PromptVariant = {
 - 아래 참고자료는 요약입니다. 필요하면 도구로 전문을 읽으세요.
 
 [채용공고]
-${JOB_POSTING_TEXT}
+${getJobPostingText(personaId)}
 
 [참고자료]
 ${context}`,
@@ -73,7 +87,7 @@ ${context}`,
 const S2: PromptVariant = {
   id: "S2",
   label: "현재",
-  buildSystemPrompt: (context) => `당신은 전문 자기소개서 작성 도우미입니다.
+  buildSystemPrompt: (context, personaId) => `당신은 전문 자기소개서 작성 도우미입니다.
 사용자가 네이버 클라우드의 시니어 백엔드 개발자 포지션에 지원하려 합니다.
 
 아래 참고자료를 바탕으로 자기소개서 작성을 도와주세요:
@@ -85,7 +99,7 @@ const S2: PromptVariant = {
 - 대화 중 기록할 만한 경험이나 기존 커리어노트의 수정이 필요하면, 먼저 사용자에게 제안하고 승인을 받은 후 saveCareerNote 도구를 사용하세요.
 
 [채용공고]
-${JOB_POSTING_TEXT}
+${getJobPostingText(personaId)}
 
 [참고자료]
 ${context}`,
@@ -98,7 +112,7 @@ ${context}`,
 const S3: PromptVariant = {
   id: "S3",
   label: "few-shot",
-  buildSystemPrompt: (context) => `당신은 전문 자기소개서 작성 도우미입니다.
+  buildSystemPrompt: (context, personaId) => `당신은 전문 자기소개서 작성 도우미입니다.
 사용자가 네이버 클라우드의 시니어 백엔드 개발자 포지션에 지원하려 합니다.
 
 아래 참고자료를 바탕으로 자기소개서 작성을 도와주세요:
@@ -116,7 +130,7 @@ const S3: PromptVariant = {
 - "고마워요" → 도구 호출 없음
 
 [채용공고]
-${JOB_POSTING_TEXT}
+${getJobPostingText(personaId)}
 
 [참고자료]
 ${context}`,
@@ -129,7 +143,7 @@ ${context}`,
 const S4: PromptVariant = {
   id: "S4",
   label: "단계별 판단",
-  buildSystemPrompt: (context) => `당신은 전문 자기소개서 작성 도우미입니다.
+  buildSystemPrompt: (context, personaId) => `당신은 전문 자기소개서 작성 도우미입니다.
 사용자가 네이버 클라우드의 시니어 백엔드 개발자 포지션에 지원하려 합니다.
 
 아래 참고자료를 바탕으로 자기소개서 작성을 도와주세요:
@@ -147,7 +161,7 @@ const S4: PromptVariant = {
 4. 위에 해당하지 않으면 → 도구 호출 없이 응답
 
 [채용공고]
-${JOB_POSTING_TEXT}
+${getJobPostingText(personaId)}
 
 [참고자료]
 ${context}`,
@@ -160,7 +174,7 @@ ${context}`,
 const S5: PromptVariant = {
   id: "S5",
   label: "강제 패턴",
-  buildSystemPrompt: (context) => `당신은 전문 자기소개서 작성 도우미입니다.
+  buildSystemPrompt: (context, personaId) => `당신은 전문 자기소개서 작성 도우미입니다.
 사용자가 네이버 클라우드의 시니어 백엔드 개발자 포지션에 지원하려 합니다.
 
 아래 참고자료를 바탕으로 자기소개서 작성을 도와주세요:
@@ -201,7 +215,7 @@ const S5: PromptVariant = {
 하나라도 미충족이면 도구를 호출한 후 응답을 시작하세요.
 
 [채용공고]
-${JOB_POSTING_TEXT}
+${getJobPostingText(personaId)}
 
 [참고자료]
 ${context}`,
@@ -214,7 +228,7 @@ ${context}`,
 const S6: PromptVariant = {
   id: "S6",
   label: "강제 패턴 + Pre-check",
-  buildSystemPrompt: (context) => S5.buildSystemPrompt(context),
+  buildSystemPrompt: (context, personaId) => S5.buildSystemPrompt(context, personaId),
 }
 
 export const PROMPT_VARIANTS: PromptVariant[] = [S1, S2, S3, S4, S5, S6]

@@ -7,6 +7,16 @@ export { calculateCost, type CostResult } from "./cost";
 // CLI argument parsing
 export { parseArgs, type BenchmarkOptions } from "./cli";
 
+// Config loading and merging
+export {
+  type BenchmarkConfig,
+  type CliOverrides,
+  resolveProvider,
+  mergeWithCli,
+  validatePersonas,
+  loadConfig,
+} from "./config";
+
 // JSON result saving
 export { saveJson } from "./report";
 
