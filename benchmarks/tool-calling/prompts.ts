@@ -50,7 +50,11 @@ export function getJobPostingText(personaId?: string): string {
   const doc = personaId
     ? ALL_EXTERNAL_DOCUMENTS.find((d) => d.personaId === personaId)
     : ALL_EXTERNAL_DOCUMENTS.find((d) => d.id === "sd-1-ext-1");
-  return doc?.extractedText ?? "";
+  if (!doc) {
+    console.warn(`⚠ No external document found for persona: ${personaId ?? "default"}`);
+    return "";
+  }
+  return doc.extractedText;
 }
 
 // ---------------------------------------------------------------------------

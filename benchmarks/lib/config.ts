@@ -56,5 +56,34 @@ export function validatePersonas(personas: string[]): string[] {
 
 export async function loadConfig(configPath: string): Promise<BenchmarkConfig> {
   const mod = await import(configPath);
-  return mod.default as BenchmarkConfig;
+  const config = mod.default;
+
+  if (!config || typeof config !== "object") {
+    throw new Error(`Config file must export a default object: ${configPath}`);
+  }
+
+  const errors: string[] = [];
+
+  if (!Array.isArray(config.models) && config.models !== undefined) {
+    errors.push("models must be an array of strings");
+  }
+  if (!Array.isArray(config.personas) && config.personas !== undefined) {
+    errors.push("personas must be an array of strings");
+  }
+  if (typeof config.batch !== "boolean" && config.batch !== undefined) {
+    errors.push("batch must be a boolean");
+  }
+  if (
+    config.suites !== "all" &&
+    !Array.isArray(config.suites) &&
+    config.suites !== undefined
+  ) {
+    errors.push('suites must be "all" or an array');
+  }
+
+  if (errors.length > 0) {
+    throw new Error(`Invalid config (${configPath}):\n  - ${errors.join("\n  - ")}`);
+  }
+
+  return config as BenchmarkConfig;
 }
