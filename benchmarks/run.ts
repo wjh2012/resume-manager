@@ -14,6 +14,11 @@ import type { BenchmarkProvider, BenchmarkConfig, CliOverrides } from "./lib";
 import { runToolCalling } from "./tool-calling/run";
 import { runChatPipeline } from "./chat-pipeline/run";
 
+/** "all" 문자열 또는 ["all"] 배열 모두 처리 */
+function isAll(value: string | string[] | undefined): boolean {
+  return value === "all" || (Array.isArray(value) && value.length === 1 && value[0] === "all");
+}
+
 const PROVIDERS: Record<string, BenchmarkProvider> = {
   openai: openaiProvider,
   anthropic: anthropicProvider,
@@ -66,18 +71,14 @@ async function main() {
   const personas = validatePersonas(config.personas);
 
   // Suite 목록 resolve
-  const suitesValue = config.suites;
-  const suiteNames =
-    suitesValue === "all" || (Array.isArray(suitesValue) && suitesValue.includes("all" as never))
-      ? Object.keys(SUITES)
-      : Array.isArray(suitesValue) ? suitesValue : [suitesValue];
+  const suiteNames = isAll(config.suites)
+    ? Object.keys(SUITES)
+    : Array.isArray(config.suites) ? config.suites : [config.suites];
 
   // Providers 필터 resolve
-  const providersValue = config.providers;
-  const allowedProviders =
-    !providersValue || providersValue === "all" || (Array.isArray(providersValue) && providersValue.includes("all" as never))
-      ? null // 제한 없음
-      : new Set(Array.isArray(providersValue) ? providersValue : [providersValue]);
+  const allowedProviders = !config.providers || isAll(config.providers)
+    ? null // 제한 없음
+    : new Set(Array.isArray(config.providers) ? config.providers : [config.providers]);
 
   // Models resolve: 명시된 모델이 없으면, 허용된 provider들의 기본 모델 사용
   let models = config.models;

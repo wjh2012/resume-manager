@@ -42,7 +42,10 @@ export function mergeWithCli(config: BenchmarkConfig, cli: CliOverrides): Benchm
 }
 
 export function validatePersonas(personas: string[]): string[] {
-  if (personas.length === 1 && personas[0] === "all") {
+  if (personas.includes("all")) {
+    if (personas.length > 1) {
+      throw new Error('"all" cannot be combined with other persona IDs');
+    }
     return ALL_PERSONAS.map((p) => p.id);
   }
 

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { resolveProvider, mergeWithCli, validatePersonas } from "../config";
+import { resolveProvider, mergeWithCli, validatePersonas, loadConfig } from "../config";
 import type { BenchmarkConfig } from "../config";
 
 describe("resolveProvider", () => {
@@ -75,5 +75,30 @@ describe("validatePersonas", () => {
     expect(result.length).toBeGreaterThanOrEqual(25);
     expect(result).toContain("sd-1");
     expect(result).toContain("ua-1");
+  });
+
+  it('"all"과 다른 ID 혼합 시 에러', () => {
+    expect(() => validatePersonas(["all", "sd-1"])).toThrow("all");
+  });
+});
+
+describe("loadConfig", () => {
+  it("models 누락 시 에러", async () => {
+    const configPath = `data:text/javascript,export default ${JSON.stringify({
+      suites: "all", personas: ["sd-1"], batch: false,
+    })}`;
+    await expect(loadConfig(configPath)).rejects.toThrow("models is required");
+  });
+
+  it("batch가 boolean이 아니면 에러", async () => {
+    const configPath = `data:text/javascript,export default ${JSON.stringify({
+      suites: "all", models: [], personas: [], batch: "yes",
+    })}`;
+    await expect(loadConfig(configPath)).rejects.toThrow("batch is required");
+  });
+
+  it("default export가 없으면 에러", async () => {
+    const configPath = "data:text/javascript,export const foo = 1";
+    await expect(loadConfig(configPath)).rejects.toThrow("must export a default object");
   });
 });
