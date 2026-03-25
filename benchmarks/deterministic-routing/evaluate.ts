@@ -39,19 +39,23 @@ export function evaluateRouting(
   }
 
   // atLeast 필드 비교 (최소 조건)
+  // 같은 필드에 exact와 atLeast가 모두 설정된 경우: AND (둘 다 만족해야 pass)
   if (expected.atLeast) {
     if (expected.atLeast.saveCareerNote !== undefined) {
-      saveCareerNoteCorrect = actual.saveCareerNote === expected.atLeast.saveCareerNote;
+      saveCareerNoteCorrect = saveCareerNoteCorrect &&
+        actual.saveCareerNote === expected.atLeast.saveCareerNote;
     }
     if (expected.atLeast.documentsToRead !== undefined) {
-      documentsToReadCorrect = expected.atLeast.documentsToRead.every(
-        (id) => actual.documentsToRead.includes(id),
-      );
+      documentsToReadCorrect = documentsToReadCorrect &&
+        expected.atLeast.documentsToRead.every(
+          (id) => actual.documentsToRead.includes(id),
+        );
     }
     if (expected.atLeast.careerNotesToRead !== undefined) {
-      careerNotesToReadCorrect = expected.atLeast.careerNotesToRead.every(
-        (id) => actual.careerNotesToRead.includes(id),
-      );
+      careerNotesToReadCorrect = careerNotesToReadCorrect &&
+        expected.atLeast.careerNotesToRead.every(
+          (id) => actual.careerNotesToRead.includes(id),
+        );
     }
   }
 

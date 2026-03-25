@@ -149,6 +149,7 @@ export async function runDeterministicRouting(
     try {
       actual = JSON.parse(response.text) as RoutingClassification;
     } catch {
+      console.warn(`  ⚠ ${entry.request.id}: JSON 파싱 실패, 기본값 사용`);
       actual = { documentsToRead: [], careerNotesToRead: [], saveCareerNote: false };
     }
 
