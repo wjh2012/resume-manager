@@ -15,6 +15,7 @@ import {
 import type { BenchmarkProvider, BenchmarkConfig, CliOverrides } from "./lib";
 import { runToolCalling } from "./tool-calling/run";
 import { runChatPipeline } from "./chat-pipeline/run";
+import { runDeterministicRouting } from "./deterministic-routing/run";
 
 /** "all" 문자열 또는 ["all"] 배열 모두 처리 */
 function isAll(value: string | string[] | undefined): boolean {
@@ -30,6 +31,7 @@ const PROVIDERS: Record<string, BenchmarkProvider> = {
 const SUITES: Record<string, (provider: BenchmarkProvider, model: string, batch: boolean, personaId: string) => Promise<unknown>> = {
   "tool-calling": runToolCalling,
   "chat-pipeline": runChatPipeline,
+  "deterministic-routing": runDeterministicRouting,
 };
 
 const DEFAULT_MODELS: Record<string, string> = {

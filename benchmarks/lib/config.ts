@@ -2,7 +2,7 @@ import type { ProviderName } from "./providers/types";
 import { ALL_PERSONAS } from "../fixtures/mock-data";
 
 export interface BenchmarkConfig {
-  suites: "all" | Array<"tool-calling" | "chat-pipeline">;
+  suites: "all" | Array<"tool-calling" | "chat-pipeline" | "deterministic-routing">;
   providers?: "all" | Array<"openai" | "anthropic" | "google">;
   models: string[];
   personas: string[];
