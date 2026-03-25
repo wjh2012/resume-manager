@@ -85,11 +85,11 @@ export async function runDeterministicRouting(
   // Provider 지원 검증
   // -----------------------------------------------------------------------
 
-  const SUPPORTED_PROVIDERS = new Set(["openai"]);
-  if (!SUPPORTED_PROVIDERS.has(provider.name)) {
+  const SUPPORTED_PROVIDERS = ["openai"];
+  if (!SUPPORTED_PROVIDERS.includes(provider.name)) {
     throw new Error(
       `Deterministic Routing은 structured output이 필요합니다. ` +
-      `현재 "${provider.name}"은 미지원. 지원 provider: ${[...SUPPORTED_PROVIDERS].join(", ")}`,
+      `현재 "${provider.name}"은 미지원. 지원 provider: ${SUPPORTED_PROVIDERS.join(", ")}`,
     );
   }
 
