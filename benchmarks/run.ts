@@ -1,6 +1,6 @@
-import dotenv from "dotenv";
-dotenv.config({ path: ".env.local" });
-dotenv.config();
+import { config } from "dotenv";
+config({ path: ".env.local" });
+config();
 import * as path from "node:path";
 import {
   parseArgs,
