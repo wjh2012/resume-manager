@@ -1,5 +1,5 @@
 // benchmarks/lib/providers/openai.ts
-import { generateText } from "ai";
+import { generateText, Output } from "ai";
 import { createOpenAI } from "@ai-sdk/openai";
 import { jsonSchema, tool } from "ai";
 import OpenAI from "openai";
@@ -83,6 +83,30 @@ function convertMessages(messages: BenchmarkMessage[]): ModelMessage[] {
 async function run(req: BenchmarkRequest): Promise<BenchmarkResponse> {
   const openai = getClient();
   const start = Date.now();
+
+  if (req.outputSchema) {
+    const result = await generateText({
+      model: openai(req.model),
+      system: req.system,
+      messages: convertMessages(req.messages),
+      output: Output.object({ schema: req.outputSchema }),
+    });
+
+    if (!result.output) {
+      throw new Error(`Structured output이 비어있습니다: ${req.id}`);
+    }
+
+    const durationMs = Date.now() - start;
+    return {
+      id: req.id,
+      model: req.model,
+      text: JSON.stringify(result.output),
+      toolCalls: [],
+      inputTokens: result.usage?.inputTokens ?? 0,
+      outputTokens: result.usage?.outputTokens ?? 0,
+      durationMs,
+    };
+  }
 
   const hasTools = req.tools && req.tools.length > 0;
   const tools = hasTools ? convertTools(req.tools!) : undefined;
