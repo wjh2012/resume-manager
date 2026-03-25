@@ -1,6 +1,7 @@
 import { PROVIDER_MODELS, type AIProvider } from "@/types/ai"
 
-const CHARS_PER_TOKEN = 4
+/** 한국어 1.5~2자/토큰, 영어 ~4자/토큰. 보수적으로 2 사용 (한국어 위주 서비스) */
+const CHARS_PER_TOKEN = 2
 
 function contentLength(content: unknown): number {
   if (typeof content === "string") return content.length

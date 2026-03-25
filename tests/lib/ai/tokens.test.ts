@@ -3,16 +3,16 @@ import { countTokens, getModelContextWindow } from "@/lib/ai/tokens"
 
 describe("countTokens", () => {
   it("시스템 프롬프트와 메시지의 토큰 수를 근사 추정한다", () => {
-    const system = "a".repeat(400) // 400 chars ≈ 100 tokens
-    const messages = [{ content: "b".repeat(200) }] // 200 chars ≈ 50 tokens
+    const system = "a".repeat(400) // 400 chars ÷ 2 = 200 tokens
+    const messages = [{ content: "b".repeat(200) }] // 200 chars ÷ 2 = 100 tokens
     const result = countTokens(system, messages)
-    expect(result).toBe(150)
+    expect(result).toBe(300)
   })
 
   it("배열 형태의 content를 처리한다", () => {
     const messages = [{ content: [{ type: "text", text: "a".repeat(100) }] }]
     const result = countTokens("", messages)
-    expect(result).toBe(25)
+    expect(result).toBe(50)
   })
 
   it("빈 입력에 0을 반환한다", () => {

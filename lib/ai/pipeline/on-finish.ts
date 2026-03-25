@@ -14,18 +14,10 @@ interface BuildOnFinishParams {
 }
 
 export function buildOnFinish(params: BuildOnFinishParams) {
-  return async ({ text, usage, steps }: {
+  return async ({ text, usage }: {
     text: string
     usage?: { inputTokens?: number; outputTokens?: number }
-    steps: { toolCalls?: { toolName: string }[] }[]
   }) => {
-    const toolCalls = steps.flatMap(s => s.toolCalls ?? [])
-    if (toolCalls.length > 0) {
-      console.log(`[${params.feature.toLowerCase()}] 도구 호출 ${toolCalls.length}건:`, toolCalls.map(tc => tc.toolName).join(", "))
-    } else {
-      console.log(`[${params.feature.toLowerCase()}] 도구 호출 없음`)
-    }
-
     const ops = [
       ...(params.lastMessageRole === "user" && params.lastMessageContent
         ? [prisma.message.create({
