@@ -9,6 +9,7 @@ import { coverLetterChatSchema } from "@/lib/validations/cover-letter"
 import { recordUsage } from "@/lib/token-usage/service"
 import { checkQuotaExceeded } from "@/lib/token-usage/quota"
 import { compressIfNeeded, buildOnFinish } from "@/lib/ai/pipeline"
+import { extractLastMessageContent } from "@/lib/ai/messages"
 
 export const maxDuration = 120
 
@@ -83,10 +84,7 @@ export async function POST(request: Request) {
 
     // 마지막 user 메시지 추출
     const lastMessage = messages[messages.length - 1]
-    const lastMessageContent = lastMessage.parts
-      ?.filter((p: { type: string }) => p.type === "text")
-      .map((p: { text?: string }) => p.text ?? "")
-      .join("") || lastMessage.content || ""
+    const lastMessageContent = extractLastMessageContent(messages)
 
     const quotaResult = await checkQuotaExceeded(user.id)
     if (quotaResult.exceeded) {

@@ -1,5 +1,5 @@
-import { getJobPostingText } from "../tool-calling/prompts";
-export { buildContext } from "../tool-calling/prompts";
+import { getJobPostingText } from "../lib/context";
+export { buildContext } from "../lib/context";
 
 export interface RoutingPromptVariant {
   id: string;
