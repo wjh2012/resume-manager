@@ -34,7 +34,7 @@ vi.mock("@/lib/ai/provider", () => ({
 }))
 
 vi.mock("@/lib/ai/context", () => ({
-  buildContext: vi.fn(),
+  buildFullContext: vi.fn(),
 }))
 
 vi.mock("@/lib/ai/prompts/cover-letter", () => ({
@@ -49,26 +49,16 @@ vi.mock("@/lib/token-usage/quota", () => ({
   checkQuotaExceeded: vi.fn(),
 }))
 
-vi.mock("@/lib/ai/tools", () => ({
-  createReadDocumentTool: vi.fn().mockReturnValue({}),
-  createReadExternalDocumentTool: vi.fn().mockReturnValue({}),
-  createReadCareerNoteTool: vi.fn().mockReturnValue({}),
-  createSaveCareerNoteTool: vi.fn().mockReturnValue({}),
-  calculateMaxSteps: vi.fn().mockReturnValue({}),
-}))
-
 vi.mock("ai", () => ({
   convertToModelMessages: vi.fn(),
+  streamText: vi.fn(),
 }))
 
 vi.mock("@/lib/ai/pipeline", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/ai/pipeline")>()
   return {
     ...actual,
-    selectPipeline: vi.fn().mockReturnValue("multi-step"),
-    handleMultiStep: vi.fn(),
-    handleClassification: vi.fn(),
-    coverLetterClassificationSchema: {},
+    compressIfNeeded: vi.fn(),
   }
 })
 
@@ -83,10 +73,10 @@ import { POST } from "@/app/api/chat/cover-letter/route"
 import { createClient } from "@/lib/supabase/server"
 import { prisma } from "@/lib/prisma"
 import { getLanguageModel, AiSettingsNotFoundError } from "@/lib/ai/provider"
-import { buildContext } from "@/lib/ai/context"
+import { buildFullContext } from "@/lib/ai/context"
 import { buildCoverLetterSystemPrompt } from "@/lib/ai/prompts/cover-letter"
-import { convertToModelMessages } from "ai"
-import { handleMultiStep } from "@/lib/ai/pipeline"
+import { convertToModelMessages, streamText } from "ai"
+import { compressIfNeeded } from "@/lib/ai/pipeline"
 import { recordUsage } from "@/lib/token-usage/service"
 import { checkQuotaExceeded } from "@/lib/token-usage/quota"
 
@@ -95,10 +85,11 @@ import { checkQuotaExceeded } from "@/lib/token-usage/quota"
 const mockCreateClient = vi.mocked(createClient)
 const mockPrisma = vi.mocked(prisma)
 const mockGetLanguageModel = vi.mocked(getLanguageModel)
-const mockBuildContext = vi.mocked(buildContext)
+const mockBuildFullContext = vi.mocked(buildFullContext)
 const mockBuildCoverLetterSystemPrompt = vi.mocked(buildCoverLetterSystemPrompt)
 const mockConvertToModelMessages = vi.mocked(convertToModelMessages)
-const mockHandleMultiStep = vi.mocked(handleMultiStep)
+const mockStreamText = vi.mocked(streamText)
+const mockCompressIfNeeded = vi.mocked(compressIfNeeded)
 const mockRecordUsage = vi.mocked(recordUsage)
 const mockCheckQuotaExceeded = vi.mocked(checkQuotaExceeded)
 
@@ -165,10 +156,10 @@ function makeValidBody(overrides?: Partial<{
   }
 }
 
-// handleMultiStep mock에서 onFinish 콜백을 캡처하고 나중에 직접 호출하는 헬퍼
+// streamText mock에서 onFinish 콜백을 캡처하고 나중에 직접 호출하는 헬퍼
 function captureOnFinish(): { getOnFinish: () => ((args: { text: string; usage?: unknown; steps?: unknown[] }) => Promise<void>) | undefined } {
   let capturedOnFinish: ((args: { text: string; usage?: unknown; steps?: unknown[] }) => Promise<void>) | undefined
-  mockHandleMultiStep.mockImplementation((opts: { onFinish?: unknown }) => {
+  mockStreamText.mockImplementation((opts: { onFinish?: unknown }) => {
     capturedOnFinish = opts.onFinish as (args: { text: string; usage?: unknown; steps?: unknown[] }) => Promise<void>
     return {
       toUIMessageStreamResponse: vi.fn().mockReturnValue(new Response("stream", { status: 200 })),
@@ -195,11 +186,12 @@ beforeEach(() => {
   mockGetLanguageModel.mockResolvedValue({ model: mockModel, isServerKey: false, provider: "openai", modelId: "gpt-4o" } as never)
   mockCheckQuotaExceeded.mockResolvedValue({ exceeded: false } as never)
   mockRecordUsage.mockResolvedValue(undefined as never)
-  mockBuildContext.mockResolvedValue({ context: "컨텍스트 내용", careerNoteCount: 0, externalDocumentCount: 1 } as never)
+  mockBuildFullContext.mockResolvedValue("컨텍스트 내용" as never)
   mockBuildCoverLetterSystemPrompt.mockReturnValue("시스템 프롬프트")
   mockConvertToModelMessages.mockResolvedValue([] as never)
+  mockCompressIfNeeded.mockResolvedValue({ messages: [] } as never)
 
-  mockHandleMultiStep.mockReturnValue({
+  mockStreamText.mockReturnValue({
     toUIMessageStreamResponse: vi.fn().mockReturnValue(new Response("stream", { status: 200 })),
   } as never)
 })
@@ -309,6 +301,23 @@ describe("POST /api/chat/cover-letter", () => {
     })
   })
 
+  // ── 쿼터 초과 ──────────────────────────────────────────────────────────────
+  describe("사용 한도를 초과했을 때", () => {
+    it("403을 반환해야 한다", async () => {
+      // Arrange
+      mockCheckQuotaExceeded.mockResolvedValue({ exceeded: true } as never)
+      const request = makeRequest(makeValidBody())
+
+      // Act
+      const response = await POST(request)
+      const body = await response.json()
+
+      // Assert
+      expect(response.status).toBe(403)
+      expect(body).toEqual({ error: "사용 한도를 초과했습니다." })
+    })
+  })
+
   // ── AiSettingsNotFoundError ────────────────────────────────────────────────
   describe("AI 설정이 없을 때", () => {
     it("400을 반환해야 한다", async () => {
@@ -323,6 +332,23 @@ describe("POST /api/chat/cover-letter", () => {
       // Assert
       expect(response.status).toBe(400)
       expect(body.error).toContain("AI 설정을 찾을 수 없습니다.")
+    })
+  })
+
+  // ── 서버 에러 ──────────────────────────────────────────────────────────────
+  describe("예상치 못한 에러가 발생했을 때", () => {
+    it("500을 반환해야 한다", async () => {
+      // Arrange
+      mockBuildFullContext.mockRejectedValue(new Error("DB 연결 실패"))
+      const request = makeRequest(makeValidBody())
+
+      // Act
+      const response = await POST(request)
+      const body = await response.json()
+
+      // Assert
+      expect(response.status).toBe(500)
+      expect(body).toEqual({ error: "채팅 응답 생성에 실패했습니다." })
     })
   })
 
@@ -426,10 +452,10 @@ describe("POST /api/chat/cover-letter", () => {
 
   // ── 성공 경로 ─────────────────────────────────────────────────────────────
   describe("성공적으로 처리될 때", () => {
-    it("handleMultiStep.toUIMessageStreamResponse() 결과를 반환해야 한다", async () => {
+    it("streamText.toUIMessageStreamResponse() 결과를 반환해야 한다", async () => {
       // Arrange
       const mockStreamResponse = new Response("stream-data", { status: 200 })
-      mockHandleMultiStep.mockReturnValue({
+      mockStreamText.mockReturnValue({
         toUIMessageStreamResponse: vi.fn().mockReturnValue(mockStreamResponse),
       } as never)
       const request = makeRequest(makeValidBody())
@@ -439,9 +465,10 @@ describe("POST /api/chat/cover-letter", () => {
 
       // Assert
       expect(response.status).toBe(200)
+      expect(mockStreamText).toHaveBeenCalledOnce()
     })
 
-    it("selectedDocumentIds를 buildContext에 전달해야 한다", async () => {
+    it("selectedDocumentIds를 buildFullContext에 전달해야 한다", async () => {
       // Arrange
       const request = makeRequest(makeValidBody({
         selectedDocumentIds: [VALID_DOC_ID],
@@ -451,13 +478,86 @@ describe("POST /api/chat/cover-letter", () => {
       await POST(request)
 
       // Assert
-      expect(mockBuildContext).toHaveBeenCalledWith(
+      expect(mockBuildFullContext).toHaveBeenCalledWith(
         VALID_USER_ID,
         expect.objectContaining({
           selectedDocumentIds: [VALID_DOC_ID],
           includeCareerNotes: true,
         }),
       )
+    })
+
+    it("compressIfNeeded를 올바른 파라미터로 호출해야 한다", async () => {
+      // Arrange
+      const mockModelMessages = [{ role: "user", content: "test" }]
+      mockConvertToModelMessages.mockResolvedValue(mockModelMessages as never)
+      const request = makeRequest(makeValidBody())
+
+      // Act
+      await POST(request)
+
+      // Assert
+      expect(mockCompressIfNeeded).toHaveBeenCalledWith({
+        model: mockModel,
+        modelId: "gpt-4o",
+        provider: "openai",
+        system: "시스템 프롬프트",
+        messages: mockModelMessages,
+      })
+    })
+
+    it("compressIfNeeded가 압축한 메시지를 streamText에 전달해야 한다", async () => {
+      // Arrange
+      const compressedMessages = [{ role: "user", content: "compressed" }]
+      mockCompressIfNeeded.mockResolvedValue({ messages: compressedMessages } as never)
+      const request = makeRequest(makeValidBody())
+
+      // Act
+      await POST(request)
+
+      // Assert
+      expect(mockStreamText).toHaveBeenCalledWith(
+        expect.objectContaining({
+          messages: compressedMessages,
+        }),
+      )
+    })
+
+    it("compressUsage가 있으면 recordUsage를 호출해야 한다", async () => {
+      // Arrange
+      mockCompressIfNeeded.mockResolvedValue({
+        messages: [],
+        usage: { inputTokens: 100, outputTokens: 50 },
+      } as never)
+      const request = makeRequest(makeValidBody())
+
+      // Act
+      await POST(request)
+
+      // Assert
+      expect(mockRecordUsage).toHaveBeenCalledWith({
+        userId: VALID_USER_ID,
+        provider: "openai",
+        model: "gpt-4o",
+        feature: "COVER_LETTER",
+        promptTokens: 100,
+        completionTokens: 50,
+        totalTokens: 150,
+        isServerKey: false,
+        metadata: { conversationId: VALID_CONVERSATION_ID },
+      })
+    })
+
+    it("compressUsage가 없으면 recordUsage를 호출하지 않아야 한다", async () => {
+      // Arrange
+      mockCompressIfNeeded.mockResolvedValue({ messages: [] } as never)
+      const request = makeRequest(makeValidBody())
+
+      // Act
+      await POST(request)
+
+      // Assert
+      expect(mockRecordUsage).not.toHaveBeenCalled()
     })
   })
 })
