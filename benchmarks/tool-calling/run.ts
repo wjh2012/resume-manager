@@ -194,44 +194,85 @@ export async function runToolCalling(
 
   if (batch) {
     // -----------------------------------------------------------------------
-    // Batch 모드: 2턴 시나리오 제외
+    // Batch 모드: 1턴은 batch, 2턴은 realtime 폴백
     // -----------------------------------------------------------------------
-    const batchEntries = entries.filter((e) => {
+    const batchEntries: RequestEntry[] = [];
+    const realtimeEntries: RequestEntry[] = [];
+
+    for (const e of entries) {
       if (e.approvalMessage) {
-        console.warn(
-          `  [SKIP] ${e.request.id} — 2턴 시나리오는 Batch 모드에서 지원되지 않습니다.`,
-        );
-        return false;
+        realtimeEntries.push(e);
+      } else {
+        batchEntries.push(e);
       }
-      return true;
-    });
+    }
 
-    const requests = batchEntries.map((e) => e.request);
-    const responses = await provider.runBatch(requests);
+    // 1턴 시나리오: batch 실행
+    if (batchEntries.length > 0) {
+      const requests = batchEntries.map((e) => e.request);
+      const responses = await provider.runBatch(requests);
 
-    // ID 기반 매핑 (부분 실패 시 응답 수 < 요청 수 대응)
-    const responseMap = new Map(responses.map((r) => [r.id, r]));
-    for (const entry of batchEntries) {
-      const response = responseMap.get(entry.request.id);
-      if (!response) {
-        // 배치에서 누락된 요청 → 에러 처리
-        runResults.push({
-          entry,
-          response: {
-            id: entry.request.id,
-            model: entry.request.model,
-            text: "",
-            toolCalls: [],
-            inputTokens: 0,
-            outputTokens: 0,
-            durationMs: 0,
-          },
-          turn2Executed: false,
-          error: "Batch 응답에서 누락됨 (부분 실패)",
-        });
-        continue;
+      const responseMap = new Map(responses.map((r) => [r.id, r]));
+      for (const entry of batchEntries) {
+        const response = responseMap.get(entry.request.id);
+        if (!response) {
+          runResults.push({
+            entry,
+            response: {
+              id: entry.request.id,
+              model: entry.request.model,
+              text: "",
+              toolCalls: [],
+              inputTokens: 0,
+              outputTokens: 0,
+              durationMs: 0,
+            },
+            turn2Executed: false,
+            error: "Batch 응답에서 누락됨 (부분 실패)",
+          });
+          continue;
+        }
+        runResults.push({ entry, response, turn2Executed: false });
       }
-      runResults.push({ entry, response, turn2Executed: false });
+    }
+
+    // 2턴 시나리오: realtime 폴백
+    if (realtimeEntries.length > 0) {
+      console.log(`\n  [FALLBACK] 2턴 시나리오 ${realtimeEntries.length}건 → realtime 실행\n`);
+      const limit = pLimit(5);
+
+      const promises = realtimeEntries.map((entry) =>
+        limit(async () => {
+          console.log(`  > ${entry.request.id} 실행 중... (realtime)`);
+          try {
+            const result = await runEntry(provider, entry);
+            const status = result.turn2Executed ? "(2턴)" : "";
+            console.log(`  < ${entry.request.id} 완료 ${status}`);
+            return result;
+          } catch (err) {
+            const errorMsg = err instanceof Error ? err.message : String(err);
+            console.error(`  ! ${entry.request.id} 실패: ${errorMsg}`);
+            const errorResponse: BenchmarkResponse = {
+              id: entry.request.id,
+              model,
+              text: "",
+              toolCalls: [],
+              inputTokens: 0,
+              outputTokens: 0,
+              durationMs: 0,
+            };
+            return {
+              entry,
+              response: errorResponse,
+              turn2Executed: false,
+              error: errorMsg,
+            };
+          }
+        }),
+      );
+
+      const settled = await Promise.all(promises);
+      runResults.push(...settled);
     }
   } else {
     // -----------------------------------------------------------------------

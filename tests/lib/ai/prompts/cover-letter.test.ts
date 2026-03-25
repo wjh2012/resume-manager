@@ -33,22 +33,10 @@ describe("buildCoverLetterSystemPrompt()", () => {
   })
 
   describe("도구 안내", () => {
-    it("readExternalDocument 도구 안내가 포함되어야 한다", () => {
+    it("도구 안내 문구가 포함되지 않아야 한다", () => {
       const result = buildCoverLetterSystemPrompt(baseParams)
 
-      expect(result).toContain("readExternalDocument")
-    })
-
-    it("readDocument 도구 안내가 포함되어야 한다", () => {
-      const result = buildCoverLetterSystemPrompt(baseParams)
-
-      expect(result).toContain("readDocument")
-    })
-
-    it("readCareerNote 도구 안내가 포함되어야 한다", () => {
-      const result = buildCoverLetterSystemPrompt(baseParams)
-
-      expect(result).toContain("readCareerNote")
+      expect(result).not.toContain("도구")
     })
   })
 

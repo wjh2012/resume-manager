@@ -1,4 +1,5 @@
 // benchmarks/lib/providers/types.ts
+import type { z } from "zod";
 import type { BenchmarkMessage } from "../../fixtures/types";
 
 export type { BenchmarkMessage };
@@ -24,6 +25,7 @@ export interface BenchmarkRequest {
   messages: BenchmarkMessage[];
   tools?: BenchmarkToolDef[];
   maxSteps?: number; // 실시간 전용 (Batch에서는 무시)
+  outputSchema?: z.ZodType; // structured output용 Zod 스키마
 }
 
 /** 단일 응답 */

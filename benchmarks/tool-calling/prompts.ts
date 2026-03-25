@@ -5,30 +5,8 @@
  */
 
 import type { BenchmarkToolDef } from "../lib/providers/types"
-import { ALL_DOCUMENTS, ALL_CAREER_NOTES } from "../fixtures/mock-data"
-
-// ---------------------------------------------------------------------------
-// 공통: 참고자료 context 빌더
-// ---------------------------------------------------------------------------
-
-export function buildContext(personaId?: string): string {
-  const docs = personaId
-    ? ALL_DOCUMENTS.filter((d) => d.personaId === personaId)
-    : ALL_DOCUMENTS;
-  const notes = personaId
-    ? ALL_CAREER_NOTES.filter((n) => n.personaId === personaId)
-    : ALL_CAREER_NOTES;
-
-  const docsSummary = docs.map(
-    (d) => `[문서: ${d.title}] (ID: ${d.id})\n${d.summary}`
-  ).join("\n\n---\n\n")
-
-  const notesSummary = notes.map(
-    (n) => `[커리어노트: ${n.title}] (ID: ${n.id})\n${n.summary}`
-  ).join("\n\n---\n\n")
-
-  return docsSummary + "\n\n---\n\n" + notesSummary
-}
+import { buildContext, getJobPostingText } from "../lib/context"
+export { buildContext, getJobPostingText }
 
 // ---------------------------------------------------------------------------
 // 프롬프트 변형 타입
@@ -38,23 +16,6 @@ export interface PromptVariant {
   id: string
   label: string
   buildSystemPrompt: (context: string, personaId?: string) => string
-}
-
-// ---------------------------------------------------------------------------
-// 채용공고 텍스트
-// ---------------------------------------------------------------------------
-
-import { ALL_EXTERNAL_DOCUMENTS } from "../fixtures/mock-data"
-
-export function getJobPostingText(personaId?: string): string {
-  const doc = personaId
-    ? ALL_EXTERNAL_DOCUMENTS.find((d) => d.personaId === personaId)
-    : ALL_EXTERNAL_DOCUMENTS.find((d) => d.id === "sd-1-ext-1");
-  if (!doc) {
-    console.warn(`⚠ No external document found for persona: ${personaId ?? "default"}`);
-    return "";
-  }
-  return doc.extractedText;
 }
 
 // ---------------------------------------------------------------------------

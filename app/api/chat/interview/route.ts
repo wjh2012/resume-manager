@@ -1,15 +1,15 @@
-import { convertToModelMessages, type UIMessage } from "ai"
+import { streamText, convertToModelMessages, type UIMessage } from "ai"
 import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { prisma } from "@/lib/prisma"
 import { getLanguageModel, AiSettingsNotFoundError } from "@/lib/ai/provider"
-import { buildContext } from "@/lib/ai/context"
+import { buildFullContext } from "@/lib/ai/context"
 import { buildInterviewSystemPrompt } from "@/lib/ai/prompts/interview"
-import { createReadDocumentTool, createReadExternalDocumentTool } from "@/lib/ai/tools"
 import { interviewChatSchema } from "@/lib/validations/interview"
 import { recordUsage } from "@/lib/token-usage/service"
 import { checkQuotaExceeded } from "@/lib/token-usage/quota"
-import { selectPipeline, handleMultiStep, handleClassification, interviewClassificationSchema, buildOnFinish } from "@/lib/ai/pipeline"
+import { compressIfNeeded, buildOnFinish } from "@/lib/ai/pipeline"
+import { extractLastMessageContent } from "@/lib/ai/messages"
 
 export const maxDuration = 120
 
@@ -97,13 +97,7 @@ export async function POST(request: Request) {
 
     // 마지막 user 메시지 텍스트 추출
     const lastMessage = messages[messages.length - 1]
-    const lastMessageContent =
-      lastMessage.parts
-        ?.filter((p: { type: string }) => p.type === "text")
-        .map((p: { text?: string }) => p.text ?? "")
-        .join("") ||
-      lastMessage.content ||
-      ""
+    const lastMessageContent = extractLastMessageContent(messages)
 
     const quotaResult = await checkQuotaExceeded(user.id)
     if (quotaResult.exceeded) {
@@ -114,10 +108,11 @@ export async function POST(request: Request) {
     }
 
     // 문서 요약 컨텍스트 + 모델 병렬 로드
-    const [{ context, externalDocumentCount }, { model, isServerKey, provider: aiProvider, modelId }] = await Promise.all([
-      buildContext(user.id, {
+    const [context, { model, isServerKey, provider: aiProvider, modelId }] = await Promise.all([
+      buildFullContext(user.id, {
         selectedDocumentIds: allowedDocIds,
         selectedExternalDocumentIds: allowedExternalDocIds,
+        // includeCareerNotes 미전달 (기본값 undefined → false)
       }),
       getLanguageModel(user.id),
     ])
@@ -136,57 +131,24 @@ export async function POST(request: Request) {
       feature: "INTERVIEW",
     })
 
-    const pipeline = selectPipeline(aiProvider)
-
-    if (pipeline === "multi-step") {
-      const result = handleMultiStep({
-        model, system, modelMessages,
-        tools: {
-          readDocument: createReadDocumentTool(user.id, allowedDocIds),
-          readExternalDocument: createReadExternalDocumentTool(user.id, allowedExternalDocIds),
-        },
-        documentCount: allowedDocIds.length,
-        careerNoteCount: 0,
-        externalDocumentCount,
-        onFinish,
-      })
-      return result.toUIMessageStreamResponse()
-    } else {
-      try {
-        const { result, preStageUsages } = await handleClassification({
-          model, system, modelMessages,
-          userId: user.id, context,
-          selectedDocumentIds: allowedDocIds,
-          selectedExternalDocumentIds: allowedExternalDocIds,
-          includeCareerNotes: false,
-          schema: interviewClassificationSchema,
-          onFinish,
-        })
-        for (const usage of preStageUsages) {
-          recordUsage({
-            userId: user.id, provider: aiProvider, model: modelId,
-            feature: "INTERVIEW",
-            promptTokens: usage.inputTokens, completionTokens: usage.outputTokens,
-            totalTokens: usage.inputTokens + usage.outputTokens,
-            isServerKey, metadata: { conversationId },
-          }).catch((e) => console.error("pre-stage 토큰 기록 실패:", e))
-        }
-        return result.toUIMessageStreamResponse()
-      } catch (error) {
-        console.error("[interview classification fallback]", error)
-        const result = handleMultiStep({
-          model, system, modelMessages,
-          tools: {
-            readDocument: createReadDocumentTool(user.id, allowedDocIds),
-            readExternalDocument: createReadExternalDocumentTool(user.id, allowedExternalDocIds),
-          },
-          documentCount: allowedDocIds.length, careerNoteCount: 0,
-          externalDocumentCount,
-          onFinish,
-        })
-        return result.toUIMessageStreamResponse()
-      }
+    // 압축 확인
+    const { messages: finalMessages, usage: compressUsage } = await compressIfNeeded({
+      model, modelId, provider: aiProvider, system, messages: modelMessages,
+    })
+    if (compressUsage) {
+      recordUsage({
+        userId: user.id, provider: aiProvider, model: modelId,
+        feature: "INTERVIEW",
+        promptTokens: compressUsage.inputTokens,
+        completionTokens: compressUsage.outputTokens,
+        totalTokens: compressUsage.inputTokens + compressUsage.outputTokens,
+        isServerKey, metadata: { conversationId },
+      }).catch((e) => console.error("compress 토큰 기록 실패:", e))
     }
+
+    // 응답 생성
+    const result = streamText({ model, system, messages: finalMessages, onFinish })
+    return result.toUIMessageStreamResponse()
   } catch (error) {
     if (error instanceof AiSettingsNotFoundError) {
       return NextResponse.json({ error: error.message }, { status: 400 })
@@ -198,4 +160,3 @@ export async function POST(request: Request) {
     )
   }
 }
-

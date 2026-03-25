@@ -1,15 +1,15 @@
-import { convertToModelMessages, type UIMessage } from "ai"
+import { streamText, convertToModelMessages, type UIMessage } from "ai"
 import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { prisma } from "@/lib/prisma"
 import { getLanguageModel, AiSettingsNotFoundError } from "@/lib/ai/provider"
-import { buildContext } from "@/lib/ai/context"
+import { buildFullContext } from "@/lib/ai/context"
 import { buildCoverLetterSystemPrompt } from "@/lib/ai/prompts/cover-letter"
-import { createReadDocumentTool, createReadExternalDocumentTool, createReadCareerNoteTool, createSaveCareerNoteTool } from "@/lib/ai/tools"
 import { coverLetterChatSchema } from "@/lib/validations/cover-letter"
 import { recordUsage } from "@/lib/token-usage/service"
 import { checkQuotaExceeded } from "@/lib/token-usage/quota"
-import { selectPipeline, handleMultiStep, handleClassification, coverLetterClassificationSchema, buildOnFinish } from "@/lib/ai/pipeline"
+import { compressIfNeeded, buildOnFinish } from "@/lib/ai/pipeline"
+import { extractLastMessageContent } from "@/lib/ai/messages"
 
 export const maxDuration = 120
 
@@ -84,10 +84,7 @@ export async function POST(request: Request) {
 
     // 마지막 user 메시지 추출
     const lastMessage = messages[messages.length - 1]
-    const lastMessageContent = lastMessage.parts
-      ?.filter((p: { type: string }) => p.type === "text")
-      .map((p: { text?: string }) => p.text ?? "")
-      .join("") || lastMessage.content || ""
+    const lastMessageContent = extractLastMessageContent(messages)
 
     const quotaResult = await checkQuotaExceeded(user.id)
     if (quotaResult.exceeded) {
@@ -98,8 +95,8 @@ export async function POST(request: Request) {
     }
 
     // 문서 요약 컨텍스트 + 모델 병렬 로드
-    const [{ context, careerNoteCount, externalDocumentCount }, { model, isServerKey, provider: aiProvider, modelId }] = await Promise.all([
-      buildContext(user.id, {
+    const [context, { model, isServerKey, provider: aiProvider, modelId }] = await Promise.all([
+      buildFullContext(user.id, {
         selectedDocumentIds,
         selectedExternalDocumentIds: allowedExternalDocIds,
         includeCareerNotes: true,
@@ -124,62 +121,24 @@ export async function POST(request: Request) {
       feature: "COVER_LETTER",
     })
 
-    const pipeline = selectPipeline(aiProvider)
-
-    if (pipeline === "multi-step") {
-      const result = handleMultiStep({
-        model, system, modelMessages,
-        tools: {
-          readDocument: createReadDocumentTool(user.id, selectedDocumentIds ?? []),
-          readExternalDocument: createReadExternalDocumentTool(user.id, allowedExternalDocIds),
-          readCareerNote: createReadCareerNoteTool(user.id),
-          saveCareerNote: createSaveCareerNoteTool(user.id, conversationId),
-        },
-        documentCount: selectedDocumentIds?.length ?? 0,
-        careerNoteCount,
-        externalDocumentCount,
-        onFinish,
-      })
-      return result.toUIMessageStreamResponse()
-    } else {
-      try {
-        const { result, preStageUsages } = await handleClassification({
-          model, system, modelMessages,
-          userId: user.id, context,
-          selectedDocumentIds: selectedDocumentIds ?? [],
-          selectedExternalDocumentIds: allowedExternalDocIds,
-          includeCareerNotes: true,
-          schema: coverLetterClassificationSchema,
-          onFinish,
-        })
-        for (const usage of preStageUsages) {
-          recordUsage({
-            userId: user.id, provider: aiProvider, model: modelId,
-            feature: "COVER_LETTER",
-            promptTokens: usage.inputTokens, completionTokens: usage.outputTokens,
-            totalTokens: usage.inputTokens + usage.outputTokens,
-            isServerKey, metadata: { conversationId },
-          }).catch((e) => console.error("pre-stage 토큰 기록 실패:", e))
-        }
-        return result.toUIMessageStreamResponse()
-      } catch (error) {
-        console.error("[cover-letter classification fallback]", error)
-        const result = handleMultiStep({
-          model, system, modelMessages,
-          tools: {
-            readDocument: createReadDocumentTool(user.id, selectedDocumentIds ?? []),
-            readExternalDocument: createReadExternalDocumentTool(user.id, allowedExternalDocIds),
-            readCareerNote: createReadCareerNoteTool(user.id),
-            saveCareerNote: createSaveCareerNoteTool(user.id, conversationId),
-          },
-          documentCount: selectedDocumentIds?.length ?? 0,
-          careerNoteCount,
-          externalDocumentCount,
-          onFinish,
-        })
-        return result.toUIMessageStreamResponse()
-      }
+    // 압축 확인
+    const { messages: finalMessages, usage: compressUsage } = await compressIfNeeded({
+      model, modelId, provider: aiProvider, system, messages: modelMessages,
+    })
+    if (compressUsage) {
+      recordUsage({
+        userId: user.id, provider: aiProvider, model: modelId,
+        feature: "COVER_LETTER",
+        promptTokens: compressUsage.inputTokens,
+        completionTokens: compressUsage.outputTokens,
+        totalTokens: compressUsage.inputTokens + compressUsage.outputTokens,
+        isServerKey, metadata: { conversationId },
+      }).catch((e) => console.error("compress 토큰 기록 실패:", e))
     }
+
+    // 응답 생성
+    const result = streamText({ model, system, messages: finalMessages, onFinish })
+    return result.toUIMessageStreamResponse()
   } catch (error) {
     if (error instanceof AiSettingsNotFoundError) {
       return NextResponse.json({ error: error.message }, { status: 400 })
