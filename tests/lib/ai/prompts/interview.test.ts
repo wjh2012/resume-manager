@@ -127,20 +127,12 @@ describe("buildInterviewSystemPrompt()", () => {
   })
 
   describe("도구 안내", () => {
-    it("readExternalDocument 도구 안내가 포함되어야 한다", () => {
+    it("도구 안내 문구가 포함되지 않아야 한다", () => {
       const result = buildInterviewSystemPrompt({
         context: baseContext,
       })
 
-      expect(result).toContain("readExternalDocument")
-    })
-
-    it("readDocument 도구 안내가 포함되어야 한다", () => {
-      const result = buildInterviewSystemPrompt({
-        context: baseContext,
-      })
-
-      expect(result).toContain("readDocument")
+      expect(result).not.toContain("도구")
     })
   })
 })
