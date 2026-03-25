@@ -1,0 +1,581 @@
+{
+  "meta": {
+    "suite": "tool-calling",
+    "provider": "openai",
+    "model": "gpt-5.4",
+    "mode": "realtime",
+    "timestamp": "2026-03-25T00:26:31.203Z",
+    "persona": {
+      "id": "jd-4",
+      "name": "김도윤",
+      "label": "전자공학 전공 / 임베디드→웹 전환 / C·C++ 배경"
+    }
+  },
+  "variants": [
+    {
+      "id": "S1",
+      "label": "최소"
+    },
+    {
+      "id": "S2",
+      "label": "현재"
+    },
+    {
+      "id": "S3",
+      "label": "few-shot"
+    },
+    {
+      "id": "S4",
+      "label": "단계별 판단"
+    },
+    {
+      "id": "S5",
+      "label": "강제 패턴"
+    },
+    {
+      "id": "S6",
+      "label": "강제 패턴 + Pre-check"
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "tc-1",
+      "name": "새 경험",
+      "userMessage": "작년에 Rust로 고성능 메시지 큐 만들었는데 초당 50만 건 처리했어",
+      "expectedTools": [
+        "saveCareerNote"
+      ],
+      "allowedTools": [
+        "readDocument",
+        "readCareerNote"
+      ],
+      "orderedPairs": [],
+      "is2Turn": true
+    },
+    {
+      "id": "tc-2",
+      "name": "수치 변경",
+      "userMessage": "아 그 deploy-ez Stars가 450개가 아니라 800개로 늘었어",
+      "expectedTools": [
+        "readCareerNote",
+        "saveCareerNote"
+      ],
+      "allowedTools": [
+        "readDocument"
+      ],
+      "orderedPairs": [
+        [
+          "readCareerNote",
+          "saveCareerNote"
+        ]
+      ],
+      "is2Turn": true
+    },
+    {
+      "id": "tc-3",
+      "name": "초안 요청",
+      "userMessage": "deploy-ez 프로젝트 중심으로 핵심역량 써줘",
+      "expectedTools": [
+        "readDocument"
+      ],
+      "allowedTools": [
+        "readCareerNote"
+      ],
+      "orderedPairs": [],
+      "is2Turn": false
+    },
+    {
+      "id": "tc-4",
+      "name": "단순 질문",
+      "userMessage": "자소서 분량은 보통 얼마나 돼?",
+      "expectedTools": [],
+      "allowedTools": [],
+      "orderedPairs": [],
+      "is2Turn": false
+    }
+  ],
+  "results": [
+    {
+      "id": "tc-1_S1",
+      "scenarioId": "tc-1",
+      "variantId": "S1",
+      "pass": false,
+      "evaluation": {
+        "toolCallsCorrect": false,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": true
+      },
+      "actualToolCalls": [],
+      "inputTokens": 1425,
+      "outputTokens": 1088,
+      "durationMs": 19252
+    },
+    {
+      "id": "tc-1_S2",
+      "scenarioId": "tc-1",
+      "variantId": "S2",
+      "pass": true,
+      "evaluation": {
+        "toolCallsCorrect": true,
+        "proposalDetected": true,
+        "turn2Executed": true,
+        "overCall": false,
+        "underCall": false
+      },
+      "actualToolCalls": [
+        {
+          "name": "saveCareerNote",
+          "args": {
+            "careerNoteId": "",
+            "title": "Rust로 고성능 메시지 큐 구현 및 초당 50만 건 처리 경험",
+            "content": "작년에 Rust를 사용해 고성능 메시지 큐를 구현한 경험이 있다. 메시지 처리 성능과 안정성을 높이는 데 초점을 두고 개발했으며, 성능 테스트 기준 초당 50만 건 수준의 처리량을 달성했다. 이 경험을 통해 비동기 처리, 병목 분석, 성능 최적화, 안정성 중심 설계의 중요성을 체감했다. 또한 시스템 프로그래밍 관점에서 얻은 성능 감각과 디버깅 습관이 이후 웹 백엔드 및 실시간 서비스 이해에도 도움이 된다고 느꼈다. 향후 자기소개서와 면접에서는 이 경험을 단순한 시스템 구현 사례가 아니라, 대규모 트래픽 환경에서 필요한 처리 구조 이해와 문제 해결 역량을 보여주는 사례로 활용할 수 있다.",
+            "summary": "Rust로 고성능 메시지 큐를 구현하며 초당 50만 건 처리 성능을 검증한 경험. 성능 최적화와 안정성 중심 개발 역량을 보여주는 사례.",
+            "metadata": {
+              "role": "개발자",
+              "result": "Rust 기반 메시지 큐 구현 및 초당 50만 건 처리",
+              "feeling": "성능 병목을 분석하고 개선하며 시스템 설계 역량에 자신감을 얻음"
+            }
+          }
+        }
+      ],
+      "inputTokens": 3430,
+      "outputTokens": 668,
+      "durationMs": 14185
+    },
+    {
+      "id": "tc-1_S3",
+      "scenarioId": "tc-1",
+      "variantId": "S3",
+      "pass": false,
+      "evaluation": {
+        "toolCallsCorrect": false,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": true
+      },
+      "actualToolCalls": [],
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "durationMs": 0,
+      "error": "Failed after 3 attempts. Last error: You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors."
+    },
+    {
+      "id": "tc-1_S4",
+      "scenarioId": "tc-1",
+      "variantId": "S4",
+      "pass": false,
+      "evaluation": {
+        "toolCallsCorrect": false,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": true
+      },
+      "actualToolCalls": [],
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "durationMs": 0,
+      "error": "Failed after 3 attempts. Last error: You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors."
+    },
+    {
+      "id": "tc-1_S5",
+      "scenarioId": "tc-1",
+      "variantId": "S5",
+      "pass": true,
+      "evaluation": {
+        "toolCallsCorrect": true,
+        "proposalDetected": true,
+        "turn2Executed": true,
+        "overCall": false,
+        "underCall": false
+      },
+      "actualToolCalls": [
+        {
+          "name": "saveCareerNote",
+          "args": {
+            "careerNoteId": "",
+            "title": "Rust 기반 고성능 메시지 큐 구현",
+            "content": "작년에 Rust로 고성능 메시지 큐를 직접 구현했다. 메시지 처리 구조와 동시성 제어를 설계하며 성능 병목을 분석하고 개선했고, 최종적으로 초당 50만 건 처리 성능을 달성했다. 이 경험을 통해 시스템 레벨에서의 데이터 흐름 이해, 병렬 처리와 자원 관리에 대한 감각, 성능 최적화 문제를 구조적으로 해결하는 역량을 쌓았다. 웹 개발 직무와 직접적으로 동일한 영역은 아니지만, 대규모 트래픽 처리와 안정적인 서비스 설계에 필요한 기초 체력을 보여주는 사례로 활용할 수 있다.",
+            "summary": "Rust로 고성능 메시지 큐를 구현해 초당 50만 건 처리 성능을 달성한 경험. 동시성 제어와 성능 최적화 역량을 보여주는 사례.",
+            "metadata": {
+              "role": "개발자",
+              "result": "초당 50만 건 처리 달성",
+              "feeling": "시스템 성능 최적화 역량에 자신감을 얻음"
+            }
+          }
+        }
+      ],
+      "inputTokens": 4209,
+      "outputTokens": 448,
+      "durationMs": 8722
+    },
+    {
+      "id": "tc-1_S6",
+      "scenarioId": "tc-1",
+      "variantId": "S6",
+      "pass": false,
+      "evaluation": {
+        "toolCallsCorrect": false,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": true
+      },
+      "actualToolCalls": [],
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "durationMs": 0,
+      "error": "Failed after 3 attempts. Last error: You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors."
+    },
+    {
+      "id": "tc-2_S1",
+      "scenarioId": "tc-2",
+      "variantId": "S1",
+      "pass": false,
+      "evaluation": {
+        "toolCallsCorrect": false,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": true
+      },
+      "actualToolCalls": [],
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "durationMs": 0,
+      "error": "Failed after 3 attempts. Last error: You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors."
+    },
+    {
+      "id": "tc-2_S2",
+      "scenarioId": "tc-2",
+      "variantId": "S2",
+      "pass": false,
+      "evaluation": {
+        "toolCallsCorrect": false,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": true
+      },
+      "actualToolCalls": [],
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "durationMs": 0,
+      "error": "Failed after 3 attempts. Last error: You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors."
+    },
+    {
+      "id": "tc-2_S3",
+      "scenarioId": "tc-2",
+      "variantId": "S3",
+      "pass": false,
+      "evaluation": {
+        "toolCallsCorrect": false,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": true
+      },
+      "actualToolCalls": [],
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "durationMs": 0,
+      "error": "Failed after 3 attempts. Last error: You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors."
+    },
+    {
+      "id": "tc-2_S4",
+      "scenarioId": "tc-2",
+      "variantId": "S4",
+      "pass": false,
+      "evaluation": {
+        "toolCallsCorrect": false,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": true
+      },
+      "actualToolCalls": [],
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "durationMs": 0,
+      "error": "Failed after 3 attempts. Last error: You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors."
+    },
+    {
+      "id": "tc-2_S5",
+      "scenarioId": "tc-2",
+      "variantId": "S5",
+      "pass": false,
+      "evaluation": {
+        "toolCallsCorrect": false,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": true
+      },
+      "actualToolCalls": [],
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "durationMs": 0,
+      "error": "Failed after 3 attempts. Last error: You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors."
+    },
+    {
+      "id": "tc-2_S6",
+      "scenarioId": "tc-2",
+      "variantId": "S6",
+      "pass": false,
+      "evaluation": {
+        "toolCallsCorrect": false,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": true
+      },
+      "actualToolCalls": [],
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "durationMs": 0,
+      "error": "Failed after 3 attempts. Last error: You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors."
+    },
+    {
+      "id": "tc-3_S1",
+      "scenarioId": "tc-3",
+      "variantId": "S1",
+      "pass": false,
+      "evaluation": {
+        "toolCallsCorrect": false,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": true
+      },
+      "actualToolCalls": [],
+      "inputTokens": 1415,
+      "outputTokens": 727,
+      "durationMs": 16627
+    },
+    {
+      "id": "tc-3_S2",
+      "scenarioId": "tc-3",
+      "variantId": "S2",
+      "pass": false,
+      "evaluation": {
+        "toolCallsCorrect": false,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": true
+      },
+      "actualToolCalls": [],
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "durationMs": 0,
+      "error": "Failed after 3 attempts. Last error: You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors."
+    },
+    {
+      "id": "tc-3_S3",
+      "scenarioId": "tc-3",
+      "variantId": "S3",
+      "pass": false,
+      "evaluation": {
+        "toolCallsCorrect": false,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": true
+      },
+      "actualToolCalls": [],
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "durationMs": 0,
+      "error": "Failed after 3 attempts. Last error: You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors."
+    },
+    {
+      "id": "tc-3_S4",
+      "scenarioId": "tc-3",
+      "variantId": "S4",
+      "pass": false,
+      "evaluation": {
+        "toolCallsCorrect": false,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": true
+      },
+      "actualToolCalls": [],
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "durationMs": 0,
+      "error": "Failed after 3 attempts. Last error: You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors."
+    },
+    {
+      "id": "tc-3_S5",
+      "scenarioId": "tc-3",
+      "variantId": "S5",
+      "pass": true,
+      "evaluation": {
+        "toolCallsCorrect": true,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": false
+      },
+      "actualToolCalls": [
+        {
+          "name": "readDocument",
+          "args": {
+            "documentId": "jd-4-doc-1"
+          }
+        }
+      ],
+      "inputTokens": 1978,
+      "outputTokens": 24,
+      "durationMs": 3489
+    },
+    {
+      "id": "tc-3_S6",
+      "scenarioId": "tc-3",
+      "variantId": "S6",
+      "pass": true,
+      "evaluation": {
+        "toolCallsCorrect": true,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": false
+      },
+      "actualToolCalls": [
+        {
+          "name": "readDocument",
+          "args": {
+            "documentId": "jd-4-doc-1"
+          }
+        }
+      ],
+      "inputTokens": 2011,
+      "outputTokens": 24,
+      "durationMs": 3557
+    },
+    {
+      "id": "tc-4_S1",
+      "scenarioId": "tc-4",
+      "variantId": "S1",
+      "pass": true,
+      "evaluation": {
+        "toolCallsCorrect": true,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": false
+      },
+      "actualToolCalls": [],
+      "inputTokens": 1414,
+      "outputTokens": 107,
+      "durationMs": 5083
+    },
+    {
+      "id": "tc-4_S2",
+      "scenarioId": "tc-4",
+      "variantId": "S2",
+      "pass": true,
+      "evaluation": {
+        "toolCallsCorrect": true,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": false
+      },
+      "actualToolCalls": [],
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "durationMs": 0,
+      "error": "Failed after 3 attempts. Last error: You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors."
+    },
+    {
+      "id": "tc-4_S3",
+      "scenarioId": "tc-4",
+      "variantId": "S3",
+      "pass": true,
+      "evaluation": {
+        "toolCallsCorrect": true,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": false
+      },
+      "actualToolCalls": [],
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "durationMs": 0,
+      "error": "Failed after 3 attempts. Last error: You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors."
+    },
+    {
+      "id": "tc-4_S4",
+      "scenarioId": "tc-4",
+      "variantId": "S4",
+      "pass": true,
+      "evaluation": {
+        "toolCallsCorrect": true,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": false
+      },
+      "actualToolCalls": [],
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "durationMs": 0,
+      "error": "Failed after 3 attempts. Last error: You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors."
+    },
+    {
+      "id": "tc-4_S5",
+      "scenarioId": "tc-4",
+      "variantId": "S5",
+      "pass": true,
+      "evaluation": {
+        "toolCallsCorrect": true,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": false
+      },
+      "actualToolCalls": [],
+      "inputTokens": 1977,
+      "outputTokens": 81,
+      "durationMs": 2215
+    },
+    {
+      "id": "tc-4_S6",
+      "scenarioId": "tc-4",
+      "variantId": "S6",
+      "pass": true,
+      "evaluation": {
+        "toolCallsCorrect": true,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": false
+      },
+      "actualToolCalls": [],
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "durationMs": 0,
+      "error": "Failed after 3 attempts. Last error: You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors."
+    }
+  ],
+  "cost": {
+    "batchCost": 0.04607625,
+    "realtimeCost": 0.0921525,
+    "savings": 0.04607625,
+    "inputTokens": 17859,
+    "outputTokens": 3167
+  },
+  "summary": {
+    "totalRuns": 24,
+    "passCount": 10,
+    "failCount": 14,
+    "errorCount": 16,
+    "passRate": "41.7%"
+  }
+}

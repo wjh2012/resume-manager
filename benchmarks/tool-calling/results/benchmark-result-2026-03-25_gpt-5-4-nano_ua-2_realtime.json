@@ -1,0 +1,591 @@
+{
+  "meta": {
+    "suite": "tool-calling",
+    "provider": "openai",
+    "model": "gpt-5.4-nano",
+    "mode": "realtime",
+    "timestamp": "2026-03-25T00:11:41.626Z",
+    "persona": {
+      "id": "ua-2",
+      "name": "김서연",
+      "label": "인문계 지원 — 고려대학교 국어국문학과"
+    }
+  },
+  "variants": [
+    {
+      "id": "S1",
+      "label": "최소"
+    },
+    {
+      "id": "S2",
+      "label": "현재"
+    },
+    {
+      "id": "S3",
+      "label": "few-shot"
+    },
+    {
+      "id": "S4",
+      "label": "단계별 판단"
+    },
+    {
+      "id": "S5",
+      "label": "강제 패턴"
+    },
+    {
+      "id": "S6",
+      "label": "강제 패턴 + Pre-check"
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "tc-1",
+      "name": "새 경험",
+      "userMessage": "작년에 Rust로 고성능 메시지 큐 만들었는데 초당 50만 건 처리했어",
+      "expectedTools": [
+        "saveCareerNote"
+      ],
+      "allowedTools": [
+        "readDocument",
+        "readCareerNote"
+      ],
+      "orderedPairs": [],
+      "is2Turn": true
+    },
+    {
+      "id": "tc-2",
+      "name": "수치 변경",
+      "userMessage": "아 그 deploy-ez Stars가 450개가 아니라 800개로 늘었어",
+      "expectedTools": [
+        "readCareerNote",
+        "saveCareerNote"
+      ],
+      "allowedTools": [
+        "readDocument"
+      ],
+      "orderedPairs": [
+        [
+          "readCareerNote",
+          "saveCareerNote"
+        ]
+      ],
+      "is2Turn": true
+    },
+    {
+      "id": "tc-3",
+      "name": "초안 요청",
+      "userMessage": "deploy-ez 프로젝트 중심으로 핵심역량 써줘",
+      "expectedTools": [
+        "readDocument"
+      ],
+      "allowedTools": [
+        "readCareerNote"
+      ],
+      "orderedPairs": [],
+      "is2Turn": false
+    },
+    {
+      "id": "tc-4",
+      "name": "단순 질문",
+      "userMessage": "자소서 분량은 보통 얼마나 돼?",
+      "expectedTools": [],
+      "allowedTools": [],
+      "orderedPairs": [],
+      "is2Turn": false
+    }
+  ],
+  "results": [
+    {
+      "id": "tc-1_S1",
+      "scenarioId": "tc-1",
+      "variantId": "S1",
+      "pass": false,
+      "evaluation": {
+        "toolCallsCorrect": false,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": true
+      },
+      "actualToolCalls": [],
+      "inputTokens": 1545,
+      "outputTokens": 890,
+      "durationMs": 5006
+    },
+    {
+      "id": "tc-1_S2",
+      "scenarioId": "tc-1",
+      "variantId": "S2",
+      "pass": false,
+      "evaluation": {
+        "toolCallsCorrect": false,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": true
+      },
+      "actualToolCalls": [],
+      "inputTokens": 1636,
+      "outputTokens": 762,
+      "durationMs": 4359
+    },
+    {
+      "id": "tc-1_S3",
+      "scenarioId": "tc-1",
+      "variantId": "S3",
+      "pass": false,
+      "evaluation": {
+        "toolCallsCorrect": false,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": true
+      },
+      "actualToolCalls": [],
+      "inputTokens": 1732,
+      "outputTokens": 530,
+      "durationMs": 3108
+    },
+    {
+      "id": "tc-1_S4",
+      "scenarioId": "tc-1",
+      "variantId": "S4",
+      "pass": false,
+      "evaluation": {
+        "toolCallsCorrect": false,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": true
+      },
+      "actualToolCalls": [],
+      "inputTokens": 1738,
+      "outputTokens": 637,
+      "durationMs": 3693
+    },
+    {
+      "id": "tc-1_S5",
+      "scenarioId": "tc-1",
+      "variantId": "S5",
+      "pass": false,
+      "evaluation": {
+        "toolCallsCorrect": false,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": true
+      },
+      "actualToolCalls": [
+        {
+          "name": "readDocument",
+          "args": {
+            "documentId": "ua-2-doc-1"
+          }
+        }
+      ],
+      "inputTokens": 2108,
+      "outputTokens": 24,
+      "durationMs": 1071
+    },
+    {
+      "id": "tc-1_S6",
+      "scenarioId": "tc-1",
+      "variantId": "S6",
+      "pass": true,
+      "evaluation": {
+        "toolCallsCorrect": true,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": false
+      },
+      "actualToolCalls": [
+        {
+          "name": "saveCareerNote",
+          "args": {
+            "careerNoteId": "",
+            "title": "Rust 기반 고성능 메시지 큐 개발 성과",
+            "content": "작년에 Rust로 고성능 메시지 큐를 직접 개발함. 초당 50만 건 처리 성능을 달성함. 메시지 생산자/소비자 간 처리량을 높이기 위해 비동기 처리 및 병목 구간을 분석·개선하는 방식으로 성능을 최적화함. 결과적으로 대량 처리 환경에서 지연 시간을 낮추고 처리량을 안정적으로 유지할 수 있는 구조를 구축함.",
+            "summary": "Rust로 고성능 메시지 큐를 개발해 초당 50만 건 처리 성능을 달성함.",
+            "metadata": {
+              "role": "개인(개발/성능 최적화)",
+              "result": "초당 50만 건 처리 성능 달성",
+              "feeling": "성능을 수치로 검증하며 성장감을 느꼈음"
+            }
+          }
+        }
+      ],
+      "inputTokens": 2148,
+      "outputTokens": 212,
+      "durationMs": 1803
+    },
+    {
+      "id": "tc-2_S1",
+      "scenarioId": "tc-2",
+      "variantId": "S1",
+      "pass": false,
+      "evaluation": {
+        "toolCallsCorrect": false,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": true
+      },
+      "actualToolCalls": [],
+      "inputTokens": 1541,
+      "outputTokens": 255,
+      "durationMs": 1960
+    },
+    {
+      "id": "tc-2_S2",
+      "scenarioId": "tc-2",
+      "variantId": "S2",
+      "pass": false,
+      "evaluation": {
+        "toolCallsCorrect": false,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": true
+      },
+      "actualToolCalls": [],
+      "inputTokens": 1632,
+      "outputTokens": 221,
+      "durationMs": 1841
+    },
+    {
+      "id": "tc-2_S3",
+      "scenarioId": "tc-2",
+      "variantId": "S3",
+      "pass": false,
+      "evaluation": {
+        "toolCallsCorrect": false,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": true
+      },
+      "actualToolCalls": [],
+      "inputTokens": 1728,
+      "outputTokens": 244,
+      "durationMs": 1904
+    },
+    {
+      "id": "tc-2_S4",
+      "scenarioId": "tc-2",
+      "variantId": "S4",
+      "pass": false,
+      "evaluation": {
+        "toolCallsCorrect": false,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": true
+      },
+      "actualToolCalls": [],
+      "inputTokens": 1734,
+      "outputTokens": 319,
+      "durationMs": 2276
+    },
+    {
+      "id": "tc-2_S5",
+      "scenarioId": "tc-2",
+      "variantId": "S5",
+      "pass": false,
+      "evaluation": {
+        "toolCallsCorrect": false,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": true
+      },
+      "actualToolCalls": [
+        {
+          "name": "readCareerNote",
+          "args": {
+            "careerNoteId": "ua-2-note-1"
+          }
+        }
+      ],
+      "inputTokens": 2104,
+      "outputTokens": 26,
+      "durationMs": 808
+    },
+    {
+      "id": "tc-2_S6",
+      "scenarioId": "tc-2",
+      "variantId": "S6",
+      "pass": false,
+      "evaluation": {
+        "toolCallsCorrect": false,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": true
+      },
+      "actualToolCalls": [
+        {
+          "name": "readCareerNote",
+          "args": {
+            "careerNoteId": "ua-2-note-1"
+          }
+        }
+      ],
+      "inputTokens": 2144,
+      "outputTokens": 26,
+      "durationMs": 1640
+    },
+    {
+      "id": "tc-3_S1",
+      "scenarioId": "tc-3",
+      "variantId": "S1",
+      "pass": false,
+      "evaluation": {
+        "toolCallsCorrect": false,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": true
+      },
+      "actualToolCalls": [],
+      "inputTokens": 1535,
+      "outputTokens": 623,
+      "durationMs": 3621
+    },
+    {
+      "id": "tc-3_S2",
+      "scenarioId": "tc-3",
+      "variantId": "S2",
+      "pass": false,
+      "evaluation": {
+        "toolCallsCorrect": false,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": true
+      },
+      "actualToolCalls": [],
+      "inputTokens": 1626,
+      "outputTokens": 680,
+      "durationMs": 3917
+    },
+    {
+      "id": "tc-3_S3",
+      "scenarioId": "tc-3",
+      "variantId": "S3",
+      "pass": false,
+      "evaluation": {
+        "toolCallsCorrect": false,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": true
+      },
+      "actualToolCalls": [],
+      "inputTokens": 1722,
+      "outputTokens": 569,
+      "durationMs": 3218
+    },
+    {
+      "id": "tc-3_S4",
+      "scenarioId": "tc-3",
+      "variantId": "S4",
+      "pass": false,
+      "evaluation": {
+        "toolCallsCorrect": false,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": true
+      },
+      "actualToolCalls": [],
+      "inputTokens": 1728,
+      "outputTokens": 519,
+      "durationMs": 3063
+    },
+    {
+      "id": "tc-3_S5",
+      "scenarioId": "tc-3",
+      "variantId": "S5",
+      "pass": true,
+      "evaluation": {
+        "toolCallsCorrect": true,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": false
+      },
+      "actualToolCalls": [
+        {
+          "name": "readDocument",
+          "args": {
+            "documentId": "ua-2-doc-1"
+          }
+        }
+      ],
+      "inputTokens": 2098,
+      "outputTokens": 24,
+      "durationMs": 929
+    },
+    {
+      "id": "tc-3_S6",
+      "scenarioId": "tc-3",
+      "variantId": "S6",
+      "pass": true,
+      "evaluation": {
+        "toolCallsCorrect": true,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": false
+      },
+      "actualToolCalls": [
+        {
+          "name": "readDocument",
+          "args": {
+            "documentId": "ua-2-doc-1"
+          }
+        },
+        {
+          "name": "readDocument",
+          "args": {
+            "documentId": "ua-2-doc-2"
+          }
+        }
+      ],
+      "inputTokens": 2131,
+      "outputTokens": 60,
+      "durationMs": 1057
+    },
+    {
+      "id": "tc-4_S1",
+      "scenarioId": "tc-4",
+      "variantId": "S1",
+      "pass": true,
+      "evaluation": {
+        "toolCallsCorrect": true,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": false
+      },
+      "actualToolCalls": [],
+      "inputTokens": 1534,
+      "outputTokens": 230,
+      "durationMs": 2360
+    },
+    {
+      "id": "tc-4_S2",
+      "scenarioId": "tc-4",
+      "variantId": "S2",
+      "pass": true,
+      "evaluation": {
+        "toolCallsCorrect": true,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": false
+      },
+      "actualToolCalls": [],
+      "inputTokens": 1625,
+      "outputTokens": 269,
+      "durationMs": 2083
+    },
+    {
+      "id": "tc-4_S3",
+      "scenarioId": "tc-4",
+      "variantId": "S3",
+      "pass": true,
+      "evaluation": {
+        "toolCallsCorrect": true,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": false
+      },
+      "actualToolCalls": [],
+      "inputTokens": 1721,
+      "outputTokens": 138,
+      "durationMs": 1428
+    },
+    {
+      "id": "tc-4_S4",
+      "scenarioId": "tc-4",
+      "variantId": "S4",
+      "pass": true,
+      "evaluation": {
+        "toolCallsCorrect": true,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": false
+      },
+      "actualToolCalls": [],
+      "inputTokens": 1727,
+      "outputTokens": 171,
+      "durationMs": 13530
+    },
+    {
+      "id": "tc-4_S5",
+      "scenarioId": "tc-4",
+      "variantId": "S5",
+      "pass": false,
+      "evaluation": {
+        "toolCallsCorrect": false,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": true,
+        "underCall": false
+      },
+      "actualToolCalls": [
+        {
+          "name": "readDocument",
+          "args": {
+            "documentId": "ua-2-doc-2"
+          }
+        }
+      ],
+      "inputTokens": 2097,
+      "outputTokens": 24,
+      "durationMs": 873
+    },
+    {
+      "id": "tc-4_S6",
+      "scenarioId": "tc-4",
+      "variantId": "S6",
+      "pass": false,
+      "evaluation": {
+        "toolCallsCorrect": false,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": true,
+        "underCall": false
+      },
+      "actualToolCalls": [
+        {
+          "name": "readDocument",
+          "args": {
+            "documentId": "ua-2-doc-1"
+          }
+        }
+      ],
+      "inputTokens": 2097,
+      "outputTokens": 24,
+      "durationMs": 923
+    }
+  ],
+  "cost": {
+    "batchCost": 0.009016225,
+    "realtimeCost": 0.01803245,
+    "savings": 0.009016225,
+    "inputTokens": 43431,
+    "outputTokens": 7477
+  },
+  "summary": {
+    "totalRuns": 24,
+    "passCount": 7,
+    "failCount": 17,
+    "errorCount": 0,
+    "passRate": "29.2%"
+  }
+}

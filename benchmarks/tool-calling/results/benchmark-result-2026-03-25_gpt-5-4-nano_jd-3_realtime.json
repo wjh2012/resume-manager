@@ -1,0 +1,791 @@
+{
+  "meta": {
+    "suite": "tool-calling",
+    "provider": "openai",
+    "model": "gpt-5.4-nano",
+    "mode": "realtime",
+    "timestamp": "2026-03-25T00:15:05.423Z",
+    "persona": {
+      "id": "jd-3",
+      "name": "최서연",
+      "label": "컴공 전공 / 백엔드 지향 / Java·Spring / 인턴 경험"
+    }
+  },
+  "variants": [
+    {
+      "id": "S1",
+      "label": "최소"
+    },
+    {
+      "id": "S2",
+      "label": "현재"
+    },
+    {
+      "id": "S3",
+      "label": "few-shot"
+    },
+    {
+      "id": "S4",
+      "label": "단계별 판단"
+    },
+    {
+      "id": "S5",
+      "label": "강제 패턴"
+    },
+    {
+      "id": "S6",
+      "label": "강제 패턴 + Pre-check"
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "tc-1",
+      "name": "새 경험",
+      "userMessage": "작년에 Rust로 고성능 메시지 큐 만들었는데 초당 50만 건 처리했어",
+      "expectedTools": [
+        "saveCareerNote"
+      ],
+      "allowedTools": [
+        "readDocument",
+        "readCareerNote"
+      ],
+      "orderedPairs": [],
+      "is2Turn": true
+    },
+    {
+      "id": "tc-2",
+      "name": "수치 변경",
+      "userMessage": "아 그 deploy-ez Stars가 450개가 아니라 800개로 늘었어",
+      "expectedTools": [
+        "readCareerNote",
+        "saveCareerNote"
+      ],
+      "allowedTools": [
+        "readDocument"
+      ],
+      "orderedPairs": [
+        [
+          "readCareerNote",
+          "saveCareerNote"
+        ]
+      ],
+      "is2Turn": true
+    },
+    {
+      "id": "tc-3",
+      "name": "초안 요청",
+      "userMessage": "deploy-ez 프로젝트 중심으로 핵심역량 써줘",
+      "expectedTools": [
+        "readDocument"
+      ],
+      "allowedTools": [
+        "readCareerNote"
+      ],
+      "orderedPairs": [],
+      "is2Turn": false
+    },
+    {
+      "id": "tc-4",
+      "name": "단순 질문",
+      "userMessage": "자소서 분량은 보통 얼마나 돼?",
+      "expectedTools": [],
+      "allowedTools": [],
+      "orderedPairs": [],
+      "is2Turn": false
+    }
+  ],
+  "results": [
+    {
+      "id": "tc-1_S1",
+      "scenarioId": "tc-1",
+      "variantId": "S1",
+      "pass": false,
+      "evaluation": {
+        "toolCallsCorrect": false,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": true
+      },
+      "actualToolCalls": [],
+      "inputTokens": 1538,
+      "outputTokens": 982,
+      "durationMs": 5114
+    },
+    {
+      "id": "tc-1_S2",
+      "scenarioId": "tc-1",
+      "variantId": "S2",
+      "pass": false,
+      "evaluation": {
+        "toolCallsCorrect": false,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": true
+      },
+      "actualToolCalls": [],
+      "inputTokens": 1629,
+      "outputTokens": 325,
+      "durationMs": 2306
+    },
+    {
+      "id": "tc-1_S3",
+      "scenarioId": "tc-1",
+      "variantId": "S3",
+      "pass": true,
+      "evaluation": {
+        "toolCallsCorrect": true,
+        "proposalDetected": true,
+        "turn2Executed": true,
+        "overCall": false,
+        "underCall": false
+      },
+      "actualToolCalls": [
+        {
+          "name": "saveCareerNote",
+          "args": {
+            "careerNoteId": "jd-3-note-rust-queue",
+            "title": "Rust 고성능 메시지 큐: 초당 50만 건 처리",
+            "content": "- 작년에 Rust로 고성능 메시지 큐를 직접 개발\n- 초당 50만 건 처리(throughput 기준)\n- 향후 자기소개서/면접에서 카카오 서버 개발 역량(대규모 트래픽 처리, 성능 최적화, 안정적 메시징 처리)과 연결 예정",
+            "summary": "Rust로 고성능 메시지 큐를 개발해 초당 50만 건 처리 성과를 달성.",
+            "metadata": {
+              "role": "신입 백엔드 개발자(개발 경험 보강)",
+              "result": "초당 50만 건 처리 성능 확보",
+              "feeling": "대규모 트래픽을 안정적으로 처리할 수 있다는 자신감"
+            }
+          }
+        }
+      ],
+      "inputTokens": 3926,
+      "outputTokens": 627,
+      "durationMs": 4986
+    },
+    {
+      "id": "tc-1_S4",
+      "scenarioId": "tc-1",
+      "variantId": "S4",
+      "pass": true,
+      "evaluation": {
+        "toolCallsCorrect": true,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": false
+      },
+      "actualToolCalls": [
+        {
+          "name": "saveCareerNote",
+          "args": {
+            "careerNoteId": "",
+            "title": "작년 Rust 기반 고성능 메시지 큐 개발",
+            "content": "작년에 Rust로 고성능 메시지 큐를 개발해 초당 50만 건 처리 성능을 달성함. (세부 구현/아키텍처/지표 산출 방식은 미기재)",
+            "summary": "Rust로 고성능 메시지 큐를 구현해 초당 50만 건 처리 성능을 달성함.",
+            "metadata": {
+              "role": "개발자",
+              "result": "초당 50만 건 처리",
+              "feeling": "성취감 및 성장"
+            }
+          }
+        }
+      ],
+      "inputTokens": 1731,
+      "outputTokens": 140,
+      "durationMs": 1564
+    },
+    {
+      "id": "tc-1_S5",
+      "scenarioId": "tc-1",
+      "variantId": "S5",
+      "pass": false,
+      "evaluation": {
+        "toolCallsCorrect": false,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": true
+      },
+      "actualToolCalls": [
+        {
+          "name": "readDocument",
+          "args": {
+            "documentId": "jd-3-doc-3"
+          }
+        }
+      ],
+      "inputTokens": 2101,
+      "outputTokens": 24,
+      "durationMs": 885
+    },
+    {
+      "id": "tc-1_S6",
+      "scenarioId": "tc-1",
+      "variantId": "S6",
+      "pass": false,
+      "evaluation": {
+        "toolCallsCorrect": false,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": true
+      },
+      "actualToolCalls": [
+        {
+          "name": "readDocument",
+          "args": {
+            "documentId": "jd-3-doc-3"
+          }
+        }
+      ],
+      "inputTokens": 2141,
+      "outputTokens": 24,
+      "durationMs": 1876
+    },
+    {
+      "id": "tc-2_S1",
+      "scenarioId": "tc-2",
+      "variantId": "S1",
+      "pass": false,
+      "evaluation": {
+        "toolCallsCorrect": false,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": true
+      },
+      "actualToolCalls": [],
+      "inputTokens": 1534,
+      "outputTokens": 194,
+      "durationMs": 9396
+    },
+    {
+      "id": "tc-2_S2",
+      "scenarioId": "tc-2",
+      "variantId": "S2",
+      "pass": false,
+      "evaluation": {
+        "toolCallsCorrect": false,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": true
+      },
+      "actualToolCalls": [],
+      "inputTokens": 1625,
+      "outputTokens": 125,
+      "durationMs": 1326
+    },
+    {
+      "id": "tc-2_S3",
+      "scenarioId": "tc-2",
+      "variantId": "S3",
+      "pass": false,
+      "evaluation": {
+        "toolCallsCorrect": false,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": true
+      },
+      "actualToolCalls": [
+        {
+          "name": "readCareerNote",
+          "args": {
+            "careerNoteId": "jd-3-note-1"
+          }
+        }
+      ],
+      "inputTokens": 1721,
+      "outputTokens": 26,
+      "durationMs": 922
+    },
+    {
+      "id": "tc-2_S4",
+      "scenarioId": "tc-2",
+      "variantId": "S4",
+      "pass": false,
+      "evaluation": {
+        "toolCallsCorrect": false,
+        "proposalDetected": true,
+        "turn2Executed": true,
+        "overCall": false,
+        "underCall": true
+      },
+      "actualToolCalls": [
+        {
+          "name": "readDocument",
+          "args": {
+            "documentId": "jd-3-doc-3"
+          }
+        },
+        {
+          "name": "readCareerNote",
+          "args": {
+            "careerNoteId": "jd-3-note-1"
+          }
+        },
+        {
+          "name": "readCareerNote",
+          "args": {
+            "careerNoteId": "jd-3-note-3"
+          }
+        },
+        {
+          "name": "readDocument",
+          "args": {
+            "documentId": "jd-3-doc-4"
+          }
+        }
+      ],
+      "inputTokens": 3717,
+      "outputTokens": 324,
+      "durationMs": 2983
+    },
+    {
+      "id": "tc-2_S5",
+      "scenarioId": "tc-2",
+      "variantId": "S5",
+      "pass": false,
+      "evaluation": {
+        "toolCallsCorrect": false,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": true
+      },
+      "actualToolCalls": [
+        {
+          "name": "readCareerNote",
+          "args": {
+            "careerNoteId": "jd-3-note-1"
+          }
+        }
+      ],
+      "inputTokens": 2097,
+      "outputTokens": 26,
+      "durationMs": 1528
+    },
+    {
+      "id": "tc-2_S6",
+      "scenarioId": "tc-2",
+      "variantId": "S6",
+      "pass": false,
+      "evaluation": {
+        "toolCallsCorrect": false,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": true
+      },
+      "actualToolCalls": [
+        {
+          "name": "readCareerNote",
+          "args": {
+            "careerNoteId": "jd-3-note-1"
+          }
+        }
+      ],
+      "inputTokens": 2137,
+      "outputTokens": 26,
+      "durationMs": 2784
+    },
+    {
+      "id": "tc-3_S1",
+      "scenarioId": "tc-3",
+      "variantId": "S1",
+      "pass": true,
+      "evaluation": {
+        "toolCallsCorrect": true,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": false
+      },
+      "actualToolCalls": [
+        {
+          "name": "readDocument",
+          "args": {
+            "documentId": "jd-3-doc-1"
+          }
+        },
+        {
+          "name": "readDocument",
+          "args": {
+            "documentId": "jd-3-doc-2"
+          }
+        },
+        {
+          "name": "readDocument",
+          "args": {
+            "documentId": "jd-3-doc-3"
+          }
+        },
+        {
+          "name": "readDocument",
+          "args": {
+            "documentId": "jd-3-doc-4"
+          }
+        },
+        {
+          "name": "readCareerNote",
+          "args": {
+            "careerNoteId": "jd-3-note-1"
+          }
+        },
+        {
+          "name": "readCareerNote",
+          "args": {
+            "careerNoteId": "jd-3-note-2"
+          }
+        },
+        {
+          "name": "readCareerNote",
+          "args": {
+            "careerNoteId": "jd-3-note-3"
+          }
+        },
+        {
+          "name": "readCareerNote",
+          "args": {
+            "careerNoteId": "jd-3-note-4"
+          }
+        }
+      ],
+      "inputTokens": 1528,
+      "outputTokens": 188,
+      "durationMs": 42025
+    },
+    {
+      "id": "tc-3_S2",
+      "scenarioId": "tc-3",
+      "variantId": "S2",
+      "pass": false,
+      "evaluation": {
+        "toolCallsCorrect": false,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": true
+      },
+      "actualToolCalls": [],
+      "inputTokens": 1619,
+      "outputTokens": 641,
+      "durationMs": 3737
+    },
+    {
+      "id": "tc-3_S3",
+      "scenarioId": "tc-3",
+      "variantId": "S3",
+      "pass": false,
+      "evaluation": {
+        "toolCallsCorrect": false,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": true
+      },
+      "actualToolCalls": [],
+      "inputTokens": 1715,
+      "outputTokens": 729,
+      "durationMs": 4206
+    },
+    {
+      "id": "tc-3_S4",
+      "scenarioId": "tc-3",
+      "variantId": "S4",
+      "pass": true,
+      "evaluation": {
+        "toolCallsCorrect": true,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": false
+      },
+      "actualToolCalls": [
+        {
+          "name": "readDocument",
+          "args": {
+            "documentId": "jd-3-doc-3"
+          }
+        },
+        {
+          "name": "readDocument",
+          "args": {
+            "documentId": "jd-3-doc-2"
+          }
+        },
+        {
+          "name": "readCareerNote",
+          "args": {
+            "careerNoteId": "jd-3-note-1"
+          }
+        },
+        {
+          "name": "readCareerNote",
+          "args": {
+            "careerNoteId": "jd-3-note-3"
+          }
+        },
+        {
+          "name": "readCareerNote",
+          "args": {
+            "careerNoteId": "jd-3-note-4"
+          }
+        },
+        {
+          "name": "readCareerNote",
+          "args": {
+            "careerNoteId": "jd-3-note-2"
+          }
+        },
+        {
+          "name": "readDocument",
+          "args": {
+            "documentId": "jd-3-doc-4"
+          }
+        }
+      ],
+      "inputTokens": 1721,
+      "outputTokens": 168,
+      "durationMs": 1503
+    },
+    {
+      "id": "tc-3_S5",
+      "scenarioId": "tc-3",
+      "variantId": "S5",
+      "pass": true,
+      "evaluation": {
+        "toolCallsCorrect": true,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": false
+      },
+      "actualToolCalls": [
+        {
+          "name": "readDocument",
+          "args": {
+            "documentId": "jd-3-doc-1"
+          }
+        },
+        {
+          "name": "readDocument",
+          "args": {
+            "documentId": "jd-3-doc-2"
+          }
+        },
+        {
+          "name": "readDocument",
+          "args": {
+            "documentId": "jd-3-doc-3"
+          }
+        },
+        {
+          "name": "readDocument",
+          "args": {
+            "documentId": "jd-3-doc-4"
+          }
+        }
+      ],
+      "inputTokens": 2091,
+      "outputTokens": 100,
+      "durationMs": 1198
+    },
+    {
+      "id": "tc-3_S6",
+      "scenarioId": "tc-3",
+      "variantId": "S6",
+      "pass": true,
+      "evaluation": {
+        "toolCallsCorrect": true,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": false
+      },
+      "actualToolCalls": [
+        {
+          "name": "readDocument",
+          "args": {
+            "documentId": "jd-3-doc-3"
+          }
+        },
+        {
+          "name": "readDocument",
+          "args": {
+            "documentId": "jd-3-doc-1"
+          }
+        },
+        {
+          "name": "readDocument",
+          "args": {
+            "documentId": "jd-3-doc-2"
+          }
+        },
+        {
+          "name": "readDocument",
+          "args": {
+            "documentId": "jd-3-doc-4"
+          }
+        },
+        {
+          "name": "readCareerNote",
+          "args": {
+            "careerNoteId": "jd-3-note-1"
+          }
+        },
+        {
+          "name": "readCareerNote",
+          "args": {
+            "careerNoteId": "jd-3-note-2"
+          }
+        },
+        {
+          "name": "readCareerNote",
+          "args": {
+            "careerNoteId": "jd-3-note-3"
+          }
+        },
+        {
+          "name": "readCareerNote",
+          "args": {
+            "careerNoteId": "jd-3-note-4"
+          }
+        }
+      ],
+      "inputTokens": 2124,
+      "outputTokens": 188,
+      "durationMs": 2518
+    },
+    {
+      "id": "tc-4_S1",
+      "scenarioId": "tc-4",
+      "variantId": "S1",
+      "pass": true,
+      "evaluation": {
+        "toolCallsCorrect": true,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": false
+      },
+      "actualToolCalls": [],
+      "inputTokens": 1527,
+      "outputTokens": 228,
+      "durationMs": 1686
+    },
+    {
+      "id": "tc-4_S2",
+      "scenarioId": "tc-4",
+      "variantId": "S2",
+      "pass": true,
+      "evaluation": {
+        "toolCallsCorrect": true,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": false
+      },
+      "actualToolCalls": [],
+      "inputTokens": 1618,
+      "outputTokens": 287,
+      "durationMs": 2059
+    },
+    {
+      "id": "tc-4_S3",
+      "scenarioId": "tc-4",
+      "variantId": "S3",
+      "pass": true,
+      "evaluation": {
+        "toolCallsCorrect": true,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": false
+      },
+      "actualToolCalls": [],
+      "inputTokens": 1714,
+      "outputTokens": 250,
+      "durationMs": 1921
+    },
+    {
+      "id": "tc-4_S4",
+      "scenarioId": "tc-4",
+      "variantId": "S4",
+      "pass": true,
+      "evaluation": {
+        "toolCallsCorrect": true,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": false
+      },
+      "actualToolCalls": [],
+      "inputTokens": 1720,
+      "outputTokens": 170,
+      "durationMs": 1458
+    },
+    {
+      "id": "tc-4_S5",
+      "scenarioId": "tc-4",
+      "variantId": "S5",
+      "pass": false,
+      "evaluation": {
+        "toolCallsCorrect": false,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": true,
+        "underCall": false
+      },
+      "actualToolCalls": [
+        {
+          "name": "readDocument",
+          "args": {
+            "documentId": "jd-3-doc-3"
+          }
+        }
+      ],
+      "inputTokens": 2090,
+      "outputTokens": 24,
+      "durationMs": 807
+    },
+    {
+      "id": "tc-4_S6",
+      "scenarioId": "tc-4",
+      "variantId": "S6",
+      "pass": false,
+      "evaluation": {
+        "toolCallsCorrect": false,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": true,
+        "underCall": false
+      },
+      "actualToolCalls": [
+        {
+          "name": "readDocument",
+          "args": {
+            "documentId": "jd-3-doc-3"
+          }
+        }
+      ],
+      "inputTokens": 2090,
+      "outputTokens": 24,
+      "durationMs": 886
+    }
+  ],
+  "cost": {
+    "batchCost": 0.0083954,
+    "realtimeCost": 0.0167908,
+    "savings": 0.0083954,
+    "inputTokens": 47454,
+    "outputTokens": 5840
+  },
+  "summary": {
+    "totalRuns": 24,
+    "passCount": 10,
+    "failCount": 14,
+    "errorCount": 0,
+    "passRate": "41.7%"
+  }
+}

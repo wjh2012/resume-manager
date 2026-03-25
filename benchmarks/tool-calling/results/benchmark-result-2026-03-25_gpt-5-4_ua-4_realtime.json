@@ -1,0 +1,647 @@
+{
+  "meta": {
+    "suite": "tool-calling",
+    "provider": "openai",
+    "model": "gpt-5.4",
+    "mode": "realtime",
+    "timestamp": "2026-03-25T00:20:24.110Z",
+    "persona": {
+      "id": "ua-4",
+      "name": "정민우",
+      "label": "사회과학 지원 — 연세대학교 사회학과"
+    }
+  },
+  "variants": [
+    {
+      "id": "S1",
+      "label": "최소"
+    },
+    {
+      "id": "S2",
+      "label": "현재"
+    },
+    {
+      "id": "S3",
+      "label": "few-shot"
+    },
+    {
+      "id": "S4",
+      "label": "단계별 판단"
+    },
+    {
+      "id": "S5",
+      "label": "강제 패턴"
+    },
+    {
+      "id": "S6",
+      "label": "강제 패턴 + Pre-check"
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "tc-1",
+      "name": "새 경험",
+      "userMessage": "작년에 Rust로 고성능 메시지 큐 만들었는데 초당 50만 건 처리했어",
+      "expectedTools": [
+        "saveCareerNote"
+      ],
+      "allowedTools": [
+        "readDocument",
+        "readCareerNote"
+      ],
+      "orderedPairs": [],
+      "is2Turn": true
+    },
+    {
+      "id": "tc-2",
+      "name": "수치 변경",
+      "userMessage": "아 그 deploy-ez Stars가 450개가 아니라 800개로 늘었어",
+      "expectedTools": [
+        "readCareerNote",
+        "saveCareerNote"
+      ],
+      "allowedTools": [
+        "readDocument"
+      ],
+      "orderedPairs": [
+        [
+          "readCareerNote",
+          "saveCareerNote"
+        ]
+      ],
+      "is2Turn": true
+    },
+    {
+      "id": "tc-3",
+      "name": "초안 요청",
+      "userMessage": "deploy-ez 프로젝트 중심으로 핵심역량 써줘",
+      "expectedTools": [
+        "readDocument"
+      ],
+      "allowedTools": [
+        "readCareerNote"
+      ],
+      "orderedPairs": [],
+      "is2Turn": false
+    },
+    {
+      "id": "tc-4",
+      "name": "단순 질문",
+      "userMessage": "자소서 분량은 보통 얼마나 돼?",
+      "expectedTools": [],
+      "allowedTools": [],
+      "orderedPairs": [],
+      "is2Turn": false
+    }
+  ],
+  "results": [
+    {
+      "id": "tc-1_S1",
+      "scenarioId": "tc-1",
+      "variantId": "S1",
+      "pass": false,
+      "evaluation": {
+        "toolCallsCorrect": false,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": true
+      },
+      "actualToolCalls": [],
+      "inputTokens": 1684,
+      "outputTokens": 436,
+      "durationMs": 10222
+    },
+    {
+      "id": "tc-1_S2",
+      "scenarioId": "tc-1",
+      "variantId": "S2",
+      "pass": false,
+      "evaluation": {
+        "toolCallsCorrect": false,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": true
+      },
+      "actualToolCalls": [],
+      "inputTokens": 1775,
+      "outputTokens": 261,
+      "durationMs": 5527
+    },
+    {
+      "id": "tc-1_S3",
+      "scenarioId": "tc-1",
+      "variantId": "S3",
+      "pass": true,
+      "evaluation": {
+        "toolCallsCorrect": true,
+        "proposalDetected": true,
+        "turn2Executed": true,
+        "overCall": false,
+        "underCall": false
+      },
+      "actualToolCalls": [
+        {
+          "name": "saveCareerNote",
+          "args": {
+            "careerNoteId": "",
+            "title": "Rust 기반 고성능 메시지 큐 개발",
+            "content": "작년에 Rust를 사용해 고성능 메시지 큐를 직접 설계·개발했다. 시스템 수준의 성능과 안정성을 고려해 구현했으며, 초당 50만 건의 메시지를 처리하는 성능을 달성했다. 이 경험을 통해 저수준 시스템 프로그래밍, 동시성 처리, 성능 최적화 역량을 강화할 수 있었다. 또한 대용량 트래픽을 안정적으로 처리하는 아키텍처 설계의 중요성을 체감했다.",
+            "summary": "Rust로 고성능 메시지 큐를 개발해 초당 50만 건 처리 성능을 달성한 경험.",
+            "metadata": {
+              "role": "개발자",
+              "result": "초당 50만 건 처리 메시지 큐 구현",
+              "feeling": "고성능 시스템 설계와 최적화에 대한 자신감을 얻음"
+            }
+          }
+        }
+      ],
+      "inputTokens": 3940,
+      "outputTokens": 366,
+      "durationMs": 7268
+    },
+    {
+      "id": "tc-1_S4",
+      "scenarioId": "tc-1",
+      "variantId": "S4",
+      "pass": true,
+      "evaluation": {
+        "toolCallsCorrect": true,
+        "proposalDetected": true,
+        "turn2Executed": true,
+        "overCall": false,
+        "underCall": false
+      },
+      "actualToolCalls": [
+        {
+          "name": "saveCareerNote",
+          "args": {
+            "careerNoteId": "",
+            "title": "Rust 기반 고성능 메시지 큐 개발 경험",
+            "content": "작년에 Rust로 고성능 메시지 큐를 직접 개발했다. 시스템 수준의 성능 최적화와 안정성을 고려해 설계했으며, 초당 50만 건의 메시지를 처리하는 성능을 구현했다. 이 경험을 통해 대규모 트래픽 처리, 병행성 제어, 성능 병목 분석과 최적화 역량을 키웠다. 새로운 언어와 시스템 프로그래밍 환경을 빠르게 학습해 실제 동작하는 결과물로 연결한 경험이다.",
+            "summary": "Rust로 고성능 메시지 큐를 개발해 초당 50만 건 처리 성능을 구현한 시스템 개발 경험.",
+            "metadata": {
+              "role": "개발자",
+              "result": "초당 50만 건 메시지 처리 구현",
+              "feeling": "고성능 시스템을 직접 설계하고 최적화하며 문제 해결의 성취감을 느낌"
+            }
+          }
+        }
+      ],
+      "inputTokens": 4157,
+      "outputTokens": 578,
+      "durationMs": 13161
+    },
+    {
+      "id": "tc-1_S5",
+      "scenarioId": "tc-1",
+      "variantId": "S5",
+      "pass": true,
+      "evaluation": {
+        "toolCallsCorrect": true,
+        "proposalDetected": true,
+        "turn2Executed": true,
+        "overCall": false,
+        "underCall": false
+      },
+      "actualToolCalls": [
+        {
+          "name": "saveCareerNote",
+          "args": {
+            "careerNoteId": "",
+            "title": "Rust 기반 고성능 메시지 큐 개발",
+            "content": "Rust로 고성능 메시지 큐를 직접 설계·구현한 경험이 있다. 시스템 프로그래밍 언어의 성능과 안정성을 활용해 메시지 처리 병목을 줄이는 데 집중했고, 성능 최적화를 통해 초당 50만 건 처리 수준을 달성했다. 이 과정에서 동시성 처리, 메모리 관리, 시스템 설계의 중요성을 깊이 이해하게 되었으며, 실제 성능 목표를 수치로 검증하는 개발 방식의 가치를 배웠다.",
+            "summary": "Rust로 고성능 메시지 큐를 구현해 초당 50만 건 처리 성능을 달성한 시스템 개발 경험.",
+            "metadata": {
+              "role": "개발자",
+              "result": "초당 50만 건 처리 달성",
+              "feeling": "성능 최적화와 시스템 설계의 중요성을 체감함"
+            }
+          }
+        }
+      ],
+      "inputTokens": 4747,
+      "outputTokens": 422,
+      "durationMs": 7816
+    },
+    {
+      "id": "tc-1_S6",
+      "scenarioId": "tc-1",
+      "variantId": "S6",
+      "pass": true,
+      "evaluation": {
+        "toolCallsCorrect": true,
+        "proposalDetected": true,
+        "turn2Executed": true,
+        "overCall": false,
+        "underCall": false
+      },
+      "actualToolCalls": [
+        {
+          "name": "saveCareerNote",
+          "args": {
+            "careerNoteId": "",
+            "title": "Rust 기반 고성능 메시지 큐 개발",
+            "content": "작년에 Rust를 활용해 고성능 메시지 큐를 직접 설계하고 구현했다. 시스템 병목 구간을 분석하며 처리량을 높이는 방향으로 구조를 개선했고, 최종적으로 초당 50만 건을 처리하는 성능을 달성했다. 이 경험을 통해 시스템 프로그래밍 언어에 대한 이해를 바탕으로 성능 최적화, 병목 분석, 고처리량 아키텍처 설계 역량을 키웠다.",
+            "summary": "Rust로 고성능 메시지 큐를 직접 구현해 초당 50만 건 처리 성능을 달성한 경험.",
+            "metadata": {
+              "role": "개발자",
+              "result": "초당 50만 건 처리 달성",
+              "feeling": "성능 최적화와 시스템 설계 역량을 체감"
+            }
+          }
+        }
+      ],
+      "inputTokens": 4833,
+      "outputTokens": 458,
+      "durationMs": 8217
+    },
+    {
+      "id": "tc-2_S1",
+      "scenarioId": "tc-2",
+      "variantId": "S1",
+      "pass": false,
+      "evaluation": {
+        "toolCallsCorrect": false,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": true
+      },
+      "actualToolCalls": [],
+      "inputTokens": 1680,
+      "outputTokens": 606,
+      "durationMs": 12025
+    },
+    {
+      "id": "tc-2_S2",
+      "scenarioId": "tc-2",
+      "variantId": "S2",
+      "pass": false,
+      "evaluation": {
+        "toolCallsCorrect": false,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": true
+      },
+      "actualToolCalls": [],
+      "inputTokens": 1771,
+      "outputTokens": 289,
+      "durationMs": 5490
+    },
+    {
+      "id": "tc-2_S3",
+      "scenarioId": "tc-2",
+      "variantId": "S3",
+      "pass": false,
+      "evaluation": {
+        "toolCallsCorrect": false,
+        "proposalDetected": true,
+        "turn2Executed": true,
+        "overCall": false,
+        "underCall": true
+      },
+      "actualToolCalls": [
+        {
+          "name": "saveCareerNote",
+          "args": {
+            "careerNoteId": "",
+            "title": "deploy-ez 오픈소스 프로젝트 성과 업데이트",
+            "content": "deploy-ez 프로젝트의 GitHub Stars 수치가 기존 450개에서 800개로 증가한 것으로 정정함. 오픈소스 프로젝트의 외부 반응과 확산 정도를 보여주는 핵심 성과 지표로 활용 가능.",
+            "summary": "deploy-ez GitHub Stars 수치를 450개에서 800개로 정정한 성과 업데이트.",
+            "metadata": {
+              "role": "개발자",
+              "result": "GitHub Stars 800개 달성",
+              "feeling": "성과 정정 및 기록"
+            }
+          }
+        }
+      ],
+      "inputTokens": 3943,
+      "outputTokens": 308,
+      "durationMs": 6248
+    },
+    {
+      "id": "tc-2_S4",
+      "scenarioId": "tc-2",
+      "variantId": "S4",
+      "pass": false,
+      "evaluation": {
+        "toolCallsCorrect": false,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": true
+      },
+      "actualToolCalls": [],
+      "inputTokens": 1873,
+      "outputTokens": 213,
+      "durationMs": 4158
+    },
+    {
+      "id": "tc-2_S5",
+      "scenarioId": "tc-2",
+      "variantId": "S5",
+      "pass": false,
+      "evaluation": {
+        "toolCallsCorrect": false,
+        "proposalDetected": true,
+        "turn2Executed": true,
+        "overCall": false,
+        "underCall": true
+      },
+      "actualToolCalls": [
+        {
+          "name": "saveCareerNote",
+          "args": {
+            "careerNoteId": "ua-4-note-1",
+            "title": "deploy-ez 프로젝트 성과 업데이트",
+            "content": "deploy-ez 프로젝트의 GitHub Stars가 기존 450개에서 800개로 증가했다. 사용자 반응과 오픈소스 영향력이 확대되었음을 보여주는 성과로, 지속적인 개선과 커뮤니티 관심을 확인할 수 있다.",
+            "summary": "deploy-ez 프로젝트 GitHub Stars가 450개에서 800개로 증가하며 오픈소스 영향력을 입증했다.",
+            "metadata": {
+              "role": "개발자",
+              "result": "GitHub Stars 800개 달성",
+              "feeling": "성장과 보람"
+            }
+          }
+        }
+      ],
+      "inputTokens": 4844,
+      "outputTokens": 466,
+      "durationMs": 11159
+    },
+    {
+      "id": "tc-2_S6",
+      "scenarioId": "tc-2",
+      "variantId": "S6",
+      "pass": false,
+      "evaluation": {
+        "toolCallsCorrect": false,
+        "proposalDetected": true,
+        "turn2Executed": true,
+        "overCall": false,
+        "underCall": true
+      },
+      "actualToolCalls": [
+        {
+          "name": "saveCareerNote",
+          "args": {
+            "careerNoteId": "",
+            "title": "deploy-ez 프로젝트 성과 업데이트",
+            "content": "deploy-ez 프로젝트의 GitHub Stars 수치가 기존 450개에서 800개로 증가했다. 오픈소스 프로젝트에 대한 사용자 관심과 기술적 활용도가 확장되고 있음을 보여주는 성과 지표로 활용할 수 있다.",
+            "summary": "deploy-ez GitHub Stars가 450개에서 800개로 증가한 성과 업데이트.",
+            "metadata": {
+              "role": "개발자",
+              "result": "GitHub Stars 800개 달성",
+              "feeling": "사용자 반응이 꾸준히 확대되어 의미 있었다"
+            }
+          }
+        }
+      ],
+      "inputTokens": 4859,
+      "outputTokens": 433,
+      "durationMs": 10774
+    },
+    {
+      "id": "tc-3_S1",
+      "scenarioId": "tc-3",
+      "variantId": "S1",
+      "pass": false,
+      "evaluation": {
+        "toolCallsCorrect": false,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": true
+      },
+      "actualToolCalls": [],
+      "inputTokens": 1674,
+      "outputTokens": 808,
+      "durationMs": 19044
+    },
+    {
+      "id": "tc-3_S2",
+      "scenarioId": "tc-3",
+      "variantId": "S2",
+      "pass": false,
+      "evaluation": {
+        "toolCallsCorrect": false,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": true
+      },
+      "actualToolCalls": [],
+      "inputTokens": 1765,
+      "outputTokens": 734,
+      "durationMs": 12429
+    },
+    {
+      "id": "tc-3_S3",
+      "scenarioId": "tc-3",
+      "variantId": "S3",
+      "pass": true,
+      "evaluation": {
+        "toolCallsCorrect": true,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": false
+      },
+      "actualToolCalls": [
+        {
+          "name": "readDocument",
+          "args": {
+            "documentId": "ua-4-doc-2"
+          }
+        }
+      ],
+      "inputTokens": 1861,
+      "outputTokens": 24,
+      "durationMs": 1952
+    },
+    {
+      "id": "tc-3_S4",
+      "scenarioId": "tc-3",
+      "variantId": "S4",
+      "pass": false,
+      "evaluation": {
+        "toolCallsCorrect": false,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": true
+      },
+      "actualToolCalls": [],
+      "inputTokens": 1867,
+      "outputTokens": 689,
+      "durationMs": 12131
+    },
+    {
+      "id": "tc-3_S5",
+      "scenarioId": "tc-3",
+      "variantId": "S5",
+      "pass": true,
+      "evaluation": {
+        "toolCallsCorrect": true,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": false
+      },
+      "actualToolCalls": [
+        {
+          "name": "readDocument",
+          "args": {
+            "documentId": "ua-4-doc-2"
+          }
+        }
+      ],
+      "inputTokens": 2237,
+      "outputTokens": 24,
+      "durationMs": 1112
+    },
+    {
+      "id": "tc-3_S6",
+      "scenarioId": "tc-3",
+      "variantId": "S6",
+      "pass": true,
+      "evaluation": {
+        "toolCallsCorrect": true,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": false
+      },
+      "actualToolCalls": [
+        {
+          "name": "readDocument",
+          "args": {
+            "documentId": "ua-4-doc-2"
+          }
+        }
+      ],
+      "inputTokens": 2270,
+      "outputTokens": 24,
+      "durationMs": 1228
+    },
+    {
+      "id": "tc-4_S1",
+      "scenarioId": "tc-4",
+      "variantId": "S1",
+      "pass": true,
+      "evaluation": {
+        "toolCallsCorrect": true,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": false
+      },
+      "actualToolCalls": [],
+      "inputTokens": 1673,
+      "outputTokens": 59,
+      "durationMs": 1969
+    },
+    {
+      "id": "tc-4_S2",
+      "scenarioId": "tc-4",
+      "variantId": "S2",
+      "pass": true,
+      "evaluation": {
+        "toolCallsCorrect": true,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": false
+      },
+      "actualToolCalls": [],
+      "inputTokens": 1764,
+      "outputTokens": 138,
+      "durationMs": 2958
+    },
+    {
+      "id": "tc-4_S3",
+      "scenarioId": "tc-4",
+      "variantId": "S3",
+      "pass": true,
+      "evaluation": {
+        "toolCallsCorrect": true,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": false
+      },
+      "actualToolCalls": [],
+      "inputTokens": 1860,
+      "outputTokens": 221,
+      "durationMs": 6779
+    },
+    {
+      "id": "tc-4_S4",
+      "scenarioId": "tc-4",
+      "variantId": "S4",
+      "pass": true,
+      "evaluation": {
+        "toolCallsCorrect": true,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": false
+      },
+      "actualToolCalls": [],
+      "inputTokens": 1866,
+      "outputTokens": 232,
+      "durationMs": 4223
+    },
+    {
+      "id": "tc-4_S5",
+      "scenarioId": "tc-4",
+      "variantId": "S5",
+      "pass": true,
+      "evaluation": {
+        "toolCallsCorrect": true,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": false
+      },
+      "actualToolCalls": [],
+      "inputTokens": 2236,
+      "outputTokens": 79,
+      "durationMs": 3367
+    },
+    {
+      "id": "tc-4_S6",
+      "scenarioId": "tc-4",
+      "variantId": "S6",
+      "pass": true,
+      "evaluation": {
+        "toolCallsCorrect": true,
+        "proposalDetected": false,
+        "turn2Executed": false,
+        "overCall": false,
+        "underCall": false
+      },
+      "actualToolCalls": [],
+      "inputTokens": 2236,
+      "outputTokens": 59,
+      "durationMs": 1991
+    }
+  ],
+  "cost": {
+    "batchCost": 0.13872125,
+    "realtimeCost": 0.2774425,
+    "savings": 0.13872125,
+    "inputTokens": 63415,
+    "outputTokens": 7927
+  },
+  "summary": {
+    "totalRuns": 24,
+    "passCount": 13,
+    "failCount": 11,
+    "errorCount": 0,
+    "passRate": "54.2%"
+  }
+}

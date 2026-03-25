@@ -1,0 +1,475 @@
+{
+  "meta": {
+    "suite": "deterministic-routing",
+    "provider": "openai",
+    "model": "gpt-5.4-nano",
+    "mode": "realtime",
+    "timestamp": "2026-03-25T04:45:33.849Z",
+    "persona": {
+      "id": "jd-1",
+      "name": "이하은",
+      "label": "컴공 전공 / 프론트엔드 지향 / React"
+    }
+  },
+  "variants": [
+    {
+      "id": "R1",
+      "label": "최소"
+    },
+    {
+      "id": "R2",
+      "label": "필드별 가이드"
+    },
+    {
+      "id": "R3",
+      "label": "few-shot"
+    },
+    {
+      "id": "R4",
+      "label": "단계별 판단"
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "tc-1",
+      "name": "새 경험",
+      "userMessage": "작년에 Rust로 고성능 메시지 큐 만들었는데 초당 50만 건 처리했어",
+      "expected": {
+        "exact": {
+          "documentsToRead": [],
+          "careerNotesToRead": [],
+          "saveCareerNote": true
+        }
+      }
+    },
+    {
+      "id": "tc-2",
+      "name": "수치 변경",
+      "userMessage": "아 그 deploy-ez Stars가 450개가 아니라 800개로 늘었어",
+      "expected": {
+        "atLeast": {
+          "saveCareerNote": true
+        }
+      }
+    },
+    {
+      "id": "tc-3",
+      "name": "초안 요청",
+      "userMessage": "deploy-ez 프로젝트 중심으로 핵심역량 써줘",
+      "expected": {
+        "atLeast": {
+          "saveCareerNote": false
+        },
+        "nonEmpty": [
+          "documentsToRead"
+        ]
+      }
+    },
+    {
+      "id": "tc-4",
+      "name": "단순 질문",
+      "userMessage": "자소서 분량은 보통 얼마나 돼?",
+      "expected": {
+        "exact": {
+          "documentsToRead": [],
+          "careerNotesToRead": [],
+          "saveCareerNote": false
+        }
+      }
+    }
+  ],
+  "results": [
+    {
+      "id": "tc-1_R1",
+      "scenarioId": "tc-1",
+      "variantId": "R1",
+      "pass": false,
+      "evaluation": {
+        "details": {
+          "documentsToReadCorrect": false,
+          "careerNotesToReadCorrect": false,
+          "saveCareerNoteCorrect": true
+        },
+        "actual": {
+          "documentsToRead": [
+            "jd-1-doc-3",
+            "jd-1-doc-1",
+            "jd-1-doc-2"
+          ],
+          "careerNotesToRead": [
+            "jd-1-note-1",
+            "jd-1-note-2",
+            "jd-1-note-3"
+          ],
+          "saveCareerNote": true
+        }
+      },
+      "inputTokens": 1373,
+      "outputTokens": 67,
+      "durationMs": 1097
+    },
+    {
+      "id": "tc-1_R2",
+      "scenarioId": "tc-1",
+      "variantId": "R2",
+      "pass": false,
+      "evaluation": {
+        "details": {
+          "documentsToReadCorrect": false,
+          "careerNotesToReadCorrect": true,
+          "saveCareerNoteCorrect": true
+        },
+        "actual": {
+          "documentsToRead": [
+            "jd-1-doc-3",
+            "jd-1-doc-2"
+          ],
+          "careerNotesToRead": [],
+          "saveCareerNote": true
+        }
+      },
+      "inputTokens": 1520,
+      "outputTokens": 39,
+      "durationMs": 867
+    },
+    {
+      "id": "tc-1_R3",
+      "scenarioId": "tc-1",
+      "variantId": "R3",
+      "pass": true,
+      "evaluation": {
+        "details": {
+          "documentsToReadCorrect": true,
+          "careerNotesToReadCorrect": true,
+          "saveCareerNoteCorrect": true
+        },
+        "actual": {
+          "documentsToRead": [],
+          "careerNotesToRead": [],
+          "saveCareerNote": true
+        }
+      },
+      "inputTokens": 1775,
+      "outputTokens": 25,
+      "durationMs": 942
+    },
+    {
+      "id": "tc-1_R4",
+      "scenarioId": "tc-1",
+      "variantId": "R4",
+      "pass": false,
+      "evaluation": {
+        "details": {
+          "documentsToReadCorrect": false,
+          "careerNotesToReadCorrect": true,
+          "saveCareerNoteCorrect": true
+        },
+        "actual": {
+          "documentsToRead": [
+            "jd-1-doc-3",
+            "jd-1-doc-2"
+          ],
+          "careerNotesToRead": [],
+          "saveCareerNote": true
+        }
+      },
+      "inputTokens": 1566,
+      "outputTokens": 39,
+      "durationMs": 994
+    },
+    {
+      "id": "tc-2_R1",
+      "scenarioId": "tc-2",
+      "variantId": "R1",
+      "pass": true,
+      "evaluation": {
+        "details": {
+          "documentsToReadCorrect": true,
+          "careerNotesToReadCorrect": true,
+          "saveCareerNoteCorrect": true
+        },
+        "actual": {
+          "documentsToRead": [
+            "jd-1-doc-3"
+          ],
+          "careerNotesToRead": [
+            "jd-1-note-1"
+          ],
+          "saveCareerNote": true
+        }
+      },
+      "inputTokens": 1369,
+      "outputTokens": 39,
+      "durationMs": 743
+    },
+    {
+      "id": "tc-2_R2",
+      "scenarioId": "tc-2",
+      "variantId": "R2",
+      "pass": true,
+      "evaluation": {
+        "details": {
+          "documentsToReadCorrect": true,
+          "careerNotesToReadCorrect": true,
+          "saveCareerNoteCorrect": true
+        },
+        "actual": {
+          "documentsToRead": [],
+          "careerNotesToRead": [
+            "jd-1-doc-3",
+            "jd-1-note-1"
+          ],
+          "saveCareerNote": true
+        }
+      },
+      "inputTokens": 1516,
+      "outputTokens": 39,
+      "durationMs": 892
+    },
+    {
+      "id": "tc-2_R3",
+      "scenarioId": "tc-2",
+      "variantId": "R3",
+      "pass": true,
+      "evaluation": {
+        "details": {
+          "documentsToReadCorrect": true,
+          "careerNotesToReadCorrect": true,
+          "saveCareerNoteCorrect": true
+        },
+        "actual": {
+          "documentsToRead": [],
+          "careerNotesToRead": [],
+          "saveCareerNote": true
+        }
+      },
+      "inputTokens": 1771,
+      "outputTokens": 25,
+      "durationMs": 798
+    },
+    {
+      "id": "tc-2_R4",
+      "scenarioId": "tc-2",
+      "variantId": "R4",
+      "pass": true,
+      "evaluation": {
+        "details": {
+          "documentsToReadCorrect": true,
+          "careerNotesToReadCorrect": true,
+          "saveCareerNoteCorrect": true
+        },
+        "actual": {
+          "documentsToRead": [
+            "jd-1-doc-3"
+          ],
+          "careerNotesToRead": [
+            "jd-1-note-1"
+          ],
+          "saveCareerNote": true
+        }
+      },
+      "inputTokens": 1562,
+      "outputTokens": 39,
+      "durationMs": 800
+    },
+    {
+      "id": "tc-3_R1",
+      "scenarioId": "tc-3",
+      "variantId": "R1",
+      "pass": true,
+      "evaluation": {
+        "details": {
+          "documentsToReadCorrect": true,
+          "careerNotesToReadCorrect": true,
+          "saveCareerNoteCorrect": true
+        },
+        "actual": {
+          "documentsToRead": [
+            "jd-1-doc-3",
+            "jd-1-doc-2"
+          ],
+          "careerNotesToRead": [],
+          "saveCareerNote": false
+        }
+      },
+      "inputTokens": 1363,
+      "outputTokens": 39,
+      "durationMs": 941
+    },
+    {
+      "id": "tc-3_R2",
+      "scenarioId": "tc-3",
+      "variantId": "R2",
+      "pass": false,
+      "evaluation": {
+        "details": {
+          "documentsToReadCorrect": false,
+          "careerNotesToReadCorrect": true,
+          "saveCareerNoteCorrect": true
+        },
+        "actual": {
+          "documentsToRead": [],
+          "careerNotesToRead": [],
+          "saveCareerNote": false
+        }
+      },
+      "inputTokens": 1510,
+      "outputTokens": 25,
+      "durationMs": 767
+    },
+    {
+      "id": "tc-3_R3",
+      "scenarioId": "tc-3",
+      "variantId": "R3",
+      "pass": true,
+      "evaluation": {
+        "details": {
+          "documentsToReadCorrect": true,
+          "careerNotesToReadCorrect": true,
+          "saveCareerNoteCorrect": true
+        },
+        "actual": {
+          "documentsToRead": [
+            "deploy-ez-관련-문서-ID"
+          ],
+          "careerNotesToRead": [],
+          "saveCareerNote": false
+        }
+      },
+      "inputTokens": 1765,
+      "outputTokens": 35,
+      "durationMs": 1101
+    },
+    {
+      "id": "tc-3_R4",
+      "scenarioId": "tc-3",
+      "variantId": "R4",
+      "pass": true,
+      "evaluation": {
+        "details": {
+          "documentsToReadCorrect": true,
+          "careerNotesToReadCorrect": true,
+          "saveCareerNoteCorrect": true
+        },
+        "actual": {
+          "documentsToRead": [
+            "jd-1-doc-3",
+            "jd-1-doc-2",
+            "jd-1-doc-1"
+          ],
+          "careerNotesToRead": [
+            "jd-1-note-1",
+            "jd-1-note-2",
+            "jd-1-note-3"
+          ],
+          "saveCareerNote": false
+        }
+      },
+      "inputTokens": 1556,
+      "outputTokens": 67,
+      "durationMs": 1139
+    },
+    {
+      "id": "tc-4_R1",
+      "scenarioId": "tc-4",
+      "variantId": "R1",
+      "pass": false,
+      "evaluation": {
+        "details": {
+          "documentsToReadCorrect": false,
+          "careerNotesToReadCorrect": true,
+          "saveCareerNoteCorrect": true
+        },
+        "actual": {
+          "documentsToRead": [
+            "jd-1-doc-3"
+          ],
+          "careerNotesToRead": [],
+          "saveCareerNote": false
+        }
+      },
+      "inputTokens": 1362,
+      "outputTokens": 32,
+      "durationMs": 756
+    },
+    {
+      "id": "tc-4_R2",
+      "scenarioId": "tc-4",
+      "variantId": "R2",
+      "pass": true,
+      "evaluation": {
+        "details": {
+          "documentsToReadCorrect": true,
+          "careerNotesToReadCorrect": true,
+          "saveCareerNoteCorrect": true
+        },
+        "actual": {
+          "documentsToRead": [],
+          "careerNotesToRead": [],
+          "saveCareerNote": false
+        }
+      },
+      "inputTokens": 1509,
+      "outputTokens": 25,
+      "durationMs": 1005
+    },
+    {
+      "id": "tc-4_R3",
+      "scenarioId": "tc-4",
+      "variantId": "R3",
+      "pass": true,
+      "evaluation": {
+        "details": {
+          "documentsToReadCorrect": true,
+          "careerNotesToReadCorrect": true,
+          "saveCareerNoteCorrect": true
+        },
+        "actual": {
+          "documentsToRead": [],
+          "careerNotesToRead": [],
+          "saveCareerNote": false
+        }
+      },
+      "inputTokens": 1764,
+      "outputTokens": 25,
+      "durationMs": 868
+    },
+    {
+      "id": "tc-4_R4",
+      "scenarioId": "tc-4",
+      "variantId": "R4",
+      "pass": false,
+      "evaluation": {
+        "details": {
+          "documentsToReadCorrect": false,
+          "careerNotesToReadCorrect": true,
+          "saveCareerNoteCorrect": true
+        },
+        "actual": {
+          "documentsToRead": [
+            "jd-1-doc-3"
+          ],
+          "careerNotesToRead": [],
+          "saveCareerNote": false
+        }
+      },
+      "inputTokens": 1555,
+      "outputTokens": 32,
+      "durationMs": 854
+    }
+  ],
+  "cost": {
+    "batchCost": 0.0028536000000000004,
+    "realtimeCost": 0.005707200000000001,
+    "savings": 0.0028536000000000004,
+    "inputTokens": 24836,
+    "outputTokens": 592
+  },
+  "summary": {
+    "totalRuns": 16,
+    "passCount": 10,
+    "failCount": 6,
+    "errorCount": 0,
+    "passRate": "62.5%"
+  }
+}
