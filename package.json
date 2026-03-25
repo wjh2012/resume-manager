@@ -4,6 +4,7 @@
   "type": "module",
   "private": true,
   "scripts": {
+    "predev": "prisma migrate status || (echo \"[ERROR] Pending migrations detected. Run: npx prisma migrate dev\" && exit 1)",
     "dev": "next dev --turbopack",
     "build": "prisma migrate deploy && next build",
     "start": "next start",
