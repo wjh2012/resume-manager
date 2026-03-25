@@ -58,7 +58,8 @@ export function validatePersonas(personas: string[]): string[] {
 }
 
 export async function loadConfig(configPath: string): Promise<BenchmarkConfig> {
-  const mod = await import(configPath);
+  const { pathToFileURL } = await import("node:url");
+  const mod = await import(pathToFileURL(configPath).href);
   const config = mod.default;
 
   if (!config || typeof config !== "object") {
