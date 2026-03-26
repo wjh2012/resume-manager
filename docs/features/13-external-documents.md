@@ -49,8 +49,7 @@
 
 ### 에러 클래스
 
-- `ExternalDocumentNotFoundError` — 문서 없음
-- `ExternalDocumentForbiddenError` — 권한 없음
+- `ExternalDocumentNotFoundError` — 문서 없음 (소유권 불일치도 포함, 403/404 통합)
 - `ExternalDocumentValidationError` — 검증 실패 (파일 크기, 타입, 매직바이트, 텍스트 추출 실패)
 
 ## API 엔드포인트
