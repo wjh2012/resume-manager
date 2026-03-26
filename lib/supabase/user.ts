@@ -6,7 +6,7 @@ export interface UserInfo {
   name: string | null
   email: string | null
   avatarUrl: string | null
-  role?: string
+  role?: "ADMIN" | "USER"
 }
 
 export function extractUserInfo(user: User): UserInfo {
