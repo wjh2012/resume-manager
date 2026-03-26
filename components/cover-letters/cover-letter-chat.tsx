@@ -340,7 +340,7 @@ export function CoverLetterChat({
               variant="ghost"
               size="icon"
               className="h-7 w-7"
-              disabled={isResetting || messages.length === 0}
+              disabled={isResetting || messages.length === 0 || status !== "ready"}
               aria-label="채팅 초기화"
             >
               {isResetting ? (
