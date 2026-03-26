@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { toast } from "sonner"
 import type { QuotaEntry } from "@/types/admin"
 import {
   Table,
@@ -96,7 +97,7 @@ export function QuotaTable({ data, onChanged }: QuotaTableProps) {
       }
       onChanged()
     } catch (err) {
-      alert(err instanceof Error ? err.message : "삭제에 실패했습니다.")
+      toast.error(err instanceof Error ? err.message : "삭제에 실패했습니다.")
     } finally {
       setDeletingId(null)
     }
@@ -106,14 +107,14 @@ export function QuotaTable({ data, onChanged }: QuotaTableProps) {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Quota 목록</CardTitle>
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={open} onOpenChange={(v) => { setOpen(v); setError(""); }}>
           <DialogTrigger asChild>
             <Button size="sm">
               <Plus className="mr-1 h-4 w-4" />
               Quota 추가
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent key={String(open)}>
             <DialogHeader>
               <DialogTitle>Quota 추가</DialogTitle>
               <DialogDescription>사용자별 사용량 한도를 설정합니다.</DialogDescription>
