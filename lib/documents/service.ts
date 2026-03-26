@@ -7,6 +7,7 @@ import {
   MAX_FILE_SIZE,
   type DocumentType,
 } from "@/lib/validations/document"
+import { MAX_CONTENT_LENGTH } from "@/lib/validations/external-document"
 import { generateDocumentSummary } from "@/lib/documents/summary"
 
 export class DocumentNotFoundError extends Error {
@@ -67,6 +68,15 @@ export async function uploadDocument(
       console.error("Storage 정리 실패:", e),
     )
     throw new DocumentValidationError("파일에서 텍스트를 추출할 수 없습니다.")
+  }
+
+  if (extractedText.length > MAX_CONTENT_LENGTH) {
+    await deleteFile(storagePath).catch((e) =>
+      console.error("Storage 정리 실패:", e),
+    )
+    throw new DocumentValidationError(
+      `추출된 텍스트가 ${MAX_CONTENT_LENGTH.toLocaleString()}자를 초과합니다.`,
+    )
   }
 
   // DB 저장

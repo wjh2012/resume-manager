@@ -6,6 +6,7 @@ import {
   MAX_FILE_SIZE,
 } from "@/lib/validations/document"
 import { parseFile } from "@/lib/files/parser"
+import { MAX_CONTENT_LENGTH } from "@/lib/validations/external-document"
 import { uploadFile, deleteFile } from "@/lib/storage"
 import { generateDocumentSummary } from "@/lib/documents/summary"
 
@@ -104,6 +105,15 @@ export async function createExternalDocumentFromFile(
     )
     throw new ExternalDocumentValidationError(
       "파일에서 텍스트를 추출할 수 없습니다.",
+    )
+  }
+
+  if (extractedText.length > MAX_CONTENT_LENGTH) {
+    await deleteFile(storagePath).catch((e) =>
+      console.error("Storage 정리 실패:", e),
+    )
+    throw new ExternalDocumentValidationError(
+      `추출된 텍스트가 ${MAX_CONTENT_LENGTH.toLocaleString()}자를 초과합니다.`,
     )
   }
 
