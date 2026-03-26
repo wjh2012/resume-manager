@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation"
 import { toast } from "sonner"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
 
 type OAuthProvider = "kakao" | "google" | "github"
 
@@ -83,7 +84,22 @@ function LoginContent() {
 
 export default function LoginPage() {
   return (
-    <Suspense>
+    <Suspense
+      fallback={
+        <div className="flex min-h-svh items-center justify-center">
+          <div className="flex w-full max-w-sm flex-col items-center gap-8 px-4">
+            <div className="text-center space-y-2">
+              <Skeleton className="mx-auto h-8 w-48" />
+              <Skeleton className="mx-auto h-5 w-56" />
+            </div>
+            <div className="flex w-full flex-col gap-3">
+              <Skeleton className="h-12 w-full rounded-md" />
+              <Skeleton className="h-12 w-full rounded-md" />
+            </div>
+          </div>
+        </div>
+      }
+    >
       <LoginContent />
     </Suspense>
   )
