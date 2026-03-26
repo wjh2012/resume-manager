@@ -225,8 +225,12 @@ export function MergeProposalDialog({ open, onOpenChange }: MergeProposalDialogP
               )}
             </div>
 
-            <p aria-live="polite" className="sr-only">
-              {isResolving ? "처리 중입니다..." : ""}
+            <p role="status" className="sr-only">
+              {isLoading
+                ? "병합 제안을 불러오는 중입니다..."
+                : isResolving
+                  ? "처리 중입니다..."
+                  : ""}
             </p>
 
             {/* Action buttons */}
