@@ -15,8 +15,9 @@ export const createInterviewSchema = z.object({
     .optional(),
   documentIds: z
     .array(z.string().uuid())
-    .min(1, "최소 1개의 문서를 선택해주세요."),
-  selectedExternalDocumentIds: z.array(z.string().uuid()).optional(),
+    .min(1, "최소 1개의 문서를 선택해주세요.")
+    .max(50),
+  selectedExternalDocumentIds: z.array(z.string().uuid()).max(50).optional(),
 })
 
 export const updateInterviewSchema = z.object({
