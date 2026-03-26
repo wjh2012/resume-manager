@@ -4,6 +4,7 @@ import {
   resetConversationMessages,
   ConversationNotFoundError,
   ConversationForbiddenError,
+  ConversationTypeNotAllowedError,
 } from "@/lib/conversations/service"
 
 export async function DELETE(
@@ -30,6 +31,9 @@ export async function DELETE(
     }
     if (error instanceof ConversationForbiddenError) {
       return NextResponse.json({ error: error.message }, { status: 403 })
+    }
+    if (error instanceof ConversationTypeNotAllowedError) {
+      return NextResponse.json({ error: error.message }, { status: 400 })
     }
     console.error("[DELETE /api/conversations/[id]/messages]", error)
     return NextResponse.json(

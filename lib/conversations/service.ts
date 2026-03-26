@@ -1,3 +1,5 @@
+import { ConversationType } from "@prisma/client"
+
 import { prisma } from "@/lib/prisma"
 
 export class ConversationNotFoundError extends Error {
@@ -12,25 +14,35 @@ export class ConversationForbiddenError extends Error {
   }
 }
 
+export class ConversationTypeNotAllowedError extends Error {
+  constructor() {
+    super("이 대화 유형은 초기화할 수 없습니다.")
+  }
+}
+
 /**
  * 대화의 모든 메시지를 삭제하여 채팅을 초기화한다.
  * 대화 자체는 유지되며, 연결된 인사이트/커리어노트는 보존한다.
+ * COVER_LETTER 타입의 대화만 초기화할 수 있다.
  */
 export async function resetConversationMessages(
   conversationId: string,
   userId: string,
 ): Promise<void> {
-  const result = await prisma.message.deleteMany({
-    where: { conversationId, conversation: { userId } },
+  // 1. 존재 여부 + 소유권 + 타입을 먼저 검증
+  const conversation = await prisma.conversation.findUnique({
+    where: { id: conversationId },
+    select: { userId: true, type: true },
   })
 
-  if (result.count === 0) {
-    const conversation = await prisma.conversation.findUnique({
-      where: { id: conversationId },
-      select: { userId: true },
-    })
-    if (!conversation) throw new ConversationNotFoundError()
-    if (conversation.userId !== userId) throw new ConversationForbiddenError()
-    // count === 0 이지만 대화가 존재하고 소유자가 맞으면 이미 비어있는 상태 — 정상
+  if (!conversation) throw new ConversationNotFoundError()
+  if (conversation.userId !== userId) throw new ConversationForbiddenError()
+  if (conversation.type !== ConversationType.COVER_LETTER) {
+    throw new ConversationTypeNotAllowedError()
   }
+
+  // 2. 검증 통과 후 메시지 삭제
+  await prisma.message.deleteMany({
+    where: { conversationId },
+  })
 }
