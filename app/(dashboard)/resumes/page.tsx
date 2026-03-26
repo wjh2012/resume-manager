@@ -52,10 +52,9 @@ export default async function ResumesPage() {
                     <Skeleton className="h-5 w-5" />
                     <Skeleton className="h-5 w-32" />
                   </div>
-                  <Skeleton className="h-8 w-8 rounded-md" />
+                  <Skeleton className="h-6 w-16 rounded-full" />
                 </div>
                 <Skeleton className="h-4 w-20" />
-                <Skeleton className="h-4 w-24" />
               </div>
             ))}
           </div>
