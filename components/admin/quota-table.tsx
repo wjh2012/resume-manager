@@ -279,22 +279,24 @@ export function QuotaTable({ data, onChanged }: QuotaTableProps) {
                       {quota.isActive ? "활성" : "비활성"}
                     </span>
                   </TableCell>
-                  <TableCell className="flex gap-1">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => openEdit(quota)}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      disabled={deletingId === quota.id}
-                      onClick={() => setDeleteTargetId(quota.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                  <TableCell>
+                    <div className="flex gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => openEdit(quota)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        disabled={deletingId === quota.id}
+                        onClick={() => setDeleteTargetId(quota.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))
@@ -348,7 +350,7 @@ export function QuotaTable({ data, onChanged }: QuotaTableProps) {
       </Dialog>
       <AlertDialog
         open={deleteTargetId !== null}
-        onOpenChange={(v) => { if (!v) setDeleteTargetId(null) }}
+        onOpenChange={() => {}}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -358,8 +360,8 @@ export function QuotaTable({ data, onChanged }: QuotaTableProps) {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>취소</AlertDialogCancel>
-            <AlertDialogAction onClick={() => { if (deleteTargetId) handleDelete(deleteTargetId) }}>
+            <AlertDialogCancel onClick={() => setDeleteTargetId(null)}>취소</AlertDialogCancel>
+            <AlertDialogAction disabled={deletingId === deleteTargetId} onClick={() => { if (deleteTargetId) handleDelete(deleteTargetId) }}>
               삭제
             </AlertDialogAction>
           </AlertDialogFooter>
