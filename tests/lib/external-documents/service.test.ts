@@ -9,6 +9,7 @@ vi.mock("@/lib/prisma", () => ({
       create: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
+      deleteMany: vi.fn(),
       count: vi.fn(),
     },
   },
@@ -441,14 +442,15 @@ describe("deleteExternalDocument()", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockDeleteFile.mockResolvedValue(undefined as never)
-    mockPrisma.externalDocument.delete.mockResolvedValue({} as never)
+    mockPrisma.externalDocument.deleteMany.mockResolvedValue({ count: 1 } as never)
   })
 
-  it("문서가 존재하지 않으면 ExternalDocumentNotFoundError를 던져야 한다", async () => {
-    // Arrange
-    mockPrisma.externalDocument.findUnique.mockResolvedValue(null)
+  it("deleteMany가 count: 0을 반환하면 ExternalDocumentNotFoundError를 던져야 한다", async () => {
+    mockPrisma.externalDocument.findUnique.mockResolvedValue({
+      originalUrl: "storage/user-1/doc.pdf",
+    } as never)
+    mockPrisma.externalDocument.deleteMany.mockResolvedValue({ count: 0 } as never)
 
-    // Act & Assert
     await expect(deleteExternalDocument("ext-doc-999", "user-1")).rejects.toThrow(
       ExternalDocumentNotFoundError,
     )
@@ -457,70 +459,53 @@ describe("deleteExternalDocument()", () => {
     )
   })
 
-  it("userId가 문서 소유자와 다르면 ExternalDocumentForbiddenError를 던져야 한다", async () => {
-    // Arrange
+  it("userId가 문서 소유자와 달라도 ExternalDocumentNotFoundError를 던져야 한다 (403/404 통합)", async () => {
     mockPrisma.externalDocument.findUnique.mockResolvedValue({
-      userId: "owner-user",
       originalUrl: "storage/owner-user/doc.pdf",
     } as never)
+    mockPrisma.externalDocument.deleteMany.mockResolvedValue({ count: 0 } as never)
 
-    // Act & Assert
     await expect(deleteExternalDocument("ext-doc-1", "other-user")).rejects.toThrow(
-      ExternalDocumentForbiddenError,
+      ExternalDocumentNotFoundError,
     )
-    await expect(deleteExternalDocument("ext-doc-1", "other-user")).rejects.toThrow(
-      "이 외부 문서에 대한 권한이 없습니다.",
-    )
+    expect(mockDeleteFile).not.toHaveBeenCalled()
   })
 
-  it("Storage 파일과 DB 레코드를 모두 삭제해야 한다", async () => {
-    // Arrange
+  it("DB 삭제 후 Storage 파일을 삭제해야 한다", async () => {
     mockPrisma.externalDocument.findUnique.mockResolvedValue({
-      userId: "user-1",
       originalUrl: "storage/user-1/job-posting.pdf",
     } as never)
+    mockPrisma.externalDocument.deleteMany.mockResolvedValue({ count: 1 } as never)
 
-    // Act
     await deleteExternalDocument("ext-doc-1", "user-1")
 
-    // Assert
-    expect(mockDeleteFile).toHaveBeenCalledWith("storage/user-1/job-posting.pdf")
-    expect(mockPrisma.externalDocument.delete).toHaveBeenCalledWith({
-      where: { id: "ext-doc-1" },
+    expect(mockPrisma.externalDocument.deleteMany).toHaveBeenCalledWith({
+      where: { id: "ext-doc-1", userId: "user-1" },
     })
+    expect(mockDeleteFile).toHaveBeenCalledWith("storage/user-1/job-posting.pdf")
   })
 
   it("originalUrl이 없으면 Storage 삭제를 건너뛰어야 한다", async () => {
-    // Arrange
     mockPrisma.externalDocument.findUnique.mockResolvedValue({
-      userId: "user-1",
       originalUrl: null,
     } as never)
+    mockPrisma.externalDocument.deleteMany.mockResolvedValue({ count: 1 } as never)
 
-    // Act
     await deleteExternalDocument("ext-doc-1", "user-1")
 
-    // Assert
     expect(mockDeleteFile).not.toHaveBeenCalled()
-    expect(mockPrisma.externalDocument.delete).toHaveBeenCalledWith({
-      where: { id: "ext-doc-1" },
+    expect(mockPrisma.externalDocument.deleteMany).toHaveBeenCalledWith({
+      where: { id: "ext-doc-1", userId: "user-1" },
     })
   })
 
-  it("deleteFile이 실패해도 DB 삭제는 계속 진행해야 한다", async () => {
-    // Arrange
+  it("deleteFile이 실패해도 에러를 던지지 않아야 한다", async () => {
     mockPrisma.externalDocument.findUnique.mockResolvedValue({
-      userId: "user-1",
       originalUrl: "storage/user-1/job-posting.pdf",
     } as never)
+    mockPrisma.externalDocument.deleteMany.mockResolvedValue({ count: 1 } as never)
     mockDeleteFile.mockRejectedValue(new Error("Storage 오류"))
 
-    // Act
     await expect(deleteExternalDocument("ext-doc-1", "user-1")).resolves.toBeUndefined()
-
-    // Assert
-    expect(mockPrisma.externalDocument.delete).toHaveBeenCalledWith({
-      where: { id: "ext-doc-1" },
-    })
   })
 })

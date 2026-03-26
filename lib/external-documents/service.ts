@@ -243,27 +243,25 @@ export async function deleteExternalDocument(
   documentId: string,
   userId: string,
 ): Promise<void> {
+  // URL 획득 (소유권 확인 안 함)
   const document = await prisma.externalDocument.findUnique({
     where: { id: documentId },
-    select: { userId: true, originalUrl: true },
+    select: { originalUrl: true },
   })
 
-  if (!document) {
+  // 원자적 소유권 확인 + 삭제
+  const { count } = await prisma.externalDocument.deleteMany({
+    where: { id: documentId, userId },
+  })
+
+  if (count === 0) {
     throw new ExternalDocumentNotFoundError()
   }
 
-  if (document.userId !== userId) {
-    throw new ExternalDocumentForbiddenError()
-  }
-
-  // Storage 파일 삭제 (있는 경우, 에러 무시)
-  if (document.originalUrl) {
+  // DB 삭제 성공 후에만 Storage 정리
+  if (document?.originalUrl) {
     await deleteFile(document.originalUrl).catch((e) =>
       console.error("Storage 정리 실패:", e),
     )
   }
-
-  await prisma.externalDocument.delete({
-    where: { id: documentId },
-  })
 }
