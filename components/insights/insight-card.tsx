@@ -93,7 +93,10 @@ export function InsightCard({ insight, onEdit, onDelete, isDeleting }: InsightCa
           size="icon"
           className="h-8 w-8 opacity-100 md:opacity-0 md:group-hover:opacity-100 focus-visible:opacity-100"
           aria-label="인사이트 수정"
-          onClick={(e) => { e.stopPropagation(); onEdit(insight) }}
+          onClick={(e) => {
+            e.stopPropagation()
+            onEdit(insight)
+          }}
           onKeyDown={(e) => e.stopPropagation()}
           disabled={isDeleting}
         >

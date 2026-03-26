@@ -128,7 +128,10 @@ export function CareerNoteCard({ note, onEdit, onDelete, isDeleting }: CareerNot
           size="icon"
           className="h-8 w-8 opacity-100 md:opacity-0 md:group-hover:opacity-100 focus-visible:opacity-100"
           aria-label="커리어노트 수정"
-          onClick={(e) => { e.stopPropagation(); onEdit(note) }}
+          onClick={(e) => {
+            e.stopPropagation()
+            onEdit(note)
+          }}
           onKeyDown={(e) => e.stopPropagation()}
           disabled={isDeleting}
         >
