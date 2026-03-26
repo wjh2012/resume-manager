@@ -225,14 +225,6 @@ export function MergeProposalDialog({ open, onOpenChange }: MergeProposalDialogP
               )}
             </div>
 
-            <p role="status" className="sr-only">
-              {isLoading
-                ? "병합 제안을 불러오는 중입니다..."
-                : isResolving
-                  ? "처리 중입니다..."
-                  : ""}
-            </p>
-
             {/* Action buttons */}
             <div className="flex justify-end gap-2">
               <Button
@@ -279,6 +271,14 @@ export function MergeProposalDialog({ open, onOpenChange }: MergeProposalDialogP
             </div>
           </div>
         )}
+
+        <p role="status" className="sr-only">
+          {isLoading
+            ? "병합 제안을 불러오는 중입니다..."
+            : isResolving
+              ? "처리 중입니다..."
+              : ""}
+        </p>
       </DialogContent>
     </Dialog>
   )
