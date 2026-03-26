@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation"
 import { getAuthUser, extractUserInfo } from "@/lib/supabase/user"
-import { prisma } from "@/lib/prisma"
+import { getUserRole } from "@/lib/auth/get-user-role"
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/layout/app-sidebar"
 import { Topbar } from "@/components/layout/topbar"
@@ -16,11 +16,8 @@ export default async function DashboardLayout({
     redirect("/login")
   }
 
-  const dbUser = await prisma.user.findUnique({
-    where: { id: user.id },
-    select: { role: true },
-  })
-  const userInfo = { ...extractUserInfo(user), role: (dbUser?.role ?? "USER") as "ADMIN" | "USER" }
+  const role = await getUserRole(user.id)
+  const userInfo = { ...extractUserInfo(user), role }
 
   // !min-h-0: SidebarProvider 기본 min-h-svh를 해제하여 자식이 뷰포트를 넘지 않도록 제약
   return (

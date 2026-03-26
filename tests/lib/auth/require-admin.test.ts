@@ -4,18 +4,16 @@ vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn(),
 }))
 
-vi.mock("@/lib/prisma", () => ({
-  prisma: {
-    user: { findUnique: vi.fn() },
-  },
+vi.mock("@/lib/auth/get-user-role", () => ({
+  getUserRole: vi.fn(),
 }))
 
 import { createClient } from "@/lib/supabase/server"
-import { prisma } from "@/lib/prisma"
+import { getUserRole } from "@/lib/auth/get-user-role"
 import { requireAdmin } from "@/lib/auth/require-admin"
 
 const mockCreateClient = vi.mocked(createClient)
-const mockFindUnique = vi.mocked(prisma.user.findUnique)
+const mockGetUserRole = vi.mocked(getUserRole)
 
 describe("requireAdmin", () => {
   beforeEach(() => { vi.clearAllMocks() })
@@ -32,7 +30,7 @@ describe("requireAdmin", () => {
     mockCreateClient.mockResolvedValue({
       auth: { getUser: () => Promise.resolve({ data: { user: { id: "u1" } }, error: null }) },
     } as unknown as Awaited<ReturnType<typeof mockCreateClient>>)
-    mockFindUnique.mockResolvedValue({ id: "u1", role: "ADMIN" } as unknown as Awaited<ReturnType<typeof mockFindUnique>>)
+    mockGetUserRole.mockResolvedValue("ADMIN")
     const result = await requireAdmin()
     expect(result).toEqual({ ok: true, user: { id: "u1", role: "ADMIN" } })
   })
@@ -41,7 +39,7 @@ describe("requireAdmin", () => {
     mockCreateClient.mockResolvedValue({
       auth: { getUser: () => Promise.resolve({ data: { user: { id: "u1" } }, error: null }) },
     } as unknown as Awaited<ReturnType<typeof mockCreateClient>>)
-    mockFindUnique.mockResolvedValue({ id: "u1", role: "USER" } as unknown as Awaited<ReturnType<typeof mockFindUnique>>)
+    mockGetUserRole.mockResolvedValue("USER")
     const result = await requireAdmin()
     expect(result).toEqual({ ok: false, status: 403 })
   })
