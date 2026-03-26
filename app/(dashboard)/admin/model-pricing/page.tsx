@@ -1,16 +1,8 @@
 "use client"
 
 import { useState, useEffect, useReducer, useCallback } from "react"
+import type { PricingEntry } from "@/types/admin"
 import { PricingTable } from "@/components/admin/pricing-table"
-
-interface PricingEntry {
-  id: string
-  provider: string
-  model: string
-  inputPricePerM: number
-  outputPricePerM: number
-  effectiveFrom: string
-}
 
 type FetchState =
   | { status: "loading" }

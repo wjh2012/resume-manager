@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import type { PricingEntry } from "@/types/admin"
 import {
   Table,
   TableBody,
@@ -29,15 +30,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Plus } from "lucide-react"
-
-interface PricingEntry {
-  id: string
-  provider: string
-  model: string
-  inputPricePerM: number
-  outputPricePerM: number
-  effectiveFrom: string
-}
 
 interface PricingTableProps {
   data: PricingEntry[]

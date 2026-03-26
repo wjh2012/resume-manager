@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import type { QuotaEntry } from "@/types/admin"
 import {
   Table,
   TableBody,
@@ -29,16 +30,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Plus, Trash2 } from "lucide-react"
-
-interface QuotaEntry {
-  id: string
-  userId: string
-  limitType: string
-  limitValue: number
-  period: string
-  isActive: boolean
-  user: { email: string; name: string | null }
-}
 
 interface QuotaTableProps {
   data: QuotaEntry[]
