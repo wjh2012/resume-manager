@@ -1,11 +1,5 @@
 import type { ResumeData } from "@/components/resumes/types"
-
-function formatDate(date?: string | null): string {
-  if (!date) return ""
-  const match = date.match(/^(\d{4})-(\d{2})/)
-  if (match) return `${match[1]}.${match[2]}`
-  return date
-}
+import { formatDate } from "@/components/resumes/date-utils"
 
 function DateRange({
   start,
