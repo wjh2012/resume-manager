@@ -30,7 +30,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Plus, Trash2 } from "lucide-react"
+import { Plus, Pencil, Trash2 } from "lucide-react"
+import { Switch } from "@/components/ui/switch"
 
 interface QuotaTableProps {
   data: QuotaEntry[]
@@ -53,6 +54,40 @@ export function QuotaTable({ data, onChanged }: QuotaTableProps) {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState("")
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [editTarget, setEditTarget] = useState<QuotaEntry | null>(null)
+  const [editSubmitting, setEditSubmitting] = useState(false)
+  const [editError, setEditError] = useState("")
+
+  async function handleEdit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    if (!editTarget) return
+    setEditSubmitting(true)
+    setEditError("")
+
+    const form = new FormData(e.currentTarget)
+    const body = {
+      limitValue: Number(form.get("limitValue")),
+      isActive: form.get("isActive") === "on",
+    }
+
+    try {
+      const res = await fetch(`/api/admin/quotas/${editTarget.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      })
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error ?? "수정에 실패했습니다.")
+      }
+      setEditTarget(null)
+      onChanged()
+    } catch (err) {
+      setEditError(err instanceof Error ? err.message : "오류가 발생했습니다.")
+    } finally {
+      setEditSubmitting(false)
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -184,7 +219,7 @@ export function QuotaTable({ data, onChanged }: QuotaTableProps) {
               <TableHead className="text-right">제한 값</TableHead>
               <TableHead>기간</TableHead>
               <TableHead>상태</TableHead>
-              <TableHead className="w-16" />
+              <TableHead className="w-24" />
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -222,7 +257,14 @@ export function QuotaTable({ data, onChanged }: QuotaTableProps) {
                       {quota.isActive ? "활성" : "비활성"}
                     </span>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="flex gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setEditTarget(quota)}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
                     <Button
                       variant="ghost"
                       size="icon"
@@ -238,6 +280,43 @@ export function QuotaTable({ data, onChanged }: QuotaTableProps) {
           </TableBody>
         </Table>
       </CardContent>
+      <Dialog open={editTarget !== null} onOpenChange={(v) => { if (!v) { setEditTarget(null); setEditError(""); } }}>
+        <DialogContent key={editTarget?.id}>
+          <DialogHeader>
+            <DialogTitle>Quota 수정</DialogTitle>
+            <DialogDescription>
+              {editTarget?.user.email} — {LIMIT_LABELS[editTarget?.limitType ?? ""] ?? editTarget?.limitType} ({PERIOD_LABELS[editTarget?.period ?? ""] ?? editTarget?.period})
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleEdit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-limitValue">제한 값</Label>
+              <Input
+                id="edit-limitValue"
+                name="limitValue"
+                type="number"
+                min="1"
+                required
+                defaultValue={editTarget?.limitValue}
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <Switch
+                id="edit-isActive"
+                name="isActive"
+                defaultChecked={editTarget?.isActive}
+              />
+              <Label htmlFor="edit-isActive">활성</Label>
+            </div>
+            {editError && (
+              <p className="text-sm text-destructive">{editError}</p>
+            )}
+            <Button type="submit" disabled={editSubmitting} className="w-full">
+              {editSubmitting ? "수정 중..." : "수정"}
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
     </Card>
   )
 }
