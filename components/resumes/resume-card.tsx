@@ -64,19 +64,17 @@ export function ResumeCard({ resume, onDelete, isDeleting }: ResumeCardProps) {
         </CardHeader>
       </Link>
 
-      <div
-        className="absolute right-2 bottom-2"
-        onClick={(e) => { e.preventDefault(); e.stopPropagation() }}
-        onKeyDown={(e) => e.stopPropagation()}
-      >
+      <div className="absolute right-2 bottom-2">
         <AlertDialog>
           <AlertDialogTrigger asChild>
             <Button
               variant="ghost"
               size="icon"
               aria-label="이력서 삭제"
-              className="text-muted-foreground hover:text-destructive h-8 w-8 opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100"
+              className="text-muted-foreground hover:text-destructive h-8 w-8 opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100 focus-visible:opacity-100"
               disabled={isDeleting}
+              onClick={(e) => e.stopPropagation()}
+              onKeyDown={(e) => e.stopPropagation()}
             >
               <Trash2 aria-hidden="true" className="h-4 w-4" />
             </Button>
