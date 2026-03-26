@@ -15,12 +15,6 @@ export class ExternalDocumentNotFoundError extends Error {
   }
 }
 
-export class ExternalDocumentForbiddenError extends Error {
-  constructor() {
-    super("이 외부 문서에 대한 권한이 없습니다.")
-  }
-}
-
 export class ExternalDocumentValidationError extends Error {}
 
 interface CreateFromTextData {
@@ -206,35 +200,33 @@ export async function updateExternalDocument(
   userId: string,
   data: { title?: string; category?: string; content?: string },
 ) {
-  const document = await prisma.externalDocument.findUnique({
-    where: { id: documentId },
-    select: { id: true, userId: true, sourceType: true },
-  })
+  return prisma.$transaction(async (tx) => {
+    const document = await tx.externalDocument.findUnique({
+      where: { id: documentId, userId },
+      select: { id: true, sourceType: true },
+    })
 
-  if (!document) {
-    throw new ExternalDocumentNotFoundError()
-  }
+    if (!document) {
+      throw new ExternalDocumentNotFoundError()
+    }
 
-  if (document.userId !== userId) {
-    throw new ExternalDocumentForbiddenError()
-  }
+    // 파일 문서에서 content 수정 시도 차단
+    if (document.sourceType === "file" && data.content !== undefined) {
+      throw new ExternalDocumentValidationError(
+        "파일 문서의 내용은 수정할 수 없습니다.",
+      )
+    }
 
-  // 파일 문서에서 content 수정 시도 차단
-  if (document.sourceType === "file" && data.content !== undefined) {
-    throw new ExternalDocumentValidationError(
-      "파일 문서의 내용은 수정할 수 없습니다.",
-    )
-  }
+    const updateData: Record<string, string> = {}
+    if (data.title !== undefined) updateData.title = data.title
+    if (data.category !== undefined) updateData.category = data.category
+    if (data.content !== undefined) updateData.content = data.content
 
-  const updateData: Record<string, string> = {}
-  if (data.title !== undefined) updateData.title = data.title
-  if (data.category !== undefined) updateData.category = data.category
-  if (data.content !== undefined) updateData.content = data.content
-
-  return prisma.externalDocument.update({
-    where: { id: documentId },
-    data: updateData,
-    select: { id: true, title: true, category: true, sourceType: true },
+    return tx.externalDocument.update({
+      where: { id: documentId },
+      data: updateData,
+      select: { id: true, title: true, category: true, sourceType: true },
+    })
   })
 }
 

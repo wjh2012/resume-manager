@@ -1,19 +1,25 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 
 // 외부 의존성 전체 mock
-vi.mock("@/lib/prisma", () => ({
-  prisma: {
-    externalDocument: {
-      findUnique: vi.fn(),
-      findMany: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
-      delete: vi.fn(),
-      deleteMany: vi.fn(),
-      count: vi.fn(),
+vi.mock("@/lib/prisma", () => {
+  const externalDocument = {
+    findUnique: vi.fn(),
+    findMany: vi.fn(),
+    create: vi.fn(),
+    update: vi.fn(),
+    delete: vi.fn(),
+    deleteMany: vi.fn(),
+    count: vi.fn(),
+  }
+  return {
+    prisma: {
+      externalDocument,
+      $transaction: vi.fn((fn: (tx: { externalDocument: typeof externalDocument }) => Promise<unknown>) =>
+        fn({ externalDocument }),
+      ),
     },
-  },
-}))
+  }
+})
 
 vi.mock("@/lib/files/parser", () => ({
   parseFile: vi.fn(),
@@ -52,7 +58,6 @@ import {
   updateExternalDocument,
   deleteExternalDocument,
   ExternalDocumentNotFoundError,
-  ExternalDocumentForbiddenError,
   ExternalDocumentValidationError,
 } from "@/lib/external-documents/service"
 
@@ -373,20 +378,21 @@ describe("updateExternalDocument()", () => {
   })
 
   it("텍스트 문서의 제목과 내용을 수정할 수 있어야 한다", async () => {
-    // Arrange
     mockPrisma.externalDocument.findUnique.mockResolvedValue({
       id: "ext-doc-1",
       userId: "user-1",
       sourceType: "text",
     } as never)
 
-    // Act
     const result = await updateExternalDocument("ext-doc-1", "user-1", {
       title: "수정된 제목",
       content: "수정된 내용",
     })
 
-    // Assert
+    expect(mockPrisma.externalDocument.findUnique).toHaveBeenCalledWith({
+      where: { id: "ext-doc-1", userId: "user-1" },
+      select: { id: true, sourceType: true },
+    })
     expect(mockPrisma.externalDocument.update).toHaveBeenCalledWith({
       where: { id: "ext-doc-1" },
       data: { title: "수정된 제목", content: "수정된 내용" },
@@ -396,14 +402,12 @@ describe("updateExternalDocument()", () => {
   })
 
   it("파일 문서에서 content 수정 시도 시 ExternalDocumentValidationError를 던져야 한다", async () => {
-    // Arrange
     mockPrisma.externalDocument.findUnique.mockResolvedValue({
       id: "ext-doc-2",
       userId: "user-1",
       sourceType: "file",
     } as never)
 
-    // Act & Assert
     await expect(
       updateExternalDocument("ext-doc-2", "user-1", { content: "수정 시도" }),
     ).rejects.toThrow(ExternalDocumentValidationError)
@@ -413,27 +417,19 @@ describe("updateExternalDocument()", () => {
   })
 
   it("문서가 존재하지 않으면 ExternalDocumentNotFoundError를 던져야 한다", async () => {
-    // Arrange
     mockPrisma.externalDocument.findUnique.mockResolvedValue(null)
 
-    // Act & Assert
     await expect(
       updateExternalDocument("ext-doc-999", "user-1", { title: "수정" }),
     ).rejects.toThrow(ExternalDocumentNotFoundError)
   })
 
-  it("소유자가 다르면 ExternalDocumentForbiddenError를 던져야 한다", async () => {
-    // Arrange
-    mockPrisma.externalDocument.findUnique.mockResolvedValue({
-      id: "ext-doc-1",
-      userId: "owner-user",
-      sourceType: "text",
-    } as never)
+  it("소유자가 다르면 ExternalDocumentNotFoundError를 던져야 한다 (403/404 통합)", async () => {
+    mockPrisma.externalDocument.findUnique.mockResolvedValue(null)
 
-    // Act & Assert
     await expect(
       updateExternalDocument("ext-doc-1", "other-user", { title: "수정" }),
-    ).rejects.toThrow(ExternalDocumentForbiddenError)
+    ).rejects.toThrow(ExternalDocumentNotFoundError)
   })
 })
 

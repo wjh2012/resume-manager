@@ -15,12 +15,6 @@ export class DocumentNotFoundError extends Error {
   }
 }
 
-export class DocumentForbiddenError extends Error {
-  constructor() {
-    super("이 문서에 대한 권한이 없습니다.")
-  }
-}
-
 export class DocumentValidationError extends Error {}
 
 interface UploadResult {

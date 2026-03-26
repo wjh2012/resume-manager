@@ -42,7 +42,6 @@ import {
   listDocuments,
   getDocument,
   DocumentNotFoundError,
-  DocumentForbiddenError,
 } from "@/lib/documents/service"
 
 // mock 타입 단축 헬퍼

@@ -18,11 +18,6 @@ vi.mock("@/lib/external-documents/service", () => ({
       super("외부 문서를 찾을 수 없습니다.")
     }
   },
-  ExternalDocumentForbiddenError: class ExternalDocumentForbiddenError extends Error {
-    constructor() {
-      super("이 외부 문서에 대한 권한이 없습니다.")
-    }
-  },
   ExternalDocumentValidationError: class ExternalDocumentValidationError extends Error {
     constructor(message: string) {
       super(message)
@@ -43,7 +38,6 @@ import {
   updateExternalDocument,
   deleteExternalDocument,
   ExternalDocumentNotFoundError,
-  ExternalDocumentForbiddenError,
 } from "@/lib/external-documents/service"
 
 // ─── mock 타입 캐스팅 헬퍼 ───────────────────────────────────────────────────
@@ -393,19 +387,6 @@ describe("PATCH /api/external-documents/[id]", () => {
     })
   })
 
-  describe("권한이 없을 때", () => {
-    it("403을 반환해야 한다", async () => {
-      mockUpdate.mockRejectedValue(new ExternalDocumentForbiddenError())
-      const request = makeJsonRequest(
-        `http://localhost/api/external-documents/${VALID_DOC_ID}`,
-        "PATCH",
-        { title: "수정" },
-      )
-      const response = await PATCH(request, { params: params(VALID_DOC_ID) })
-      expect(response.status).toBe(403)
-    })
-  })
-
   describe("문서가 없을 때", () => {
     it("404를 반환해야 한다", async () => {
       mockUpdate.mockRejectedValue(new ExternalDocumentNotFoundError())
@@ -477,14 +458,4 @@ describe("DELETE /api/external-documents/[id]", () => {
     })
   })
 
-  describe("권한이 없을 때", () => {
-    it("403을 반환해야 한다", async () => {
-      mockDelete.mockRejectedValue(new ExternalDocumentForbiddenError())
-      const request = new Request(`http://localhost/api/external-documents/${VALID_DOC_ID}`, {
-        method: "DELETE",
-      })
-      const response = await DELETE(request, { params: params(VALID_DOC_ID) })
-      expect(response.status).toBe(403)
-    })
-  })
 })
