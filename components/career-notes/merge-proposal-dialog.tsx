@@ -158,7 +158,7 @@ export function MergeProposalDialog({ open, onOpenChange }: MergeProposalDialogP
 
         {isLoading ? (
           <div className="flex justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            <Loader2 aria-hidden="true" className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
         ) : !current ? (
           <p className="text-muted-foreground py-8 text-center">
@@ -194,7 +194,7 @@ export function MergeProposalDialog({ open, onOpenChange }: MergeProposalDialogP
             {/* AI suggestion or edit mode */}
             <div className="space-y-2 rounded-lg border border-primary/20 bg-primary/5 p-4">
               <div className="flex items-center gap-2">
-                <ArrowRight className="h-4 w-4 text-primary" />
+                <ArrowRight aria-hidden="true" className="h-4 w-4 text-primary" />
                 <p className="text-xs font-medium text-primary">
                   {isEditing ? "병합 결과 편집" : "AI 병합 제안"}
                 </p>
@@ -206,11 +206,13 @@ export function MergeProposalDialog({ open, onOpenChange }: MergeProposalDialogP
                     value={editedTitle}
                     onChange={(e) => setEditedTitle(e.target.value)}
                     placeholder="제목"
+                    aria-label="병합 결과 제목"
                   />
                   <Textarea
                     value={editedContent}
                     onChange={(e) => setEditedContent(e.target.value)}
                     placeholder="내용"
+                    aria-label="병합 결과 내용"
                     rows={4}
                   />
                 </div>
@@ -223,6 +225,10 @@ export function MergeProposalDialog({ open, onOpenChange }: MergeProposalDialogP
               )}
             </div>
 
+            <p aria-live="polite" className="sr-only">
+              {isResolving ? "처리 중입니다..." : ""}
+            </p>
+
             {/* Action buttons */}
             <div className="flex justify-end gap-2">
               <Button
@@ -231,7 +237,7 @@ export function MergeProposalDialog({ open, onOpenChange }: MergeProposalDialogP
                 onClick={() => handleResolve("reject")}
                 disabled={isResolving}
               >
-                <X className="mr-1 h-4 w-4" />
+                <X aria-hidden="true" className="mr-1 h-4 w-4" />
                 거부 (별도 노트로 유지)
               </Button>
               {isEditing ? (
@@ -250,7 +256,7 @@ export function MergeProposalDialog({ open, onOpenChange }: MergeProposalDialogP
                   onClick={startEditing}
                   disabled={isResolving}
                 >
-                  <Pencil className="mr-1 h-4 w-4" />
+                  <Pencil aria-hidden="true" className="mr-1 h-4 w-4" />
                   편집 후 승인
                 </Button>
               )}
@@ -260,9 +266,9 @@ export function MergeProposalDialog({ open, onOpenChange }: MergeProposalDialogP
                 disabled={isResolving}
               >
                 {isResolving ? (
-                  <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                  <Loader2 aria-hidden="true" className="mr-1 h-4 w-4 animate-spin" />
                 ) : (
-                  <Check className="mr-1 h-4 w-4" />
+                  <Check aria-hidden="true" className="mr-1 h-4 w-4" />
                 )}
                 {isEditing ? "편집 내용으로 승인" : "승인"}
               </Button>
