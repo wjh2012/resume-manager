@@ -350,7 +350,7 @@ export function QuotaTable({ data, onChanged }: QuotaTableProps) {
       </Dialog>
       <AlertDialog
         open={deleteTargetId !== null}
-        onOpenChange={() => {}}
+        onOpenChange={(v) => { if (!v && !deletingId) setDeleteTargetId(null) }}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
