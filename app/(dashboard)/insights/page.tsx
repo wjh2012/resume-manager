@@ -5,6 +5,7 @@ import { Lightbulb } from "lucide-react"
 import { getAuthUser } from "@/lib/supabase/user"
 import { listInsights, countByCategory } from "@/lib/insights/service"
 import { InsightList } from "@/components/insights/insight-list"
+import { Skeleton } from "@/components/ui/skeleton"
 
 interface PageProps {
   searchParams: Promise<{ category?: string; sort?: string }>
@@ -55,9 +56,25 @@ export default async function InsightsPage({ searchParams }: PageProps) {
 
       <Suspense
         fallback={
-          <p className="text-muted-foreground py-12 text-center">
-            불러오는 중...
-          </p>
+          <div className="space-y-6">
+            <div className="flex gap-2">
+              {Array.from({ length: 5 }, (_, i) => (
+                <Skeleton key={i} className="h-9 w-20 rounded-md" />
+              ))}
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {Array.from({ length: 6 }, (_, i) => (
+                <div key={i} className="space-y-3 rounded-xl border p-6">
+                  <div className="flex items-center justify-between">
+                    <Skeleton className="h-5 w-16 rounded-full" />
+                    <Skeleton className="h-4 w-12" />
+                  </div>
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-3/4" />
+                </div>
+              ))}
+            </div>
+          </div>
         }
       >
         <InsightListSection
