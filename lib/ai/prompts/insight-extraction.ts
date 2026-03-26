@@ -16,8 +16,8 @@ export const INSIGHT_CATEGORY_LABELS: Record<InsightCategory, string> = {
   other: "기타",
 }
 
-const categoryList = Object.entries(INSIGHT_CATEGORY_LABELS)
-  .map(([key, label]) => `- ${key}: ${label}`)
+const categoryList = INSIGHT_CATEGORIES
+  .map((cat) => `- ${cat}: ${INSIGHT_CATEGORY_LABELS[cat]}`)
   .join("\n")
 
 export const insightExtractionPrompt = `대화 내용을 분석하여 취업 준비에 유용한 인사이트를 추출하세요.
