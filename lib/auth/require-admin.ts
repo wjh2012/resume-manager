@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server"
 import { getUserRole } from "@/lib/auth/get-user-role"
 
 type AdminResult =
-  | { ok: true; user: { id: string; role: string } }
+  | { ok: true; user: { id: string; role: "ADMIN" } }
   | { ok: false; status: 401 }
   | { ok: false; status: 403 }
 

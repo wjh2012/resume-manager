@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/select"
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogHeader,
@@ -57,7 +58,7 @@ export function QuotaTable({ data, onChanged }: QuotaTableProps) {
   const [editTarget, setEditTarget] = useState<QuotaEntry | null>(null)
   const [editSubmitting, setEditSubmitting] = useState(false)
   const [editError, setEditError] = useState("")
-  const [editIsActive, setEditIsActive] = useState(true)
+  const [editIsActive, setEditIsActive] = useState(false)
   const [editKey, setEditKey] = useState(0)
 
   function openEdit(quota: QuotaEntry) {
@@ -132,6 +133,7 @@ export function QuotaTable({ data, onChanged }: QuotaTableProps) {
   }
 
   async function handleDelete(id: string) {
+    if (!confirm("정말 삭제하시겠습니까?")) return
     setDeletingId(id)
     try {
       const res = await fetch(`/api/admin/quotas/${id}`, { method: "DELETE" })
@@ -320,9 +322,16 @@ export function QuotaTable({ data, onChanged }: QuotaTableProps) {
             {editError && (
               <p className="text-sm text-destructive">{editError}</p>
             )}
-            <Button type="submit" disabled={editSubmitting} className="w-full">
-              {editSubmitting ? "수정 중..." : "수정"}
-            </Button>
+            <div className="flex gap-2">
+              <Button type="submit" disabled={editSubmitting} className="flex-1">
+                {editSubmitting ? "수정 중..." : "수정"}
+              </Button>
+              <DialogClose asChild>
+                <Button type="button" variant="outline" className="flex-1">
+                  취소
+                </Button>
+              </DialogClose>
+            </div>
           </form>
         </DialogContent>
       </Dialog>
