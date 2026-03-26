@@ -441,10 +441,8 @@ describe("deleteExternalDocument()", () => {
     mockPrisma.externalDocument.deleteMany.mockResolvedValue({ count: 1 } as never)
   })
 
-  it("deleteMany가 count: 0을 반환하면 ExternalDocumentNotFoundError를 던져야 한다", async () => {
-    mockPrisma.externalDocument.findUnique.mockResolvedValue({
-      originalUrl: "storage/user-1/doc.pdf",
-    } as never)
+  it("문서가 존재하지 않으면 ExternalDocumentNotFoundError를 던져야 한다 (findUnique null)", async () => {
+    mockPrisma.externalDocument.findUnique.mockResolvedValue(null)
     mockPrisma.externalDocument.deleteMany.mockResolvedValue({ count: 0 } as never)
 
     await expect(deleteExternalDocument("ext-doc-999", "user-1")).rejects.toThrow(
@@ -453,6 +451,7 @@ describe("deleteExternalDocument()", () => {
     await expect(deleteExternalDocument("ext-doc-999", "user-1")).rejects.toThrow(
       "외부 문서를 찾을 수 없습니다.",
     )
+    expect(mockDeleteFile).not.toHaveBeenCalled()
   })
 
   it("userId가 문서 소유자와 달라도 ExternalDocumentNotFoundError를 던져야 한다 (403/404 통합)", async () => {

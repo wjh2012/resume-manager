@@ -209,15 +209,14 @@ describe("deleteDocument()", () => {
   })
 
   describe("소유권 검증 (403/404 통합)", () => {
-    it("문서가 존재하지 않으면 DocumentNotFoundError를 던져야 한다", async () => {
-      mockPrisma.document.findUnique.mockResolvedValue({
-        originalUrl: "storage/user-1/doc.pdf",
-      } as never)
+    it("문서가 존재하지 않으면 DocumentNotFoundError를 던져야 한다 (findUnique null)", async () => {
+      mockPrisma.document.findUnique.mockResolvedValue(null)
       mockPrisma.document.deleteMany.mockResolvedValue({ count: 0 } as never)
 
       await expect(deleteDocument("doc-999", "user-1")).rejects.toThrow(
         DocumentNotFoundError,
       )
+      expect(mockDeleteFile).not.toHaveBeenCalled()
     })
 
     it("userId가 문서 소유자와 달라도 DocumentNotFoundError를 던져야 한다 (403/404 통합)", async () => {
