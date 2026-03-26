@@ -104,29 +104,33 @@ export async function uploadDocument(
   }
 }
 
-// 문서 삭제: URL 획득 → 원자적 소유권 검증+삭제 → Storage 정리
+// 문서 삭제: 트랜잭션(URL 획득 + 원자적 소유권 검증+삭제) → Storage 정리
 export async function deleteDocument(
   documentId: string,
   userId: string,
 ): Promise<void> {
-  // URL 획득 (소유권 확인 안 함)
-  const document = await prisma.document.findUnique({
-    where: { id: documentId },
-    select: { originalUrl: true },
-  })
+  const { originalUrl } = await prisma.$transaction(async (tx) => {
+    // URL 획득 (소유권 확인 안 함)
+    const document = await tx.document.findUnique({
+      where: { id: documentId },
+      select: { originalUrl: true },
+    })
 
-  // 원자적 소유권 확인 + 삭제
-  const { count } = await prisma.document.deleteMany({
-    where: { id: documentId, userId },
-  })
+    // 원자적 소유권 확인 + 삭제
+    const { count } = await tx.document.deleteMany({
+      where: { id: documentId, userId },
+    })
 
-  if (count === 0) {
-    throw new DocumentNotFoundError()
-  }
+    if (count === 0) {
+      throw new DocumentNotFoundError()
+    }
+
+    return { originalUrl: document?.originalUrl ?? null }
+  })
 
   // DB 삭제 성공 후에만 Storage 정리
-  if (document?.originalUrl) {
-    await deleteFile(document.originalUrl).catch((e) =>
+  if (originalUrl) {
+    await deleteFile(originalUrl).catch((e) =>
       console.error("Storage 정리 실패:", e),
     )
   }

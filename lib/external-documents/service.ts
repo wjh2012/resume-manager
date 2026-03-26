@@ -1,6 +1,5 @@
 import { prisma } from "@/lib/prisma"
 import {
-  type DocumentType,
   resolveDocumentType,
   verifyMagicBytes,
   MAX_FILE_SIZE,
@@ -222,6 +221,8 @@ export async function updateExternalDocument(
     if (data.category !== undefined) updateData.category = data.category
     if (data.content !== undefined) updateData.content = data.content
 
+    // Defense-in-depth: userId는 위 findUnique에서 트랜잭션 내 검증 완료.
+    // Prisma update는 @@unique 필드만 where에 허용하므로 id만 사용.
     return tx.externalDocument.update({
       where: { id: documentId },
       data: updateData,
@@ -230,29 +231,33 @@ export async function updateExternalDocument(
   })
 }
 
-// 외부 문서 삭제
+// 외부 문서 삭제: 트랜잭션(URL 획득 + 원자적 소유권 검증+삭제) → Storage 정리
 export async function deleteExternalDocument(
   documentId: string,
   userId: string,
 ): Promise<void> {
-  // URL 획득 (소유권 확인 안 함)
-  const document = await prisma.externalDocument.findUnique({
-    where: { id: documentId },
-    select: { originalUrl: true },
-  })
+  const { originalUrl } = await prisma.$transaction(async (tx) => {
+    // URL 획득 (소유권 확인 안 함)
+    const document = await tx.externalDocument.findUnique({
+      where: { id: documentId },
+      select: { originalUrl: true },
+    })
 
-  // 원자적 소유권 확인 + 삭제
-  const { count } = await prisma.externalDocument.deleteMany({
-    where: { id: documentId, userId },
-  })
+    // 원자적 소유권 확인 + 삭제
+    const { count } = await tx.externalDocument.deleteMany({
+      where: { id: documentId, userId },
+    })
 
-  if (count === 0) {
-    throw new ExternalDocumentNotFoundError()
-  }
+    if (count === 0) {
+      throw new ExternalDocumentNotFoundError()
+    }
+
+    return { originalUrl: document?.originalUrl ?? null }
+  })
 
   // DB 삭제 성공 후에만 Storage 정리
-  if (document?.originalUrl) {
-    await deleteFile(document.originalUrl).catch((e) =>
+  if (originalUrl) {
+    await deleteFile(originalUrl).catch((e) =>
       console.error("Storage 정리 실패:", e),
     )
   }

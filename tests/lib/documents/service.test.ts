@@ -1,17 +1,23 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 
 // 외부 의존성 전체 mock
-vi.mock("@/lib/prisma", () => ({
-  prisma: {
-    document: {
-      findUnique: vi.fn(),
-      findMany: vi.fn(),
-      create: vi.fn(),
-      delete: vi.fn(),
-      deleteMany: vi.fn(),
+vi.mock("@/lib/prisma", () => {
+  const document = {
+    findUnique: vi.fn(),
+    findMany: vi.fn(),
+    create: vi.fn(),
+    delete: vi.fn(),
+    deleteMany: vi.fn(),
+  }
+  return {
+    prisma: {
+      document,
+      $transaction: vi.fn((fn: (tx: { document: typeof document }) => Promise<unknown>) =>
+        fn({ document }),
+      ),
     },
-  },
-}))
+  }
+})
 
 vi.mock("@/lib/files/parser", () => ({
   parseFile: vi.fn(),
@@ -246,6 +252,20 @@ describe("deleteDocument()", () => {
         where: { id: "doc-1", userId: "user-1" },
       })
       expect(mockDeleteFile).toHaveBeenCalledWith(storagePath)
+    })
+
+    it("originalUrl이 없으면 Storage 삭제를 건너뛰어야 한다", async () => {
+      mockPrisma.document.findUnique.mockResolvedValue({
+        originalUrl: null,
+      } as never)
+      mockPrisma.document.deleteMany.mockResolvedValue({ count: 1 } as never)
+
+      await deleteDocument("doc-1", "user-1")
+
+      expect(mockDeleteFile).not.toHaveBeenCalled()
+      expect(mockPrisma.document.deleteMany).toHaveBeenCalledWith({
+        where: { id: "doc-1", userId: "user-1" },
+      })
     })
 
     it("deleteFile이 실패해도 에러를 던지지 않아야 한다 (catch 무시)", async () => {
