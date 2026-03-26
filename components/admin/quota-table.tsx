@@ -57,6 +57,15 @@ export function QuotaTable({ data, onChanged }: QuotaTableProps) {
   const [editTarget, setEditTarget] = useState<QuotaEntry | null>(null)
   const [editSubmitting, setEditSubmitting] = useState(false)
   const [editError, setEditError] = useState("")
+  const [editIsActive, setEditIsActive] = useState(true)
+  const [editKey, setEditKey] = useState(0)
+
+  function openEdit(quota: QuotaEntry) {
+    setEditTarget(quota)
+    setEditIsActive(quota.isActive)
+    setEditKey((k) => k + 1)
+    setEditError("")
+  }
 
   async function handleEdit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -67,7 +76,7 @@ export function QuotaTable({ data, onChanged }: QuotaTableProps) {
     const form = new FormData(e.currentTarget)
     const body = {
       limitValue: Number(form.get("limitValue")),
-      isActive: form.get("isActive") === "on",
+      isActive: editIsActive,
     }
 
     try {
@@ -261,7 +270,7 @@ export function QuotaTable({ data, onChanged }: QuotaTableProps) {
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => setEditTarget(quota)}
+                      onClick={() => openEdit(quota)}
                     >
                       <Pencil className="h-4 w-4" />
                     </Button>
@@ -281,7 +290,7 @@ export function QuotaTable({ data, onChanged }: QuotaTableProps) {
         </Table>
       </CardContent>
       <Dialog open={editTarget !== null} onOpenChange={(v) => { if (!v) { setEditTarget(null); setEditError(""); } }}>
-        <DialogContent key={editTarget?.id}>
+        <DialogContent key={editKey}>
           <DialogHeader>
             <DialogTitle>Quota 수정</DialogTitle>
             <DialogDescription>
@@ -303,8 +312,8 @@ export function QuotaTable({ data, onChanged }: QuotaTableProps) {
             <div className="flex items-center gap-2">
               <Switch
                 id="edit-isActive"
-                name="isActive"
-                defaultChecked={editTarget?.isActive}
+                checked={editIsActive}
+                onCheckedChange={setEditIsActive}
               />
               <Label htmlFor="edit-isActive">활성</Label>
             </div>
