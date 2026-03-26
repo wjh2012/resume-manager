@@ -31,6 +31,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Plus, Pencil, Trash2 } from "lucide-react"
 import { Switch } from "@/components/ui/switch"
 
@@ -55,10 +65,11 @@ export function QuotaTable({ data, onChanged }: QuotaTableProps) {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState("")
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null)
   const [editTarget, setEditTarget] = useState<QuotaEntry | null>(null)
   const [editSubmitting, setEditSubmitting] = useState(false)
   const [editError, setEditError] = useState("")
-  const [editIsActive, setEditIsActive] = useState(false)
+  const [editIsActive, setEditIsActive] = useState<boolean | null>(null)
   const [editKey, setEditKey] = useState(0)
 
   function openEdit(quota: QuotaEntry) {
@@ -77,7 +88,7 @@ export function QuotaTable({ data, onChanged }: QuotaTableProps) {
     const form = new FormData(e.currentTarget)
     const body = {
       limitValue: Number(form.get("limitValue")),
-      isActive: editIsActive,
+      isActive: editIsActive ?? false,
     }
 
     try {
@@ -133,7 +144,6 @@ export function QuotaTable({ data, onChanged }: QuotaTableProps) {
   }
 
   async function handleDelete(id: string) {
-    if (!confirm("정말 삭제하시겠습니까?")) return
     setDeletingId(id)
     try {
       const res = await fetch(`/api/admin/quotas/${id}`, { method: "DELETE" })
@@ -146,6 +156,7 @@ export function QuotaTable({ data, onChanged }: QuotaTableProps) {
       toast.error(err instanceof Error ? err.message : "삭제에 실패했습니다.")
     } finally {
       setDeletingId(null)
+      setDeleteTargetId(null)
     }
   }
 
@@ -280,7 +291,7 @@ export function QuotaTable({ data, onChanged }: QuotaTableProps) {
                       variant="ghost"
                       size="icon"
                       disabled={deletingId === quota.id}
-                      onClick={() => handleDelete(quota.id)}
+                      onClick={() => setDeleteTargetId(quota.id)}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -314,7 +325,7 @@ export function QuotaTable({ data, onChanged }: QuotaTableProps) {
             <div className="flex items-center gap-2">
               <Switch
                 id="edit-isActive"
-                checked={editIsActive}
+                checked={editIsActive ?? false}
                 onCheckedChange={setEditIsActive}
               />
               <Label htmlFor="edit-isActive">활성</Label>
@@ -335,6 +346,25 @@ export function QuotaTable({ data, onChanged }: QuotaTableProps) {
           </form>
         </DialogContent>
       </Dialog>
+      <AlertDialog
+        open={deleteTargetId !== null}
+        onOpenChange={(v) => { if (!v) setDeleteTargetId(null) }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Quota를 삭제하시겠습니까?</AlertDialogTitle>
+            <AlertDialogDescription>
+              선택한 Quota가 삭제됩니다. 이 작업은 되돌릴 수 없습니다.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>취소</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { if (deleteTargetId) handleDelete(deleteTargetId) }}>
+              삭제
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   )
 }
