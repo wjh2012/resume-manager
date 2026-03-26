@@ -1,6 +1,7 @@
 import { z } from "zod"
 
 export const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
+export const MAX_CONTENT_LENGTH = 50000
 
 export const DOCUMENT_TYPES = ["pdf", "docx", "txt"] as const
 export type DocumentType = (typeof DOCUMENT_TYPES)[number]

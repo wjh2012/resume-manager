@@ -4,9 +4,9 @@ import {
   resolveDocumentType,
   verifyMagicBytes,
   MAX_FILE_SIZE,
+  MAX_CONTENT_LENGTH,
 } from "@/lib/validations/document"
 import { parseFile } from "@/lib/files/parser"
-import { MAX_CONTENT_LENGTH } from "@/lib/validations/external-document"
 import { uploadFile, deleteFile } from "@/lib/storage"
 import { generateDocumentSummary } from "@/lib/documents/summary"
 

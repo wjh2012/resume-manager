@@ -5,9 +5,9 @@ import {
   resolveDocumentType,
   verifyMagicBytes,
   MAX_FILE_SIZE,
+  MAX_CONTENT_LENGTH,
   type DocumentType,
 } from "@/lib/validations/document"
-import { MAX_CONTENT_LENGTH } from "@/lib/validations/external-document"
 import { generateDocumentSummary } from "@/lib/documents/summary"
 
 export class DocumentNotFoundError extends Error {
