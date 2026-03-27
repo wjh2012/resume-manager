@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest"
 import {
   INSIGHT_CATEGORIES,
+  INSIGHT_CATEGORY_LABELS,
   insightExtractionPrompt,
 } from "@/lib/ai/prompts/insight-extraction"
 
@@ -37,6 +38,23 @@ describe("INSIGHT_CATEGORIES", () => {
       "skill",
       "other",
     ])
+  })
+})
+
+describe("INSIGHT_CATEGORY_LABELS", () => {
+  it("INSIGHT_CATEGORIES의 모든 항목에 대해 라벨이 정의되어야 한다", () => {
+    for (const category of INSIGHT_CATEGORIES) {
+      expect(INSIGHT_CATEGORY_LABELS).toHaveProperty(category)
+      expect(typeof INSIGHT_CATEGORY_LABELS[category]).toBe("string")
+      expect(INSIGHT_CATEGORY_LABELS[category].length).toBeGreaterThan(0)
+    }
+  })
+
+  it("프롬프트에 한국어 라벨이 포함되어야 한다", () => {
+    const koreanPattern = /[\uAC00-\uD7AF]/
+    for (const category of INSIGHT_CATEGORIES) {
+      expect(INSIGHT_CATEGORY_LABELS[category]).toMatch(koreanPattern)
+    }
   })
 })
 
