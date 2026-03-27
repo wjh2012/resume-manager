@@ -122,17 +122,17 @@ export function CareerNoteCard({ note, onEdit, onDelete, isDeleting }: CareerNot
           </div>
         )}
       </CardContent>
-      <div
-        className="absolute right-2 top-2 flex gap-1"
-        onClick={(e) => e.stopPropagation()}
-        onKeyDown={(e) => e.stopPropagation()}
-      >
+      <div className="absolute right-2 top-2 flex gap-1">
         <Button
           variant="ghost"
           size="icon"
-          className="h-8 w-8 opacity-100 md:opacity-0 md:group-hover:opacity-100"
+          className="h-8 w-8 opacity-100 md:opacity-0 md:group-hover:opacity-100 focus-visible:opacity-100"
           aria-label="커리어노트 수정"
-          onClick={() => onEdit(note)}
+          onClick={(e) => {
+            e.stopPropagation()
+            onEdit(note)
+          }}
+          onKeyDown={(e) => e.stopPropagation()}
           disabled={isDeleting}
         >
           <Pencil aria-hidden="true" className="h-4 w-4" />
@@ -142,9 +142,11 @@ export function CareerNoteCard({ note, onEdit, onDelete, isDeleting }: CareerNot
             <Button
               variant="ghost"
               size="icon"
-              className="text-muted-foreground hover:text-destructive h-8 w-8 opacity-100 md:opacity-0 md:group-hover:opacity-100"
+              className="text-muted-foreground hover:text-destructive h-8 w-8 opacity-100 md:opacity-0 md:group-hover:opacity-100 focus-visible:opacity-100"
               aria-label="커리어노트 삭제"
               disabled={isDeleting}
+              onClick={(e) => e.stopPropagation()}
+              onKeyDown={(e) => e.stopPropagation()}
             >
               <Trash2 aria-hidden="true" className="h-4 w-4" />
             </Button>
