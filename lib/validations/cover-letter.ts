@@ -4,8 +4,8 @@ export const createCoverLetterSchema = z.object({
   title: z.string().min(1, "제목을 입력해주세요.").max(100, "제목은 100자 이하로 입력해주세요."),
   companyName: z.string().min(1, "기업명을 입력해주세요.").max(100, "기업명은 100자 이하로 입력해주세요."),
   position: z.string().min(1, "직무를 입력해주세요.").max(100, "직무는 100자 이하로 입력해주세요."),
-  selectedDocumentIds: z.array(z.string().uuid()).optional(),
-  selectedExternalDocumentIds: z.array(z.string().uuid()).optional(),
+  selectedDocumentIds: z.array(z.string().uuid()).max(50, "최대 50개까지 선택 가능합니다.").optional(),
+  selectedExternalDocumentIds: z.array(z.string().uuid()).max(50, "최대 50개까지 선택 가능합니다.").optional(),
 })
 
 export const updateCoverLetterSchema = z.object({
@@ -25,13 +25,13 @@ export const coverLetterChatSchema = z.object({
   ).min(1, "메시지가 필요합니다."),
   conversationId: z.string().uuid("유효하지 않은 대화 ID입니다."),
   coverLetterId: z.string().uuid("유효하지 않은 자기소개서 ID입니다."),
-  selectedDocumentIds: z.array(z.string().uuid()).optional(),
+  selectedDocumentIds: z.array(z.string().uuid()).max(50, "최대 50개까지 선택 가능합니다.").optional(),
 })
 
 export const updateSelectedDocumentsSchema = z.object({
-  documentIds: z.array(z.string().uuid()),
+  documentIds: z.array(z.string().uuid()).max(50, "최대 50개까지 선택 가능합니다."),
 })
 
 export const updateSelectedExternalDocumentsSchema = z.object({
-  externalDocumentIds: z.array(z.string().uuid()),
+  externalDocumentIds: z.array(z.string().uuid()).max(50, "최대 50개까지 선택 가능합니다."),
 })
