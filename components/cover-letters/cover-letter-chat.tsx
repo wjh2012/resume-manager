@@ -3,7 +3,7 @@
 import { useState, useCallback, useRef, useMemo } from "react"
 import { useChat } from "@ai-sdk/react"
 import { DefaultChatTransport, type UIMessage } from "ai"
-import { ArrowDown, BookOpen, ClipboardPaste, FileText, Lightbulb, Loader2 } from "lucide-react"
+import { ArrowDown, BookOpen, ClipboardPaste, FileText, Lightbulb, Loader2, RotateCcw } from "lucide-react"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -69,10 +69,13 @@ export function CoverLetterChat({
   const [input, setInput] = useState("")
   const [isExtracting, setIsExtracting] = useState(false)
   const [isExtractingCareerNotes, setIsExtractingCareerNotes] = useState(false)
+  const [isResetting, setIsResetting] = useState(false)
 
-  // useRef로 최신 selectedDocIds를 body에 반영
+  // useRef로 최신 선택 상태를 body에 반영
   const selectedDocIdsRef = useRef(selectedDocIds)
   selectedDocIdsRef.current = selectedDocIds
+  const selectedExtDocIdsRef = useRef(selectedExtDocIds)
+  selectedExtDocIdsRef.current = selectedExtDocIds
 
   const transport = useMemo(
     () =>
@@ -82,12 +85,13 @@ export function CoverLetterChat({
           conversationId,
           coverLetterId,
           selectedDocumentIds: selectedDocIdsRef.current,
+          selectedExternalDocumentIds: selectedExtDocIdsRef.current,
         }),
       }),
     [conversationId, coverLetterId],
   )
 
-  const { messages, sendMessage, status } = useChat({
+  const { messages, sendMessage, setMessages, status } = useChat({
     id: conversationId,
     transport,
     messages: initialMessages,
@@ -155,6 +159,26 @@ export function CoverLetterChat({
       setIsExtractingCareerNotes(false)
     }
   }, [conversationId])
+
+  const handleReset = useCallback(async () => {
+    setIsResetting(true)
+    try {
+      const res = await fetch(`/api/conversations/${conversationId}/messages`, {
+        method: "DELETE",
+      })
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error || "채팅 초기화에 실패했습니다.")
+      }
+      setMessages([])
+      toast.success("채팅이 초기화되었습니다.")
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "채팅 초기화에 실패했습니다."
+      toast.error(message)
+    } finally {
+      setIsResetting(false)
+    }
+  }, [conversationId, setMessages])
 
   const handleDocToggle = useCallback(
     async (docId: string) => {
@@ -310,6 +334,35 @@ export function CoverLetterChat({
             <BookOpen className="h-3.5 w-3.5" />
           )}
         </Button>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              disabled={isResetting || messages.length === 0 || status !== "ready"}
+              aria-label="채팅 초기화"
+            >
+              {isResetting ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <RotateCcw className="h-3.5 w-3.5" />
+              )}
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>채팅 초기화</AlertDialogTitle>
+              <AlertDialogDescription>
+                모든 대화 내용이 삭제됩니다. 이미 추출된 인사이트와 커리어노트는 유지됩니다.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>취소</AlertDialogCancel>
+              <AlertDialogAction onClick={handleReset}>초기화</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
 
       {/* 메시지 영역 */}
