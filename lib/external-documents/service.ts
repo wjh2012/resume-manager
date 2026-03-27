@@ -1,6 +1,5 @@
 import { prisma } from "@/lib/prisma"
 import {
-  type DocumentType,
   resolveDocumentType,
   verifyMagicBytes,
   MAX_FILE_SIZE,
@@ -13,12 +12,6 @@ import { generateDocumentSummary } from "@/lib/documents/summary"
 export class ExternalDocumentNotFoundError extends Error {
   constructor() {
     super("외부 문서를 찾을 수 없습니다.")
-  }
-}
-
-export class ExternalDocumentForbiddenError extends Error {
-  constructor() {
-    super("이 외부 문서에 대한 권한이 없습니다.")
   }
 }
 
@@ -216,64 +209,66 @@ export async function updateExternalDocument(
   userId: string,
   data: { title?: string; category?: string; content?: string },
 ) {
-  const document = await prisma.externalDocument.findUnique({
-    where: { id: documentId },
-    select: { id: true, userId: true, sourceType: true },
-  })
+  return prisma.$transaction(async (tx) => {
+    const document = await tx.externalDocument.findUnique({
+      where: { id: documentId, userId },
+      select: { id: true, sourceType: true },
+    })
 
-  if (!document) {
-    throw new ExternalDocumentNotFoundError()
-  }
+    if (!document) {
+      throw new ExternalDocumentNotFoundError()
+    }
 
-  if (document.userId !== userId) {
-    throw new ExternalDocumentForbiddenError()
-  }
+    // 파일 문서에서 content 수정 시도 차단
+    if (document.sourceType === "file" && data.content !== undefined) {
+      throw new ExternalDocumentValidationError(
+        "파일 문서의 내용은 수정할 수 없습니다.",
+      )
+    }
 
-  // 파일 문서에서 content 수정 시도 차단
-  if (document.sourceType === "file" && data.content !== undefined) {
-    throw new ExternalDocumentValidationError(
-      "파일 문서의 내용은 수정할 수 없습니다.",
-    )
-  }
+    const updateData: Record<string, string> = {}
+    if (data.title !== undefined) updateData.title = data.title
+    if (data.category !== undefined) updateData.category = data.category
+    if (data.content !== undefined) updateData.content = data.content
 
-  const updateData: Record<string, string> = {}
-  if (data.title !== undefined) updateData.title = data.title
-  if (data.category !== undefined) updateData.category = data.category
-  if (data.content !== undefined) updateData.content = data.content
-
-  return prisma.externalDocument.update({
-    where: { id: documentId },
-    data: updateData,
-    select: { id: true, title: true, category: true, sourceType: true },
+    // Defense-in-depth: userId는 위 findUnique에서 트랜잭션 내 검증 완료.
+    // Prisma update는 @@unique 필드만 where에 허용하므로 id만 사용.
+    return tx.externalDocument.update({
+      where: { id: documentId },
+      data: updateData,
+      select: { id: true, title: true, category: true, sourceType: true },
+    })
   })
 }
 
-// 외부 문서 삭제
+// 외부 문서 삭제: 트랜잭션(URL 획득 + 원자적 소유권 검증+삭제) → Storage 정리
 export async function deleteExternalDocument(
   documentId: string,
   userId: string,
 ): Promise<void> {
-  const document = await prisma.externalDocument.findUnique({
-    where: { id: documentId },
-    select: { userId: true, originalUrl: true },
+  const { originalUrl } = await prisma.$transaction(async (tx) => {
+    // URL 획득 (소유권 확인 안 함)
+    const document = await tx.externalDocument.findUnique({
+      where: { id: documentId },
+      select: { originalUrl: true },
+    })
+
+    // 원자적 소유권 확인 + 삭제
+    const { count } = await tx.externalDocument.deleteMany({
+      where: { id: documentId, userId },
+    })
+
+    if (count === 0) {
+      throw new ExternalDocumentNotFoundError()
+    }
+
+    return { originalUrl: document?.originalUrl ?? null }
   })
 
-  if (!document) {
-    throw new ExternalDocumentNotFoundError()
-  }
-
-  if (document.userId !== userId) {
-    throw new ExternalDocumentForbiddenError()
-  }
-
-  // Storage 파일 삭제 (있는 경우, 에러 무시)
-  if (document.originalUrl) {
-    await deleteFile(document.originalUrl).catch((e) =>
+  // DB 삭제 성공 후에만 Storage 정리
+  if (originalUrl) {
+    await deleteFile(originalUrl).catch((e) =>
       console.error("Storage 정리 실패:", e),
     )
   }
-
-  await prisma.externalDocument.delete({
-    where: { id: documentId },
-  })
 }

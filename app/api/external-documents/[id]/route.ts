@@ -6,7 +6,6 @@ import {
   updateExternalDocument,
   deleteExternalDocument,
   ExternalDocumentNotFoundError,
-  ExternalDocumentForbiddenError,
   ExternalDocumentValidationError,
 } from "@/lib/external-documents/service"
 import { updateExternalDocumentSchema } from "@/lib/validations/external-document"
@@ -97,9 +96,6 @@ export async function PATCH(
     if (error instanceof ExternalDocumentNotFoundError) {
       return NextResponse.json({ error: error.message }, { status: 404 })
     }
-    if (error instanceof ExternalDocumentForbiddenError) {
-      return NextResponse.json({ error: error.message }, { status: 403 })
-    }
     if (error instanceof ExternalDocumentValidationError) {
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
@@ -139,9 +135,6 @@ export async function DELETE(
   } catch (error) {
     if (error instanceof ExternalDocumentNotFoundError) {
       return NextResponse.json({ error: error.message }, { status: 404 })
-    }
-    if (error instanceof ExternalDocumentForbiddenError) {
-      return NextResponse.json({ error: error.message }, { status: 403 })
     }
     console.error("[DELETE /api/external-documents/[id]]", error)
     return NextResponse.json(

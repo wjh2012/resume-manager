@@ -5,7 +5,6 @@ import {
   getDocument,
   deleteDocument,
   DocumentNotFoundError,
-  DocumentForbiddenError,
 } from "@/lib/documents/service"
 
 export async function GET(
@@ -78,9 +77,6 @@ export async function DELETE(
   } catch (error) {
     if (error instanceof DocumentNotFoundError) {
       return NextResponse.json({ error: error.message }, { status: 404 })
-    }
-    if (error instanceof DocumentForbiddenError) {
-      return NextResponse.json({ error: error.message }, { status: 403 })
     }
     console.error("[DELETE /api/documents/[id]]", error)
     return NextResponse.json(

@@ -1,16 +1,23 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 
 // 외부 의존성 전체 mock
-vi.mock("@/lib/prisma", () => ({
-  prisma: {
-    document: {
-      findUnique: vi.fn(),
-      findMany: vi.fn(),
-      create: vi.fn(),
-      delete: vi.fn(),
+vi.mock("@/lib/prisma", () => {
+  const document = {
+    findUnique: vi.fn(),
+    findMany: vi.fn(),
+    create: vi.fn(),
+    delete: vi.fn(),
+    deleteMany: vi.fn(),
+  }
+  return {
+    prisma: {
+      document,
+      $transaction: vi.fn((fn: (tx: { document: typeof document }) => Promise<unknown>) =>
+        fn({ document }),
+      ),
     },
-  },
-}))
+  }
+})
 
 vi.mock("@/lib/files/parser", () => ({
   parseFile: vi.fn(),
@@ -41,7 +48,6 @@ import {
   listDocuments,
   getDocument,
   DocumentNotFoundError,
-  DocumentForbiddenError,
 } from "@/lib/documents/service"
 
 // mock 타입 단축 헬퍼
@@ -205,76 +211,71 @@ describe("deleteDocument()", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockDeleteFile.mockResolvedValue(undefined as never)
-    mockPrisma.document.delete.mockResolvedValue({} as never)
+    mockPrisma.document.deleteMany.mockResolvedValue({ count: 1 } as never)
   })
 
-  // ── 소유권 검증 ─────────────────────────────────────────────────────────────
-  describe("소유권 검증", () => {
-    it("문서가 존재하지 않으면 DocumentNotFoundError를 던져야 한다", async () => {
-      // Arrange
+  describe("소유권 검증 (403/404 통합)", () => {
+    it("문서가 존재하지 않으면 DocumentNotFoundError를 던져야 한다 (findUnique null)", async () => {
       mockPrisma.document.findUnique.mockResolvedValue(null)
+      mockPrisma.document.deleteMany.mockResolvedValue({ count: 0 } as never)
 
-      // Act & Assert
       await expect(deleteDocument("doc-999", "user-1")).rejects.toThrow(
         DocumentNotFoundError,
       )
-      await expect(deleteDocument("doc-999", "user-1")).rejects.toThrow(
-        "문서를 찾을 수 없습니다.",
-      )
+      expect(mockDeleteFile).not.toHaveBeenCalled()
     })
 
-    it("userId가 문서 소유자와 다르면 DocumentForbiddenError를 던져야 한다", async () => {
-      // Arrange
+    it("userId가 문서 소유자와 달라도 DocumentNotFoundError를 던져야 한다 (403/404 통합)", async () => {
       mockPrisma.document.findUnique.mockResolvedValue({
-        userId: "owner-user",
         originalUrl: "storage/owner-user/doc.pdf",
       } as never)
+      mockPrisma.document.deleteMany.mockResolvedValue({ count: 0 } as never)
 
-      // Act & Assert
       await expect(deleteDocument("doc-1", "other-user")).rejects.toThrow(
-        DocumentForbiddenError,
+        DocumentNotFoundError,
       )
-      await expect(deleteDocument("doc-1", "other-user")).rejects.toThrow(
-        "이 문서에 대한 권한이 없습니다.",
-      )
+      expect(mockDeleteFile).not.toHaveBeenCalled()
     })
   })
 
-  // ── 성공 경로 ───────────────────────────────────────────────────────────────
   describe("성공 경로", () => {
-    it("Storage 파일과 DB 레코드를 모두 삭제해야 한다", async () => {
-      // Arrange
+    it("DB 삭제 후 Storage 파일을 삭제해야 한다", async () => {
       const storagePath = "storage/user-1/resume.pdf"
       mockPrisma.document.findUnique.mockResolvedValue({
-        userId: "user-1",
         originalUrl: storagePath,
       } as never)
+      mockPrisma.document.deleteMany.mockResolvedValue({ count: 1 } as never)
 
-      // Act
       await deleteDocument("doc-1", "user-1")
 
-      // Assert
+      expect(mockPrisma.document.deleteMany).toHaveBeenCalledWith({
+        where: { id: "doc-1", userId: "user-1" },
+      })
       expect(mockDeleteFile).toHaveBeenCalledWith(storagePath)
-      expect(mockPrisma.document.delete).toHaveBeenCalledWith({
-        where: { id: "doc-1" },
+    })
+
+    it("originalUrl이 없으면 Storage 삭제를 건너뛰어야 한다", async () => {
+      mockPrisma.document.findUnique.mockResolvedValue({
+        originalUrl: null,
+      } as never)
+      mockPrisma.document.deleteMany.mockResolvedValue({ count: 1 } as never)
+
+      await deleteDocument("doc-1", "user-1")
+
+      expect(mockDeleteFile).not.toHaveBeenCalled()
+      expect(mockPrisma.document.deleteMany).toHaveBeenCalledWith({
+        where: { id: "doc-1", userId: "user-1" },
       })
     })
 
-    it("deleteFile이 실패해도 DB 삭제는 계속 진행해야 한다", async () => {
-      // Arrange
+    it("deleteFile이 실패해도 에러를 던지지 않아야 한다 (catch 무시)", async () => {
       mockPrisma.document.findUnique.mockResolvedValue({
-        userId: "user-1",
         originalUrl: "storage/user-1/resume.pdf",
       } as never)
+      mockPrisma.document.deleteMany.mockResolvedValue({ count: 1 } as never)
       mockDeleteFile.mockRejectedValue(new Error("Storage 오류"))
 
-      // Act — 에러 없이 완료되어야 한다
       await expect(deleteDocument("doc-1", "user-1")).resolves.toBeUndefined()
-
-      // DB 삭제는 여전히 호출되어야 한다
-      expect(mockPrisma.document.delete).toHaveBeenCalledWith({
-        where: { id: "doc-1" },
-      })
     })
   })
 })
