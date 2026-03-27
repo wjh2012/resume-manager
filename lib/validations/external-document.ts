@@ -1,6 +1,7 @@
 import { z } from "zod"
+import { MAX_CONTENT_LENGTH } from "@/lib/validations/document"
 
-export const MAX_CONTENT_LENGTH = 50000
+export { MAX_CONTENT_LENGTH }
 
 export const createExternalDocumentSchema = z.object({
   title: z.string().min(1).max(200),
