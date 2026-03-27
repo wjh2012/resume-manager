@@ -141,7 +141,7 @@ export async function extractCareerNotes(userId: string, conversationId: string)
   // 2. Check quota
   const quotaResult = await checkQuotaExceeded(userId)
   if (quotaResult.exceeded) {
-    throw new QuotaExceededError()
+    throw new QuotaExceededError(quotaResult.source)
   }
 
   // 3. Get confirmed notes for comparison
