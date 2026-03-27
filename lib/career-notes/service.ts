@@ -130,7 +130,7 @@ export async function extractCareerNotes(userId: string, conversationId: string)
   }
 
   const messages = await prisma.message.findMany({
-    where: { conversationId },
+    where: { conversationId, role: "USER" },
     orderBy: { createdAt: "asc" },
   })
 
