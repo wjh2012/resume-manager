@@ -1,6 +1,8 @@
 "use client"
 
 import { useState } from "react"
+import { toast } from "sonner"
+import type { QuotaEntry } from "@/types/admin"
 import {
   Table,
   TableBody,
@@ -22,23 +24,25 @@ import {
 } from "@/components/ui/select"
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Plus, Trash2 } from "lucide-react"
-
-interface QuotaEntry {
-  id: string
-  userId: string
-  limitType: string
-  limitValue: number
-  period: string
-  isActive: boolean
-  user: { email: string; name: string | null }
-}
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { Plus, Pencil, Trash2 } from "lucide-react"
+import { Switch } from "@/components/ui/switch"
 
 interface QuotaTableProps {
   data: QuotaEntry[]
@@ -61,6 +65,50 @@ export function QuotaTable({ data, onChanged }: QuotaTableProps) {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState("")
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null)
+  const [editTarget, setEditTarget] = useState<QuotaEntry | null>(null)
+  const [editSubmitting, setEditSubmitting] = useState(false)
+  const [editError, setEditError] = useState("")
+  const [editIsActive, setEditIsActive] = useState<boolean | null>(null)
+  const [editKey, setEditKey] = useState(0)
+
+  function openEdit(quota: QuotaEntry) {
+    setEditTarget(quota)
+    setEditIsActive(quota.isActive)
+    setEditKey((k) => k + 1)
+    setEditError("")
+  }
+
+  async function handleEdit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    if (!editTarget) return
+    setEditSubmitting(true)
+    setEditError("")
+
+    const form = new FormData(e.currentTarget)
+    const body = {
+      limitValue: Number(form.get("limitValue")),
+      isActive: editIsActive ?? false,
+    }
+
+    try {
+      const res = await fetch(`/api/admin/quotas/${editTarget.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      })
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error ?? "수정에 실패했습니다.")
+      }
+      setEditTarget(null)
+      onChanged()
+    } catch (err) {
+      setEditError(err instanceof Error ? err.message : "오류가 발생했습니다.")
+    } finally {
+      setEditSubmitting(false)
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -105,9 +153,10 @@ export function QuotaTable({ data, onChanged }: QuotaTableProps) {
       }
       onChanged()
     } catch (err) {
-      alert(err instanceof Error ? err.message : "삭제에 실패했습니다.")
+      toast.error(err instanceof Error ? err.message : "삭제에 실패했습니다.")
     } finally {
       setDeletingId(null)
+      setDeleteTargetId(null)
     }
   }
 
@@ -115,14 +164,14 @@ export function QuotaTable({ data, onChanged }: QuotaTableProps) {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Quota 목록</CardTitle>
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={open} onOpenChange={(v) => { setOpen(v); setError(""); }}>
           <DialogTrigger asChild>
             <Button size="sm">
               <Plus className="mr-1 h-4 w-4" />
               Quota 추가
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent key={String(open)}>
             <DialogHeader>
               <DialogTitle>Quota 추가</DialogTitle>
               <DialogDescription>사용자별 사용량 한도를 설정합니다.</DialogDescription>
@@ -192,7 +241,7 @@ export function QuotaTable({ data, onChanged }: QuotaTableProps) {
               <TableHead className="text-right">제한 값</TableHead>
               <TableHead>기간</TableHead>
               <TableHead>상태</TableHead>
-              <TableHead className="w-16" />
+              <TableHead className="w-24" />
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -231,14 +280,23 @@ export function QuotaTable({ data, onChanged }: QuotaTableProps) {
                     </span>
                   </TableCell>
                   <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      disabled={deletingId === quota.id}
-                      onClick={() => handleDelete(quota.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <div className="flex gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => openEdit(quota)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        disabled={deletingId === quota.id}
+                        onClick={() => setDeleteTargetId(quota.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))
@@ -246,6 +304,69 @@ export function QuotaTable({ data, onChanged }: QuotaTableProps) {
           </TableBody>
         </Table>
       </CardContent>
+      <Dialog open={editTarget !== null} onOpenChange={(v) => { if (!v) { setEditTarget(null); setEditError(""); } }}>
+        <DialogContent key={editKey}>
+          <DialogHeader>
+            <DialogTitle>Quota 수정</DialogTitle>
+            <DialogDescription>
+              {editTarget?.user.email} — {LIMIT_LABELS[editTarget?.limitType ?? ""] ?? editTarget?.limitType} ({PERIOD_LABELS[editTarget?.period ?? ""] ?? editTarget?.period})
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleEdit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-limitValue">제한 값</Label>
+              <Input
+                id="edit-limitValue"
+                name="limitValue"
+                type="number"
+                min="1"
+                required
+                defaultValue={editTarget?.limitValue}
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <Switch
+                id="edit-isActive"
+                checked={editIsActive ?? false}
+                onCheckedChange={setEditIsActive}
+              />
+              <Label htmlFor="edit-isActive">활성</Label>
+            </div>
+            {editError && (
+              <p className="text-sm text-destructive">{editError}</p>
+            )}
+            <div className="flex gap-2">
+              <Button type="submit" disabled={editSubmitting} className="flex-1">
+                {editSubmitting ? "수정 중..." : "수정"}
+              </Button>
+              <DialogClose asChild>
+                <Button type="button" variant="outline" className="flex-1">
+                  취소
+                </Button>
+              </DialogClose>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+      <AlertDialog
+        open={deleteTargetId !== null}
+        onOpenChange={(v) => { if (!v && !deletingId) setDeleteTargetId(null) }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Quota를 삭제하시겠습니까?</AlertDialogTitle>
+            <AlertDialogDescription>
+              선택한 Quota가 삭제됩니다. 이 작업은 되돌릴 수 없습니다.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setDeleteTargetId(null)}>취소</AlertDialogCancel>
+            <AlertDialogAction disabled={deletingId === deleteTargetId} onClick={() => { if (deleteTargetId) handleDelete(deleteTargetId) }}>
+              삭제
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   )
 }

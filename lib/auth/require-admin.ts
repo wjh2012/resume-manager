@@ -1,8 +1,8 @@
 import { createClient } from "@/lib/supabase/server"
-import { prisma } from "@/lib/prisma"
+import { getUserRole } from "@/lib/auth/get-user-role"
 
 type AdminResult =
-  | { ok: true; user: { id: string; role: string } }
+  | { ok: true; user: { id: string; role: "ADMIN" } }
   | { ok: false; status: 401 }
   | { ok: false; status: 403 }
 
@@ -12,12 +12,9 @@ export async function requireAdmin(): Promise<AdminResult> {
 
   if (!user) return { ok: false, status: 401 }
 
-  const dbUser = await prisma.user.findUnique({
-    where: { id: user.id },
-    select: { id: true, role: true },
-  })
+  const role = await getUserRole(user.id)
 
-  if (!dbUser || dbUser.role !== "ADMIN") return { ok: false, status: 403 }
+  if (role !== "ADMIN") return { ok: false, status: 403 }
 
-  return { ok: true, user: dbUser }
+  return { ok: true, user: { id: user.id, role } }
 }

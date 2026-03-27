@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import type { PricingEntry } from "@/types/admin"
 import {
   Table,
   TableBody,
@@ -29,15 +30,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Plus } from "lucide-react"
-
-interface PricingEntry {
-  id: string
-  provider: string
-  model: string
-  inputPricePerM: number
-  outputPricePerM: number
-  effectiveFrom: string
-}
 
 interface PricingTableProps {
   data: PricingEntry[]
@@ -86,14 +78,14 @@ export function PricingTable({ data, onCreated }: PricingTableProps) {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>모델 단가 목록</CardTitle>
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={open} onOpenChange={(v) => { setOpen(v); setError(""); }}>
           <DialogTrigger asChild>
             <Button size="sm">
               <Plus className="mr-1 h-4 w-4" />
               단가 추가
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent key={String(open)}>
             <DialogHeader>
               <DialogTitle>모델 단가 추가</DialogTitle>
               <DialogDescription>AI 모델의 토큰 단가를 설정합니다.</DialogDescription>

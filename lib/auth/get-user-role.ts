@@ -1,0 +1,16 @@
+import { cache } from "react"
+import { prisma } from "@/lib/prisma"
+
+/**
+ * React.cache()로 래핑된 user role 조회.
+ * RSC 렌더 패스 내에서 여러 번 호출해도 실제 DB 쿼리는 1회만 실행.
+ * API route handler에서는 요청마다 새로운 cache scope가 생성되므로
+ * 동일 요청 내 중복 제거(deduplication)가 적용되지 않으나 정상 동작.
+ */
+export const getUserRole = cache(async (userId: string): Promise<"ADMIN" | "USER"> => {
+  const dbUser = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { role: true },
+  })
+  return dbUser?.role === "ADMIN" ? "ADMIN" : "USER"
+})
