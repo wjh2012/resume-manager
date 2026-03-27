@@ -6,6 +6,7 @@ import { getAuthUser } from "@/lib/supabase/user"
 import { listResumes } from "@/lib/resumes/service"
 import { ResumeList } from "@/components/resumes/resume-list"
 import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
 
 async function ResumeListSection({ userId }: { userId: string }) {
   const resumes = await listResumes(userId)
@@ -41,7 +42,24 @@ export default async function ResumesPage() {
         </Button>
       </div>
 
-      <Suspense fallback={<p className="text-muted-foreground py-12 text-center">불러오는 중...</p>}>
+      <Suspense
+        fallback={
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 6 }, (_, i) => (
+              <div key={i} className="space-y-3 rounded-xl border p-6">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-2">
+                    <Skeleton className="h-5 w-5" />
+                    <Skeleton className="h-5 w-32" />
+                  </div>
+                  <Skeleton className="h-6 w-16 rounded-full" />
+                </div>
+                <Skeleton className="h-4 w-20" />
+              </div>
+            ))}
+          </div>
+        }
+      >
         <ResumeListSection userId={user.id} />
       </Suspense>
     </div>
