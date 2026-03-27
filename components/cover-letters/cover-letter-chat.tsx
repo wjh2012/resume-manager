@@ -197,7 +197,11 @@ export function CoverLetterChat({
 
         if (!res.ok) throw new Error()
       } catch {
-        setSelectedDocIds(selectedDocIds)
+        setSelectedDocIds((prev) =>
+          newIds.includes(docId)
+            ? prev.filter((id) => id !== docId)
+            : [...prev, docId],
+        )
         toast.error("참고 문서 변경에 실패했습니다.")
       } finally {
         setIsUpdatingDocs(false)
@@ -223,7 +227,11 @@ export function CoverLetterChat({
 
         if (!res.ok) throw new Error()
       } catch {
-        setSelectedExtDocIds(selectedExtDocIds)
+        setSelectedExtDocIds((prev) =>
+          newIds.includes(docId)
+            ? prev.filter((id) => id !== docId)
+            : [...prev, docId],
+        )
         toast.error("외부 문서 변경에 실패했습니다.")
       } finally {
         setIsUpdatingExtDocs(false)
