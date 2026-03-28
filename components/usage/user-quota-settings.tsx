@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Progress } from "@/components/ui/progress"
 import { Trash2, Plus } from "lucide-react"
+import { toast } from "sonner"
 import type { UserQuotaWithUsage } from "@/types/token-usage"
 
 interface UserQuotaSettingsProps {
@@ -34,7 +35,12 @@ export function UserQuotaSettings({ quotas, onRefresh }: UserQuotaSettingsProps)
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ limitType, limitValue }),
       })
-      if (res.ok) onRefresh()
+      if (res.ok) {
+        onRefresh()
+      } else {
+        const { error } = await res.json()
+        toast.error(error ?? "자기 제한 생성에 실패했습니다.")
+      }
     } finally {
       setLoading(null)
     }
@@ -48,7 +54,12 @@ export function UserQuotaSettings({ quotas, onRefresh }: UserQuotaSettingsProps)
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       })
-      if (res.ok) onRefresh()
+      if (res.ok) {
+        onRefresh()
+      } else {
+        const { error } = await res.json()
+        toast.error(error ?? "자기 제한 수정에 실패했습니다.")
+      }
     } finally {
       setLoading(null)
     }
@@ -58,7 +69,12 @@ export function UserQuotaSettings({ quotas, onRefresh }: UserQuotaSettingsProps)
     setLoading(id)
     try {
       const res = await fetch(`/api/user-quotas/${id}`, { method: "DELETE" })
-      if (res.ok) onRefresh()
+      if (res.ok) {
+        onRefresh()
+      } else {
+        const { error } = await res.json()
+        toast.error(error ?? "자기 제한 삭제에 실패했습니다.")
+      }
     } finally {
       setLoading(null)
     }
