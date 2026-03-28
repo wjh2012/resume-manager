@@ -112,39 +112,32 @@ export async function getUserQuotas(userId: string) {
 // UserQuota + 현재 사용량을 함께 반환 (대시보드 프로그레스 바용)
 export async function getUserUserQuotasWithUsage(userId: string) {
   const quotas = await prisma.userQuota.findMany({
-    where: { userId, isActive: true },
+    where: { userId },
     orderBy: { createdAt: "desc" },
   })
 
+  if (quotas.length === 0) return []
+
   const periodStart = getPeriodStart("MONTHLY")
 
-  return Promise.all(
-    quotas.map(async (quota) => {
-      let currentUsage = 0
+  // 한 번의 집계로 토큰 + 비용 모두 조회
+  const agg = await prisma.tokenUsageLog.aggregate({
+    where: { userId, createdAt: { gte: periodStart } },
+    _sum: { totalTokens: true, estimatedCost: true },
+  })
 
-      if (quota.limitType === "TOKENS") {
-        const agg = await prisma.tokenUsageLog.aggregate({
-          where: { userId, createdAt: { gte: periodStart } },
-          _sum: { totalTokens: true },
-        })
-        currentUsage = agg._sum.totalTokens ?? 0
-      } else if (quota.limitType === "COST") {
-        const agg = await prisma.tokenUsageLog.aggregate({
-          where: { userId, createdAt: { gte: periodStart } },
-          _sum: { estimatedCost: true },
-        })
-        currentUsage = agg._sum.estimatedCost?.toNumber() ?? 0
-      }
+  const usageByType: Record<string, number> = {
+    TOKENS: agg._sum.totalTokens ?? 0,
+    COST: agg._sum.estimatedCost?.toNumber() ?? 0,
+  }
 
-      return {
-        id: quota.id,
-        limitType: quota.limitType,
-        limitValue: quota.limitValue.toNumber(),
-        isActive: quota.isActive,
-        currentUsage,
-      }
-    }),
-  )
+  return quotas.map((quota) => ({
+    id: quota.id,
+    limitType: quota.limitType,
+    limitValue: quota.limitValue.toNumber(),
+    isActive: quota.isActive,
+    currentUsage: usageByType[quota.limitType] ?? 0,
+  }))
 }
 
 // Quota + 현재 사용량을 함께 반환 (대시보드 프로그레스 바용)

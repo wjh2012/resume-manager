@@ -5,10 +5,9 @@ vi.mock("@/lib/prisma", () => ({
   prisma: {
     userQuota: {
       findMany: vi.fn(),
-      findFirst: vi.fn(),
+      findUnique: vi.fn(),
       create: vi.fn(),
-      update: vi.fn(),
-      delete: vi.fn(),
+      updateMany: vi.fn(),
       deleteMany: vi.fn(),
     },
   },
@@ -23,10 +22,9 @@ import {
 } from "@/lib/user-quota/service"
 
 const mockFindMany = vi.mocked(prisma.userQuota.findMany)
-const mockFindFirst = vi.mocked(prisma.userQuota.findFirst)
+const mockFindUnique = vi.mocked(prisma.userQuota.findUnique)
 const mockCreate = vi.mocked(prisma.userQuota.create)
-const mockUpdate = vi.mocked(prisma.userQuota.update)
-const mockDelete = vi.mocked(prisma.userQuota.delete)
+const mockUpdateMany = vi.mocked(prisma.userQuota.updateMany)
 const mockDeleteMany = vi.mocked(prisma.userQuota.deleteMany)
 
 describe("UserQuota service", () => {
@@ -87,32 +85,28 @@ describe("UserQuota service", () => {
 
   describe("updateUserQuota", () => {
     it("본인의 자기 제한만 수정할 수 있다", async () => {
-      mockFindFirst.mockResolvedValue({
-        id: "uq1",
-        userId: "user-1",
-      } as never)
-      mockUpdate.mockResolvedValue({ id: "uq1" } as never)
+      mockUpdateMany.mockResolvedValue({ count: 1 } as never)
+      mockFindUnique.mockResolvedValue({ id: "uq1", limitValue: 8000 } as never)
 
-      await updateUserQuota("uq1", "user-1", { limitValue: 8000 })
+      const result = await updateUserQuota("uq1", "user-1", { limitValue: 8000 })
 
-      expect(mockFindFirst).toHaveBeenCalledWith({
+      expect(mockUpdateMany).toHaveBeenCalledWith({
         where: { id: "uq1", userId: "user-1" },
-      })
-      expect(mockUpdate).toHaveBeenCalledWith({
-        where: { id: "uq1" },
         data: { limitValue: 8000 },
       })
+      expect(mockFindUnique).toHaveBeenCalledWith({ where: { id: "uq1" } })
+      expect(result).toEqual({ id: "uq1", limitValue: 8000 })
     })
 
     it("다른 사용자의 제한 수정 시 null 반환", async () => {
-      mockFindFirst.mockResolvedValue(null)
+      mockUpdateMany.mockResolvedValue({ count: 0 } as never)
 
       const result = await updateUserQuota("uq1", "other-user", {
         limitValue: 8000,
       })
 
       expect(result).toBeNull()
-      expect(mockUpdate).not.toHaveBeenCalled()
+      expect(mockFindUnique).not.toHaveBeenCalled()
     })
   })
 

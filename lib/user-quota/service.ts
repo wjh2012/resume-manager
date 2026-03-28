@@ -23,12 +23,13 @@ export async function updateUserQuota(
   userId: string,
   data: { limitValue?: number; isActive?: boolean },
 ) {
-  const quota = await prisma.userQuota.findFirst({
+  const { count } = await prisma.userQuota.updateMany({
     where: { id, userId },
+    data,
   })
-  if (!quota) return null
+  if (count === 0) return null
 
-  return prisma.userQuota.update({ where: { id }, data })
+  return prisma.userQuota.findUnique({ where: { id } })
 }
 
 export async function deleteUserQuota(id: string, userId: string) {

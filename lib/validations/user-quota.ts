@@ -2,7 +2,7 @@ import { z } from "zod"
 
 export const createUserQuotaSchema = z.object({
   limitType: z.enum(["TOKENS", "COST"], {
-    errorMap: () => ({ message: "토큰 또는 비용만 선택할 수 있습니다." }),
+    error: "토큰 또는 비용만 선택할 수 있습니다.",
   }),
   limitValue: z.coerce.number().positive("양수여야 합니다."),
   isActive: z.boolean().optional().default(true),

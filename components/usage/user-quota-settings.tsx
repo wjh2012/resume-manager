@@ -36,6 +36,7 @@ export function UserQuotaSettings({ quotas, onRefresh }: UserQuotaSettingsProps)
         body: JSON.stringify({ limitType, limitValue }),
       })
       if (res.ok) {
+        toast.success("자기 제한이 추가되었습니다.")
         onRefresh()
       } else {
         const { error } = await res.json()
@@ -55,6 +56,7 @@ export function UserQuotaSettings({ quotas, onRefresh }: UserQuotaSettingsProps)
         body: JSON.stringify(data),
       })
       if (res.ok) {
+        toast.success("자기 제한이 수정되었습니다.")
         onRefresh()
       } else {
         const { error } = await res.json()
@@ -70,6 +72,7 @@ export function UserQuotaSettings({ quotas, onRefresh }: UserQuotaSettingsProps)
     try {
       const res = await fetch(`/api/user-quotas/${id}`, { method: "DELETE" })
       if (res.ok) {
+        toast.success("자기 제한이 삭제되었습니다.")
         onRefresh()
       } else {
         const { error } = await res.json()
@@ -181,6 +184,7 @@ function QuotaRow({ label, quota, limitType, loading, onCreate, onUpdate, onDele
       )}
       <div className="flex items-center gap-2">
         <Input
+          key={quota.limitValue}
           type="number"
           defaultValue={quota.limitValue}
           className="w-36"
@@ -188,6 +192,11 @@ function QuotaRow({ label, quota, limitType, loading, onCreate, onUpdate, onDele
             const val = Number(e.target.value)
             if (val > 0 && val !== quota.limitValue) {
               onUpdate(quota.id, { limitValue: val })
+            }
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.currentTarget.blur()
             }
           }}
         />
