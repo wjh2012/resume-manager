@@ -167,6 +167,7 @@ function QuotaRow({ label, quota, limitType, loading, onCreate, onUpdate, onDele
           <Button
             size="icon"
             variant="ghost"
+            aria-label="delete"
             disabled={loading === quota.id}
             onClick={() => onDelete(quota.id)}
           >
@@ -189,6 +190,8 @@ function QuotaRow({ label, quota, limitType, loading, onCreate, onUpdate, onDele
           defaultValue={quota.limitValue}
           className="w-36"
           onBlur={(e) => {
+            const target = e.relatedTarget as HTMLElement | null
+            if (target?.closest("button[aria-label='delete']")) return
             if (loading === quota.id) return
             const val = Number(e.target.value)
             if (val > 0 && val !== quota.limitValue) {
