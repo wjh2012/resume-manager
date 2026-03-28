@@ -7,6 +7,7 @@ import { FeatureChart } from "@/components/usage/feature-chart"
 import { ModelChart } from "@/components/usage/model-chart"
 import { PeriodFilter } from "@/components/usage/period-filter"
 import { QuotaProgress } from "@/components/usage/quota-progress"
+import { UserQuotaSettings } from "@/components/usage/user-quota-settings"
 import type { UsageSummaryWithQuotas } from "@/types/token-usage"
 
 type FetchState =
@@ -69,6 +70,7 @@ export default function UsagePage() {
       </div>
       <SummaryCards totalTokens={data.totalTokens} totalCost={data.totalCost} requestCount={data.requestCount} />
       <QuotaProgress quotas={data.quotas} />
+      <UserQuotaSettings quotas={data.userQuotas ?? []} onRefresh={() => handlePeriodChange(period, startDate, endDate)} />
       <DailyChart data={data.daily} />
       <div className="grid gap-4 md:grid-cols-2">
         <FeatureChart data={data.byFeature} />

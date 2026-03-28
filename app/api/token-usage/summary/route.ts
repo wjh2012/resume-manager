@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { getUserUsageSummary } from "@/lib/token-usage/service"
-import { getUserQuotasWithUsage } from "@/lib/token-usage/quota"
+import { getUserQuotasWithUsage, getUserUserQuotasWithUsage } from "@/lib/token-usage/quota"
 import { usageSummaryQuerySchema } from "@/lib/validations/token-usage"
 import { getDateRange } from "@/lib/utils/date-range"
 
@@ -27,12 +27,13 @@ export async function GET(request: NextRequest) {
       ? { start: parsed.data.startDate, end: parsed.data.endDate }
       : getDateRange(parsed.data.period)
 
-    const [summary, quotas] = await Promise.all([
+    const [summary, quotas, userQuotas] = await Promise.all([
       getUserUsageSummary(user.id, start, end, parsed.data.tz),
       getUserQuotasWithUsage(user.id),
+      getUserUserQuotasWithUsage(user.id),
     ])
 
-    return NextResponse.json({ ...summary, quotas })
+    return NextResponse.json({ ...summary, quotas, userQuotas })
   } catch (error) {
     console.error("[GET /api/token-usage/summary]", error)
     return NextResponse.json({ error: "사용량 요약 조회에 실패했습니다." }, { status: 500 })

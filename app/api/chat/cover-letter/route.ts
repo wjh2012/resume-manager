@@ -41,7 +41,7 @@ export async function POST(request: Request) {
     )
   }
 
-  const { messages, conversationId, coverLetterId, selectedDocumentIds } =
+  const { messages, conversationId, coverLetterId, selectedDocumentIds, selectedExternalDocumentIds } =
     parsed.data
 
   try {
@@ -65,9 +65,13 @@ export async function POST(request: Request) {
       )
     }
 
-    const allowedExternalDocIds = coverLetter.coverLetterExternalDocs.map(
+    const linkedExternalDocIds = coverLetter.coverLetterExternalDocs.map(
       (d) => d.externalDocumentId,
     )
+    // 클라이언트 선택이 있으면 연결된 문서 내에서 필터, 없으면 전체 연결 문서 사용
+    const allowedExternalDocIds = selectedExternalDocumentIds
+      ? selectedExternalDocumentIds.filter((id) => linkedExternalDocIds.includes(id))
+      : linkedExternalDocIds
 
     // conversationId 소유권 검증
     const conversation = await prisma.conversation.findUnique({
@@ -88,8 +92,11 @@ export async function POST(request: Request) {
 
     const quotaResult = await checkQuotaExceeded(user.id)
     if (quotaResult.exceeded) {
+      const message = quotaResult.source === "USER"
+        ? "설정하신 자기 제한을 초과했습니다."
+        : "사용 한도를 초과했습니다."
       return NextResponse.json(
-        { error: "사용 한도를 초과했습니다." },
+        { error: message },
         { status: 403 },
       )
     }

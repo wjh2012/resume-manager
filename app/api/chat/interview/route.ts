@@ -101,8 +101,11 @@ export async function POST(request: Request) {
 
     const quotaResult = await checkQuotaExceeded(user.id)
     if (quotaResult.exceeded) {
+      const message = quotaResult.source === "USER"
+        ? "설정하신 자기 제한을 초과했습니다."
+        : "사용 한도를 초과했습니다."
       return NextResponse.json(
-        { error: "사용 한도를 초과했습니다." },
+        { error: message },
         { status: 403 },
       )
     }

@@ -58,7 +58,7 @@ export async function extractInsights(userId: string, conversationId: string) {
   // 할당량 확인
   const quotaResult = await checkQuotaExceeded(userId)
   if (quotaResult.exceeded) {
-    throw new QuotaExceededError()
+    throw new QuotaExceededError(quotaResult.source)
   }
 
   // AI 호출을 먼저 수행 — 실패해도 기존 인사이트 보존
