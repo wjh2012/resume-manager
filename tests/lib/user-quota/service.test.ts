@@ -9,6 +9,7 @@ vi.mock("@/lib/prisma", () => ({
       create: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
+      deleteMany: vi.fn(),
     },
   },
 }))
@@ -26,6 +27,7 @@ const mockFindFirst = vi.mocked(prisma.userQuota.findFirst)
 const mockCreate = vi.mocked(prisma.userQuota.create)
 const mockUpdate = vi.mocked(prisma.userQuota.update)
 const mockDelete = vi.mocked(prisma.userQuota.delete)
+const mockDeleteMany = vi.mocked(prisma.userQuota.deleteMany)
 
 describe("UserQuota service", () => {
   beforeEach(() => {
@@ -116,24 +118,22 @@ describe("UserQuota service", () => {
 
   describe("deleteUserQuota", () => {
     it("본인의 자기 제한만 삭제할 수 있다", async () => {
-      mockFindFirst.mockResolvedValue({
-        id: "uq1",
-        userId: "user-1",
-      } as never)
-      mockDelete.mockResolvedValue({ id: "uq1" } as never)
+      mockDeleteMany.mockResolvedValue({ count: 1 } as never)
 
       const result = await deleteUserQuota("uq1", "user-1")
 
+      expect(mockDeleteMany).toHaveBeenCalledWith({
+        where: { id: "uq1", userId: "user-1" },
+      })
       expect(result).toBe(true)
     })
 
     it("다른 사용자의 제한 삭제 시 false 반환", async () => {
-      mockFindFirst.mockResolvedValue(null)
+      mockDeleteMany.mockResolvedValue({ count: 0 } as never)
 
       const result = await deleteUserQuota("uq1", "other-user")
 
       expect(result).toBe(false)
-      expect(mockDelete).not.toHaveBeenCalled()
     })
   })
 })
