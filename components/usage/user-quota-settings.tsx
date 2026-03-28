@@ -189,6 +189,7 @@ function QuotaRow({ label, quota, limitType, loading, onCreate, onUpdate, onDele
           defaultValue={quota.limitValue}
           className="w-36"
           onBlur={(e) => {
+            if (loading === quota.id) return
             const val = Number(e.target.value)
             if (val > 0 && val !== quota.limitValue) {
               onUpdate(quota.id, { limitValue: val })
