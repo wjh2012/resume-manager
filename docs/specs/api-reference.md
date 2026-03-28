@@ -529,9 +529,45 @@ AI 설정 업데이트.
     "byFeature": [{ "feature": "COVER_LETTER", "totalTokens": 30000, "count": 20 }],
     "byModel": [{ "model": "gpt-4o", "totalTokens": 40000, "totalCost": 0.2 }],
     "daily": [{ "date": "2026-03-21", "totalTokens": 5000, "totalCost": 0.025, "count": 3 }],
-    "quotas": [{ "id": "uuid", "limitType": "TOKENS", "limitValue": 100000, "period": "MONTHLY", "currentUsage": 50000 }]
+    "quotas": [{ "id": "uuid", "limitType": "TOKENS", "limitValue": 100000, "period": "MONTHLY", "currentUsage": 50000 }],
+    "userQuotas": [{ "id": "uuid", "limitType": "TOKENS", "limitValue": 50000, "isActive": true, "currentUsage": 30000 }]
   }
   ```
+
+---
+
+## 사용자 자기 제한 (User Quotas)
+
+사용자가 직접 월간 토큰/비용 사용 제한을 설정한다. Admin Quota와 별도 운영.
+
+### `GET /api/user-quotas`
+
+사용자의 자기 제한 목록 조회.
+
+- **Response**: `200 OK` — `{ data: [{ id, userId, limitType, limitValue, isActive, createdAt, updatedAt }] }`
+
+### `POST /api/user-quotas`
+
+자기 제한 생성.
+
+- **Body**: `{ limitType: "TOKENS" | "COST", limitValue: number, isActive?: boolean }`
+- **Response**: `201 Created` — `{ data: { id, ... } }`
+- **에러**: `409` (동일 유형 제한 이미 존재)
+
+### `PUT /api/user-quotas/[id]`
+
+자기 제한 수정 (소유권 검증).
+
+- **Body**: `{ limitValue?: number, isActive?: boolean }` (최소 하나 필수)
+- **Response**: `200 OK` — `{ data: { id, ... } }`
+- **에러**: `404` (존재하지 않거나 소유자 불일치)
+
+### `DELETE /api/user-quotas/[id]`
+
+자기 제한 삭제 (소유권 검증).
+
+- **Response**: `200 OK` — `{ success: true }`
+- **에러**: `404` (존재하지 않거나 소유자 불일치)
 
 ---
 

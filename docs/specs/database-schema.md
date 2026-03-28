@@ -20,7 +20,8 @@ User ─┬─ AiSettings (1:1)
       ├─ Conversation (1:N) ── Message (1:N)
       ├─ Insight (1:N)
       ├─ TokenUsageLog (1:N)
-      └─ Quota (1:N)
+      ├─ Quota (1:N)
+      └─ UserQuota (1:N)
 
 ModelPricing (독립 — User와 무관)
 ```
@@ -100,6 +101,7 @@ model User {
   insights         Insight[]
   tokenUsageLogs   TokenUsageLog[]
   quotas           Quota[]
+  userQuotas       UserQuota[]
 
   @@map("users")
 }
@@ -537,6 +539,29 @@ model Quota {
   @@map("quotas")
 }
 ```
+
+### UserQuota
+
+사용자가 직접 설정하는 월간 사용 제한. Admin Quota와 별도로 운영된다.
+
+```prisma
+model UserQuota {
+  id         String    @id @default(uuid()) @db.Uuid
+  userId     String    @map("user_id") @db.Uuid
+  limitType  LimitType @map("limit_type")
+  limitValue Decimal   @map("limit_value") @db.Decimal(12, 2)
+  isActive   Boolean   @default(true) @map("is_active")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, limitType])
+  @@map("user_quotas")
+}
+```
+
+> **Admin Quota와의 차이**: Quota는 관리자가 설정하는 시스템 상한선으로 `period`(DAILY/MONTHLY)를 지원한다. UserQuota는 사용자가 직접 설정하며 항상 MONTHLY 고정이다. `@@unique([userId, limitType])`로 사용자당 유형별 하나만 허용한다.
 
 ## pgvector 설정
 

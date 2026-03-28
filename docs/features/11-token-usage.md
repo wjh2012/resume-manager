@@ -11,8 +11,8 @@ AI API 호출(커버레터, 면접, 인사이트, 임베딩)의 토큰 사용량
    - 인사이트 추출: `generateObject()` 반환값의 `usage` 캡처
    - 임베딩: `embedMany()` 반환값의 `usage.tokens` 캡처
 2. **비용 계산**: ModelPricing 테이블에서 해당 시점의 유효 단가를 조회하여 `estimatedCost` 산출
-3. **Quota 체크**: AI 호출 전 `checkQuotaExceeded()`로 한도 초과 여부 확인. 초과 시 403 차단
-4. **대시보드**: `/usage` 페이지에서 기간별 사용량, 기능별/모델별 분포, Quota 현황을 차트로 표시
+3. **Quota 체크**: AI 호출 전 `checkQuotaExceeded()`로 한도 초과 여부 확인. Admin Quota → User Quota 순서로 검사하며, 초과 시 source별 에러 메시지 구분 (403 차단)
+4. **대시보드**: `/usage` 페이지에서 기간별 사용량, 기능별/모델별 분포, Admin Quota 현황, 사용자 자기 제한 설정을 표시
 
 ## 주요 컴포넌트
 
@@ -20,7 +20,7 @@ AI API 호출(커버레터, 면접, 인사이트, 임베딩)의 토큰 사용량
 |------|------|
 | `lib/token-usage/service.ts` | `recordUsage()`, `getUserUsage()`, `getUserUsageSummary()` |
 | `lib/token-usage/pricing.ts` | `calculateCost()` — ModelPricing 기반 비용 계산 |
-| `lib/token-usage/quota.ts` | `checkQuotaExceeded()`, `getUserQuotasWithUsage()`, `QuotaExceededError` |
+| `lib/token-usage/quota.ts` | `checkQuotaExceeded()`, `getUserQuotasWithUsage()`, `getUserUserQuotasWithUsage()`, `QuotaExceededError` |
 | `app/api/token-usage/route.ts` | `GET` — 사용량 로그 (커서 페이지네이션) |
 | `app/api/token-usage/summary/route.ts` | `GET` — 요약 통계 + Quota 현황 |
 | `app/(dashboard)/usage/page.tsx` | 사용량 대시보드 페이지 |
